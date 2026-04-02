@@ -38,10 +38,10 @@ def get_settings() -> Settings:
 
     return Settings(
         app_title="NAWA Global General Trading",
-        admin_username=os.getenv("ADMIN_USERNAME", "admin"),
+        admin_username=os.getenv("ADMIN_USERNAME", "nawa"),
         admin_password_hash=os.getenv(
             "ADMIN_PASSWORD_HASH",
-            _sha256(os.getenv("ADMIN_PASSWORD", "admin123")),
+            _sha256(os.getenv("ADMIN_PASSWORD", "nawaglobal@123")),
         ),
         secret_key=os.getenv("SECRET_KEY", secrets.token_hex(32)),
         admin_route=os.getenv("ADMIN_ROUTE", "/admin12"),
