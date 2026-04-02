@@ -17,6 +17,8 @@ from fastapi import (
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+from PIL import Image
+from io import BytesIO
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 ADMIN_USERNAME = "admin"
@@ -66,12 +68,30 @@ def require_admin(request: Request):
         raise HTTPException(status_code=303, headers={"Location": f"{ADMIN_ROUTE}/login"})
 
 async def save_image(image: UploadFile, pid: str, suffix: str = "") -> Optional[str]:
-    if not image or not image.filename: return None
+    if not image or not image.filename:
+        return None
+
     ext = Path(image.filename).suffix.lower()
-    if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}: return None
-    fname = f"{pid}{suffix}{ext}"
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        return None
+
     contents = await image.read()
-    (UPLOAD_DIR / fname).write_bytes(contents)
+
+    # Open image
+    img = Image.open(BytesIO(contents)).convert("RGB")
+
+    # ✅ Resize while keeping aspect ratio
+    max_size = (800, 800)  # You can change this
+    img.thumbnail(max_size)
+
+    # Optional: center crop to exact size (uncomment if needed)
+    # img = img.resize((800, 600))
+
+    fname = f"{pid}{suffix}.jpg"  # save as jpg for consistency
+    save_path = UPLOAD_DIR / fname
+
+    img.save(save_path, format="JPEG", quality=85)
+
     return fname
 
 # ─── App ──────────────────────────────────────────────────────────────────────
