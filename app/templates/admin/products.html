@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/admin_nav.html" %}
+<div class="admin-layout">
+  {% include "partials/admin_sidebar.html" %}
+  <div class="main-content">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Products</div>
+        <div class="page-subtitle">Manage your product catalog</div>
+      </div>
+      <button class="btn primary" type="button" data-modal-open="#add-modal">+ Add Product</button>
+    </div>
+    {% if message %}
+    <div class="alert success">✅ {{ message }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert error">⚠️ {{ error }}</div>
+    {% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Images</th><th>Name</th><th>Category</th><th>Description</th><th>Media</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for row in product_rows %}
+          {% set product = row.product %}
+          {% set images = row.images %}
+          <tr>
+            <td>
+              {% if images %}
+              <div class="thumbs-row">
+                {% for image in images[:3] %}
+                <img src="/uploads/{{ image }}" class="admin-thumb" alt="">
+                {% endfor %}
+                {% if images|length > 3 %}
+                <span class="admin-thumb-more">+{{ images|length - 3 }}</span>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="admin-thumb admin-thumb-empty">📦</div>
+              {% endif %}
+            </td>
+            <td><strong class="table-strong">{{ product.name }}</strong></td>
+            <td><span class="tag green">{{ product.category or "—" }}</span></td>
+            <td class="ellipsis-cell">{{ product.description[:70] }}</td>
+            <td class="media-cell">{{ images|length }} img{% if images|length != 1 %}s{% endif %}</td>
+            <td>
+              <div class="table-actions">
+                <a href="{{ settings.admin_route }}/products/edit/{{ product.id }}" class="btn sm">Edit</a>
+                <a href="{{ settings.admin_route }}/products/delete/{{ product.id }}" class="btn sm danger" data-confirm="Delete this product?">Delete</a>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6"><div class="empty-state empty-state-small"><div class="empty-state-icon">📦</div><h3>No products yet</h3><p>Add your first product above.</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <button class="modal-close" type="button" data-modal-close="#add-modal">✕</button>
+    <div class="modal-title">Add New Product</div>
+    <form method="post" action="{{ settings.admin_route }}/products/add" enctype="multipart/form-data">
+      <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" required placeholder="e.g. Industrial Safety Gloves"></div>
+      <div class="form-group"><label class="form-label">Category *</label><input type="text" name="category" class="form-control" placeholder="e.g. Safety PPE, Oilfield Equipment" required></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control"></textarea></div>
+      <div class="form-group"><label class="form-label">Specifications (Label: Value, one per line)</label><textarea name="specs" class="form-control" rows="4" placeholder="Material: Nitrile&#10;Sizes: S, M, L, XL"></textarea></div>
+      <div class="form-group"><label class="form-label">Tags (comma separated)</label><input type="text" name="tags" class="form-control" placeholder="safety, gloves, industrial"></div>
+      <div class="form-group">
+        <label class="form-label">Product Images — up to 10, first = primary</label>
+        <div class="upload-zone" data-upload-zone>
+          <input type="file" name="images" accept="image/*" multiple data-upload-input data-preview-target="add-prev">
+          <div class="upload-zone-icon">📷</div>
+          <div class="upload-zone-text">Click or drag &amp; drop images here</div>
+          <div class="upload-zone-sub">PNG, JPG, WEBP · up to 10 images</div>
+        </div>
+        <div class="image-preview-grid" id="add-prev"></div>
+      </div>
+      <button type="submit" class="btn primary btn-block">Add Product</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script defer src="{{ url_for('static', path='js/admin-products.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/admin_nav.html" %}
+<div class="admin-layout">
+  {% include "partials/admin_sidebar.html" %}
+  <div class="main-content">
+    <div class="page-title">Visitor Analytics</div>
+    <div class="page-subtitle">Track who's viewing your product catalog</div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Period:</span>
+      <a href="{{ settings.admin_route }}/visitors?period=today" class="filter-pill{% if period == 'today' %} active{% endif %}">Today</a>
+      <a href="{{ settings.admin_route }}/visitors?period=week" class="filter-pill{% if period == 'week' %} active{% endif %}">This Week</a>
+      <a href="{{ settings.admin_route }}/visitors?period=month" class="filter-pill{% if period == 'month' %} active{% endif %}">This Month</a>
+      <a href="{{ settings.admin_route }}/visitors?period=year" class="filter-pill{% if period == 'year' %} active{% endif %}">This Year</a>
+      <a href="{{ settings.admin_route }}/visitors?period=all" class="filter-pill{% if period == 'all' %} active{% endif %}">All Time</a>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">{{ analytics.filtered|length }}</div><div class="stat-label">Visits ({{ analytics.label }})</div></div>
+      <div class="stat-card"><div class="stat-num">{{ analytics.today_count }}</div><div class="stat-label">Today</div></div>
+      <div class="stat-card"><div class="stat-num">{{ analytics.unique_ips }}</div><div class="stat-label">Unique IPs</div></div>
+      <div class="stat-card"><div class="stat-num">{{ analytics.all_time_total }}</div><div class="stat-label">All-Time Total</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="subsection-title">{{ analytics.label }} — Visit Trend</div>
+        <span class="chart-meta">{{ analytics.chart|length }} DATA POINT{% if analytics.chart|length != 1 %}S{% endif %}</span>
+      </div>
+      {% if analytics.chart %}
+      <div class="bar-chart">
+        {% for item in analytics.chart %}
+        <div class="bar-wrap">
+          <span class="bar-val">{{ item.count }}</span>
+          <div class="bar" data-height="{{ item.height }}" title="{{ item.label }}: {{ item.count }} visits"></div>
+          <span class="bar-label">{{ item.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="table-empty">No data for this period</div>
+      {% endif %}
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="subsection-title">Top Visitors</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>IP Address</th><th>Visits</th></tr></thead>
+            <tbody>
+              {% for ip, count in analytics.top_ips %}
+              <tr><td class="mono-cell">{{ ip }}</td><td><strong class="green-strong">{{ count }}</strong></td></tr>
+              {% else %}
+              <tr><td colspan="2" class="table-empty">No data</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="subsection-title">Recent 50 Visits</div>
+        <div class="table-wrap table-scroll">
+          <table>
+            <thead><tr><th>IP Address</th><th>Timestamp</th></tr></thead>
+            <tbody>
+              {% for visit in analytics.filtered[-50:]|reverse %}
+              <tr><td class="mono-cell">{{ visit.ip }}</td><td class="muted-cell">{{ visit.time.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>
+              {% else %}
+              <tr><td colspan="2" class="table-empty">No visits in this period</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

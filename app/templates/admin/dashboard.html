@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/admin_nav.html" %}
+<div class="admin-layout">
+  {% include "partials/admin_sidebar.html" %}
+  <div class="main-content">
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">Overview of catalog and visitor activity</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">{{ products|length }}</div><div class="stat-label">Products</div></div>
+      <div class="stat-card"><div class="stat-num">{{ category_count }}</div><div class="stat-label">Categories</div></div>
+      <div class="stat-card"><div class="stat-num">{{ visit_summary.total }}</div><div class="stat-label">Total Visits</div></div>
+      <div class="stat-card"><div class="stat-num">{{ visit_summary.today }}</div><div class="stat-label">Today</div></div>
+      <div class="stat-card"><div class="stat-num">{{ visit_summary.unique_ips }}</div><div class="stat-label">Unique IPs</div></div>
+    </div>
+    <div class="subsection-title">Recent Visitors</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>IP Address</th><th>Timestamp</th></tr></thead>
+        <tbody>
+          {% for visit in visits[-8:]|reverse %}
+          <tr><td class="mono-cell">{{ visit.ip }}</td><td class="muted-cell">{{ visit.time.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>
+          {% else %}
+          <tr><td colspan="2" class="table-empty">No visits yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

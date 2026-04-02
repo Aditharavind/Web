@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/public_nav.html" %}
+
+<div class="hero">
+  <div class="hero-bg-pattern"></div>
+  <div class="hero-glow-green"></div>
+  <div class="hero-glow-gold"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">Abu Dhabi, UAE · Est. 2020</div>
+      <h1 class="hero-title">Premium Oilfield &amp;<br><em>Industrial Supply</em><br>Partner</h1>
+      <p class="hero-sub">Reliable sourcing of high-quality oilfield spare parts, industrial consumables, lubricants, safety products, and maintenance solutions — delivered with speed and competitive pricing.</p>
+      <div class="hero-cta">
+        <a href="/catalog" class="btn primary lg">Browse Catalog</a>
+        <a href="{{ whatsapp_quote_url }}" target="_blank" class="wa-btn">Request a Quote</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-num">{{ total_products }}+</div><div class="hero-stat-label">Products</div></div>
+        <div><div class="hero-stat-num">{{ total_categories }}+</div><div class="hero-stat-label">Categories</div></div>
+        <div><div class="hero-stat-num">UAE</div><div class="hero-stat-label">Based In</div></div>
+        <div><div class="hero-stat-num">14+</div><div class="hero-stat-label">Brands</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-card"><div class="hero-card-icon">🛢️</div><div class="hero-card-title">Oilfield Equipment</div><div class="hero-card-text">Spare parts, pipe fittings, valves, and field equipment for oil &amp; gas operations.</div></div>
+      <div class="hero-card"><div class="hero-card-icon">🔧</div><div class="hero-card-title">Industrial Supplies</div><div class="hero-card-text">MRO supplies, consumables, hydraulic components, and mechanical parts.</div></div>
+      <div class="hero-card"><div class="hero-card-icon">🛡️</div><div class="hero-card-title">Safety Products</div><div class="hero-card-text">PPE, hand protection, head &amp; eye protection, uniforms, and safety equipment.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="trust-band">
+  <div class="trust-item">🛢️ Oilfield Specialists</div>
+  <div class="trust-item">🇦🇪 Abu Dhabi Based</div>
+  <div class="trust-item">🌍 Global Sourcing</div>
+  <div class="trust-item">⚡ Fast Delivery</div>
+  <div class="trust-item">💰 Competitive Pricing</div>
+  <div class="trust-item">💬 WhatsApp Support</div>
+</div>
+
+<div class="section">
+  <div class="two-col-feature">
+    <div>
+      <span class="section-label">About NAWA Global</span>
+      <h2 class="section-heading-left">A Trusted Partner for Industrial &amp; Oilfield Supply</h2>
+      <p class="section-copy">NAWA Global General Trading is a reliable supplier of high-quality oilfield spare parts, industrial consumables, lubricants, grease, degreasers, and maintenance solutions. We serve oil &amp; gas, industrial, construction, and facility management sectors with a commitment to quality, speed, and competitive pricing.</p>
+      <div class="button-row">
+        <a href="/about" class="btn primary">Learn More About Us</a>
+        <a href="/contact" class="btn outline-green">Get in Touch</a>
+      </div>
+    </div>
+    <div class="grid-2 cards-compact">
+      <div class="info-card"><div class="info-card-icon">🌐</div><div class="info-card-title">Global Network</div><div class="info-card-text">Strong global supplier network enabling competitive pricing.</div></div>
+      <div class="info-card"><div class="info-card-icon">⚡</div><div class="info-card-title">Fast Response</div><div class="info-card-text">Quick turnaround and reliable delivery schedules.</div></div>
+      <div class="info-card"><div class="info-card-icon">✅</div><div class="info-card-title">Quality Focused</div><div class="info-card-text">Compliance-driven approach with rigorous quality assurance.</div></div>
+      <div class="info-card"><div class="info-card-icon">🤝</div><div class="info-card-title">Customer First</div><div class="info-card-text">Solution-oriented, dedicated to your operational success.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="alt-band">
+  <div class="alt-band-inner">
+    <div class="section-header section-header-tight">
+      <span class="section-label">Industries We Serve</span>
+      <h2 class="section-title">Powering Multiple Sectors</h2>
+    </div>
+    <div class="card-grid-4">
+      <div class="industry-card"><div class="industry-icon">🛢️</div><div class="industry-title">Oil &amp; Gas</div></div>
+      <div class="industry-card"><div class="industry-icon">🏗️</div><div class="industry-title">Construction</div></div>
+      <div class="industry-card"><div class="industry-icon">🏭</div><div class="industry-title">Industrial</div></div>
+      <div class="industry-card"><div class="industry-icon">🏢</div><div class="industry-title">Facility Mgmt</div></div>
+    </div>
+  </div>
+</div>
+
+{% if recent_product_cards %}
+<div class="section section-tight-top">
+  <div class="section-header-row">
+    <div>
+      <span class="section-label">Featured Products</span>
+      <div class="recent-title">Recently Added</div>
+    </div>
+    <a href="/catalog" class="btn outline-green">View Full Catalog →</a>
+  </div>
+  <div class="product-grid">
+    {% for card in recent_product_cards %}
+    {% include "partials/product_card.html" %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% include "partials/brands.html" %}
+
+<div class="cta-banner">
+  <div class="cta-banner-inner">
+    <h2 class="cta-banner-title">Looking for Reliable Industrial Supply?</h2>
+    <p class="cta-banner-copy">Partner with NAWA Global for dependable sourcing, quality products, and timely delivery across the UAE and beyond.</p>
+    <div class="button-row button-row-center">
+      <a href="{{ whatsapp_quote_url }}" target="_blank" class="wa-btn">Request a Quote</a>
+      <a href="/contact" class="btn btn-on-green">Contact Us →</a>
+    </div>
+  </div>
+</div>
+
+{% include "partials/footer.html" %}
+{% endblock %}

@@ -1,0 +1,11 @@
+<aside class="sidebar">
+  <div class="sidebar-pad">
+    <div class="sidebar-label">Navigation</div>
+    <a href="{{ settings.admin_route }}/dashboard" class="sidebar-link{% if admin_section == 'dashboard' %} active{% endif %}">📊 Dashboard</a>
+    <a href="{{ settings.admin_route }}/products" class="sidebar-link{% if admin_section == 'products' %} active{% endif %}">📦 Products</a>
+    <a href="{{ settings.admin_route }}/visitors" class="sidebar-link{% if admin_section == 'visitors' %} active{% endif %}">👥 Visitors</a>
+  </div>
+  <div class="sidebar-bottom">
+    <a href="/" class="sidebar-link sidebar-link-small">🔗 View Live Site</a>
+  </div>
+</aside>

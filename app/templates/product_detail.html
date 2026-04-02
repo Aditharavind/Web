@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/public_nav.html" %}
+
+<div class="section product-detail-section">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <a href="/catalog">Catalog</a><span>/</span>
+    <a href="/catalog?cat={{ product.category }}">{{ product.category or "Products" }}</a><span>/</span>
+    <span>{{ product.name }}</span>
+  </div>
+  <div class="detail-layout">
+    <div class="detail-gallery">
+      <div class="detail-main-img" data-open-lightbox>
+        {% if product_images %}
+        <img src="/uploads/{{ product_images[0] }}" alt="{{ product.name }}" id="main-gallery-img">
+        {% else %}
+        <div class="detail-img-placeholder">📦</div>
+        {% endif %}
+      </div>
+      {% if product_images|length > 1 %}
+      <div class="detail-thumbs">
+        {% for image in product_images %}
+        <img src="/uploads/{{ image }}" class="detail-thumb{% if loop.first %} active{% endif %}" alt="Image {{ loop.index }}" data-thumb-index="{{ loop.index0 }}">
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div>
+      <div class="detail-eyebrow">{{ product.category or "Product" }}</div>
+      <h1 class="detail-title">{{ product.name }}</h1>
+      {% if product.tags %}
+      <div class="tags-row">
+        {% for tag in product.tags.split(",") if tag.strip() %}
+        <span class="tag green">{{ tag.strip() }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <p class="detail-desc">{{ product.description or "Product details will be shared on request." }}</p>
+      {% if product.specs %}
+      <div class="specs-box">
+        <div class="specs-box-title">Specifications</div>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              {% for spec in product.specs if ':' in spec %}
+              {% set parts = spec.split(':', 1) %}
+              <tr><td>{{ parts[0].strip() }}</td><td>{{ parts[1].strip() }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+      <div class="detail-actions">
+        <a href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="wa-btn">Get Quote on WhatsApp</a>
+        <a href="{{ email_url }}" class="btn outline-gold">Email About This Product</a>
+        <a href="/catalog" class="btn">← All Products</a>
+      </div>
+      <p class="detail-contact">📞 <a href="tel:{{ settings.contact_whatsapp }}">{{ settings.contact_whatsapp }}</a> | 📧 <a href="{{ email_url }}">{{ settings.contact_email }}</a></p>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" type="button" data-lightbox-close>✕</button>
+  <img class="lightbox-img" id="lb-img" src="" alt="">
+  <div class="lightbox-controls">
+    <button class="lightbox-nav" type="button" data-lightbox-step="-1">&#8249;</button>
+    <span class="lightbox-counter" id="lb-ctr"></span>
+    <button class="lightbox-nav" type="button" data-lightbox-step="1">&#8250;</button>
+  </div>
+  <div class="lightbox-thumbs" id="lb-thumbs"></div>
+</div>
+<div id="product-images-data" data-images='{{ product_image_urls | tojson }}'></div>
+
+{% include "partials/footer.html" %}
+{% endblock %}
+{% block scripts %}
+<script defer src="{{ url_for('static', path='js/product-detail.js') }}"></script>
+{% endblock %}

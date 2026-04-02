@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/admin_nav.html" %}
+<div class="admin-layout">
+  {% include "partials/admin_sidebar.html" %}
+  <div class="main-content">
+    <div class="breadcrumb">
+      <a href="{{ settings.admin_route }}/products">Products</a><span>/</span><span>Edit</span>
+    </div>
+    <div class="page-title">Edit Product</div>
+    <div class="page-subtitle">{{ product.name }}</div>
+    {% if request.query_params.get("msg") %}
+    <div class="alert success">✅ {{ request.query_params.get("msg") }}</div>
+    {% endif %}
+    <div class="form-card form-card-wide">
+      <form method="post" action="{{ settings.admin_route }}/products/edit/{{ product.id }}" enctype="multipart/form-data">
+        <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" value="{{ product.name }}" required></div>
+        <div class="form-group"><label class="form-label">Category *</label><input type="text" name="category" class="form-control" value="{{ product.category }}"></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control">{{ product.description }}</textarea></div>
+        <div class="form-group"><label class="form-label">Specifications</label><textarea name="specs" class="form-control">{% for spec in product.specs %}{{ spec }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea></div>
+        <div class="form-group"><label class="form-label">Tags</label><input type="text" name="tags" class="form-control" value="{{ product.tags }}"></div>
+        <div class="form-group">
+          <label class="form-label">Current Images ({{ product_images|length }}) — click ✕ to remove</label>
+          {% if product_images %}
+          <div class="existing-imgs">
+            {% for image in product_images %}
+            <div class="existing-img-item">
+              <img src="/uploads/{{ image }}" alt="">
+              <a href="{{ settings.admin_route }}/products/delete-image/{{ product.id }}/{{ image }}" class="del-img-btn" data-confirm="Remove image?" title="Remove">✕</a>
+              {% if loop.first %}<span class="primary-label">PRIMARY</span>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="muted-note">No images yet.</p>
+          {% endif %}
+          <label class="form-label">Add More Images</label>
+          <div class="upload-zone" data-upload-zone>
+            <input type="file" name="images" accept="image/*" multiple data-upload-input data-preview-target="edit-prev">
+            <div class="upload-zone-icon">📷</div>
+            <div class="upload-zone-text">Click or drag &amp; drop to add images</div>
+            <div class="upload-zone-sub">Existing images are kept unless removed above</div>
+          </div>
+          <div class="image-preview-grid" id="edit-prev"></div>
+        </div>
+        <div class="table-actions">
+          <button type="submit" class="btn primary">Save Changes</button>
+          <a href="{{ settings.admin_route }}/products" class="btn">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script defer src="{{ url_for('static', path='js/admin-products.js') }}"></script>
+{% endblock %}

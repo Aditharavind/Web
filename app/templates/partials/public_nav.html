@@ -1,0 +1,27 @@
+<nav class="navbar">
+  <a href="/" class="brand">
+    <div class="logo-wrap">
+      <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
+        <path d="M2 20 L10 6 L15 14 L20 6 L28 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M10 20 L15 12 L20 20" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">NAWA Global</span>
+      <span class="brand-sub">General Trading</span>
+    </div>
+  </a>
+  <button class="nav-menu-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="public-nav-links">Menu</button>
+  <div class="nav-links" id="public-nav-links">
+    <a href="/" class="nav-link{% if active_nav == 'home' %} active{% endif %}">Home</a>
+    <a href="/about" class="nav-link{% if active_nav == 'about' %} active{% endif %}">About Us</a>
+    <a href="/catalog" class="nav-link{% if active_nav == 'catalog' %} active{% endif %}">Catalog</a>
+    <a href="/services" class="nav-link{% if active_nav == 'services' %} active{% endif %}">Products &amp; Services</a>
+    <a href="/contact" class="nav-link{% if active_nav == 'contact' %} active{% endif %}">Contact</a>
+  </div>
+  <div class="nav-right">
+    <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme"></button>
+    <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn outline-green sm">WhatsApp</a>
+    <a href="/catalog" class="btn primary sm">View Catalog</a>
+  </div>
+</nav>

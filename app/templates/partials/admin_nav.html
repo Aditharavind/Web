@@ -1,0 +1,19 @@
+<nav class="navbar">
+  <a href="/" class="brand">
+    <div class="logo-wrap">
+      <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
+        <path d="M2 20 L10 6 L15 14 L20 6 L28 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M10 20 L15 12 L20 20" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">NAWA Global</span>
+      <span class="admin-badge">ADMIN</span>
+    </div>
+  </a>
+  <div class="nav-right">
+    <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme"></button>
+    <a href="{{ settings.admin_route }}/dashboard" class="btn sm">Dashboard</a>
+    <a href="{{ settings.admin_route }}/logout" class="btn sm danger">Sign Out</a>
+  </div>
+</nav>

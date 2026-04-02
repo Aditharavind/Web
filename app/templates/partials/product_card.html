@@ -1,0 +1,24 @@
+{% set product = card.product %}
+{% set images = card.images %}
+<div class="product-card">
+  <a class="card-media" href="/product/{{ product.id }}">
+    {% if images %}
+    <img src="/uploads/{{ images[0] }}" alt="{{ product.name }}" loading="lazy">
+    {% else %}
+    <div class="card-media-placeholder">📦</div>
+    {% endif %}
+    <span class="card-category-badge">{{ product.category or 'General' }}</span>
+    {% if images|length > 1 %}
+    <span class="card-img-count">1 / {{ images|length }}</span>
+    {% endif %}
+  </a>
+  <div class="card-body">
+    <div class="card-title">{{ product.name }}</div>
+    <div class="card-desc">{{ product.description or 'No description available.' }}</div>
+    <div class="card-footer">
+      <a href="/product/{{ product.id }}" class="btn sm primary card-btn-fill">View Details</a>
+      <a href="{{ card.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn sm outline-green">WhatsApp</a>
+      <a href="{{ card.email_url }}" class="btn sm outline-gold">Email</a>
+    </div>
+  </div>
+</div>

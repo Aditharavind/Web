@@ -1,0 +1,49 @@
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-row">
+        <div class="logo-wrap">
+          <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
+            <path d="M2 20 L10 6 L15 14 L20 6 L28 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M10 20 L15 12 L20 20" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <div>
+          <div class="footer-brand-name">NAWA Global</div>
+          <div class="footer-brand-sub">General Trading</div>
+        </div>
+      </div>
+      <div class="footer-brand-desc">Premium oilfield &amp; industrial supply partner based in Abu Dhabi, UAE. Trusted by oil &amp; gas, construction, and facility management sectors.</div>
+      <div class="footer-cta">
+        <a href="{{ contact_whatsapp_url }}" target="_blank" class="wa-btn wa-btn-small">Chat on WhatsApp</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-heading">Quick Links</div>
+      <a href="/" class="footer-link">Home</a>
+      <a href="/about" class="footer-link">About Us</a>
+      <a href="/services" class="footer-link">Products &amp; Services</a>
+      <a href="/catalog" class="footer-link">Product Catalog</a>
+      <a href="/contact" class="footer-link">Contact Us</a>
+    </div>
+    <div>
+      <div class="footer-heading">Services</div>
+      <a href="/services" class="footer-link">Oilfield Equipment</a>
+      <a href="/services" class="footer-link">Industrial Supplies</a>
+      <a href="/services" class="footer-link">Lubricants &amp; Oils</a>
+      <a href="/services" class="footer-link">Safety Products</a>
+      <a href="/services" class="footer-link">Procurement Services</a>
+    </div>
+    <div>
+      <div class="footer-heading">Contact Info</div>
+      <div class="footer-contact">📍 <span>{{ settings.contact_address }}</span></div>
+      <div class="footer-contact">📞 <a href="tel:{{ settings.contact_whatsapp }}" class="footer-accent">{{ settings.contact_whatsapp }}</a></div>
+      <div class="footer-contact">📧 <a href="mailto:{{ settings.contact_email }}" class="footer-accent">{{ settings.contact_email }}</a></div>
+      <div class="footer-contact">🌐 <a href="https://{{ settings.contact_website }}" target="_blank" class="footer-accent">{{ settings.contact_website }}</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© {{ current_year }} NAWA Global General Trading. All Rights Reserved.</div>
+    <div class="footer-copy">Mussafah, Abu Dhabi, UAE</div>
+  </div>
+</footer>
