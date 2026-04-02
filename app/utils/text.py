@@ -18,4 +18,8 @@ def mailto_url(email: str, subject: str = "", body: str = "") -> str:
     if body:
         query["body"] = body
 
-    return f"mailto:{email}" + (f"?{urlencode(query)}" if query else "")
+    if not query:
+        return f"mailto:{email}"
+
+    encoded_items = [f"{key}={quote(value, safe='')}" for key, value in query.items()]
+    return f"mailto:{email}?{'&'.join(encoded_items)}"
