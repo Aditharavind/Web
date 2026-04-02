@@ -1,6 +1,7 @@
 """
-Ketch-All Product Catalog - Premium Edition v2
+NAWA Global General Trading — Product Catalog
 Features: Multi-image upload, pagination, admin visit analytics filtering
+Public Pages: Home, About, Products & Services, Contact
 Run: pip install fastapi uvicorn python-multipart aiofiles pillow && python main.py
 """
 
@@ -24,7 +25,10 @@ from io import BytesIO
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD_HASH = hashlib.sha256("admin123".encode()).hexdigest()
 SECRET_KEY = secrets.token_hex(32)
-CONTACT_WHATSAPP = "+918129922989"
+CONTACT_WHATSAPP = "+971505464847"
+CONTACT_EMAIL = "info@nawaglobalgtd.com"
+CONTACT_WEBSITE = "www.nawaglobalgtd.com"
+CONTACT_ADDRESS = "Mussafah, Abu Dhabi, United Arab Emirates"
 ADMIN_ROUTE = "/admin12"
 PRODUCTS_PER_PAGE = 9
 
@@ -70,110 +74,131 @@ def require_admin(request: Request):
 async def save_image(image: UploadFile, pid: str, suffix: str = "") -> Optional[str]:
     if not image or not image.filename:
         return None
-
     ext = Path(image.filename).suffix.lower()
     if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
         return None
-
     contents = await image.read()
-
-    # Open image
     img = Image.open(BytesIO(contents)).convert("RGB")
-
-    # ✅ Resize while keeping aspect ratio
-    max_size = (800, 800)  # You can change this
+    max_size = (800, 800)
     img.thumbnail(max_size)
-
-    # Optional: center crop to exact size (uncomment if needed)
-    # img = img.resize((800, 600))
-
-    fname = f"{pid}{suffix}.jpg"  # save as jpg for consistency
+    fname = f"{pid}{suffix}.jpg"
     save_path = UPLOAD_DIR / fname
-
     img.save(save_path, format="JPEG", quality=85)
-
     return fname
 
 # ─── App ──────────────────────────────────────────────────────────────────────
-app = FastAPI(title="Ketch-All Product Catalog")
+app = FastAPI(title="NAWA Global General Trading")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STYLES
+# STYLES — NAWA Global brand: deep green + gold, editorial-industrial
 # ═══════════════════════════════════════════════════════════════════════════════
 BASE_STYLE = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{--accent:#C8972A;--accent-light:#E8B84B;--danger:#C0392B;--success:#27AE60;--tr:.3s cubic-bezier(.4,0,.2,1)}
-  [data-theme="dark"]{--bg:#0C0C0F;--bg2:#141418;--bg3:#1C1C22;--surface:#1A1A20;--surface2:#222228;--border:rgba(255,255,255,.08);--border-accent:rgba(200,151,42,.4);--text:#F0EDE8;--text2:#A8A49E;--text3:#6B6764;--nav-bg:rgba(12,12,15,.88);--cshadow:0 4px 24px rgba(0,0,0,.5);--chshadow:0 12px 48px rgba(0,0,0,.7)}
-  [data-theme="light"]{--bg:#F7F5F0;--bg2:#EFEDE8;--bg3:#E8E4DC;--surface:#FFF;--surface2:#F2F0EB;--border:rgba(0,0,0,.08);--border-accent:rgba(200,151,42,.5);--text:#1A1714;--text2:#5A5550;--text3:#9A9590;--nav-bg:rgba(247,245,240,.92);--cshadow:0 2px 16px rgba(0,0,0,.08);--chshadow:0 12px 40px rgba(0,0,0,.15)}
-  body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background var(--tr),color var(--tr);overflow-x:hidden}
+  :root{
+    --green:#1B5E20;--green2:#2E7D32;--green3:#388E3C;--green-light:#4CAF50;
+    --gold:#D4A017;--gold-light:#E8B84B;--gold-dark:#B8860B;
+    --danger:#C0392B;--success:#27AE60;--tr:.3s cubic-bezier(.4,0,.2,1)
+  }
+  [data-theme="dark"]{
+    --bg:#0A0F0A;--bg2:#111711;--bg3:#182018;--surface:#141A14;--surface2:#1C241C;
+    --border:rgba(255,255,255,.07);--border-accent:rgba(212,160,23,.4);
+    --text:#F0EEE8;--text2:#A8A89E;--text3:#6B6B60;
+    --nav-bg:rgba(10,15,10,.92);--cshadow:0 4px 24px rgba(0,0,0,.5);--chshadow:0 12px 48px rgba(0,0,0,.7)
+  }
+  [data-theme="light"]{
+    --bg:#F5F7F4;--bg2:#ECEEE8;--bg3:#E0E4DB;--surface:#FFF;--surface2:#F2F4EF;
+    --border:rgba(0,0,0,.08);--border-accent:rgba(212,160,23,.5);
+    --text:#141A14;--text2:#4A5A4A;--text3:#8A9A8A;
+    --nav-bg:rgba(245,247,244,.94);--cshadow:0 2px 16px rgba(0,0,0,.08);--chshadow:0 12px 40px rgba(0,0,0,.15)
+  }
+  body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background var(--tr),color var(--tr);overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border-accent);border-radius:3px}
 
   /* Navbar */
-  .navbar{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(20px) saturate(1.8);border-bottom:1px solid var(--border);height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem}
-  .brand{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--text)}
-  .brand-accent{color:var(--accent)}
-  .brand-tagline{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--text3);letter-spacing:3px;text-transform:uppercase;display:block;margin-top:-2px}
-  .nav-right{display:flex;align-items:center;gap:1rem}
-  .theme-toggle{width:42px;height:24px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;cursor:pointer;position:relative;display:flex;align-items:center;padding:2px;transition:background var(--tr)}
-  .theme-toggle::after{content:'';width:18px;height:18px;background:var(--accent);border-radius:50%;transition:transform var(--tr)}
+  .navbar{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(20px) saturate(1.8);border-bottom:1px solid var(--border);height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem}
+  .brand{display:flex;align-items:center;gap:.75rem}
+  .brand-logo{width:44px;height:44px;background:linear-gradient(135deg,var(--green2),var(--green-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff;font-family:'Barlow Condensed',sans-serif;letter-spacing:-1px}
+  .brand-text{display:flex;flex-direction:column}
+  .brand-name{font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:1px;color:var(--text);line-height:1;text-transform:uppercase}
+  .brand-sub{font-size:.58rem;letter-spacing:2.5px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-top:1px}
+  .nav-links{display:flex;align-items:center;gap:.25rem}
+  .nav-link{padding:.45rem .9rem;border-radius:6px;font-size:.85rem;font-weight:500;color:var(--text2);transition:all var(--tr);letter-spacing:.3px}
+  .nav-link:hover{color:var(--text);background:var(--bg3)}
+  .nav-link.active{color:var(--green-light);background:rgba(76,175,80,.08)}
+  .nav-right{display:flex;align-items:center;gap:.8rem}
+  .theme-toggle{width:40px;height:22px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;cursor:pointer;position:relative;display:flex;align-items:center;padding:2px;transition:background var(--tr)}
+  .theme-toggle::after{content:'';width:16px;height:16px;background:var(--gold);border-radius:50%;transition:transform var(--tr)}
   [data-theme="light"] .theme-toggle::after{transform:translateX(18px)}
 
   /* Buttons */
-  .btn{font-family:'Outfit',sans-serif;font-weight:600;font-size:.85rem;letter-spacing:.4px;padding:.55rem 1.4rem;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
-  .btn:hover{border-color:var(--accent);color:var(--accent)}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn.primary:hover{background:var(--accent-light);border-color:var(--accent-light);color:#000}
-  .btn.outline-gold{border-color:var(--accent);color:var(--accent)}
-  .btn.outline-gold:hover{background:var(--accent);color:#000}
+  .btn{font-family:'Barlow',sans-serif;font-weight:600;font-size:.85rem;letter-spacing:.3px;padding:.55rem 1.4rem;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
+  .btn:hover{border-color:var(--green3);color:var(--green-light)}
+  .btn.primary{background:var(--green2);border-color:var(--green2);color:#fff}
+  .btn.primary:hover{background:var(--green3);border-color:var(--green3)}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#000}
+  .btn.gold:hover{background:var(--gold-light);border-color:var(--gold-light)}
+  .btn.outline-gold{border-color:var(--gold);color:var(--gold)}
+  .btn.outline-gold:hover{background:var(--gold);color:#000}
+  .btn.outline-green{border-color:var(--green3);color:var(--green-light)}
+  .btn.outline-green:hover{background:var(--green2);color:#fff}
   .btn.danger{border-color:var(--danger);color:var(--danger)}
   .btn.danger:hover{background:var(--danger);color:#fff}
   .btn.sm{padding:.32rem .85rem;font-size:.78rem;border-radius:5px}
-  .btn.lg{padding:.85rem 2.2rem;font-size:1rem;border-radius:8px}
+  .btn.lg{padding:.9rem 2.4rem;font-size:1rem;border-radius:8px}
   .btn:disabled{opacity:.4;cursor:not-allowed}
-  .wa-btn{display:inline-flex;align-items:center;gap:.6rem;background:#25D366;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:.95rem;padding:.75rem 1.6rem;border-radius:8px;transition:all var(--tr);border:none;cursor:pointer}
+  .wa-btn{display:inline-flex;align-items:center;gap:.6rem;background:#25D366;color:#fff;font-family:'Barlow',sans-serif;font-weight:700;font-size:.95rem;padding:.75rem 1.6rem;border-radius:8px;transition:all var(--tr);border:none;cursor:pointer;letter-spacing:.3px}
   .wa-btn:hover{background:#1ebe5d;transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,211,102,.35)}
 
   /* Hero */
-  .hero{padding:140px 2.5rem 80px;background:var(--bg);position:relative;overflow:hidden;margin-top:68px}
-  .hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.5}
-  .hero-glow{position:absolute;top:-100px;right:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(200,151,42,.12) 0%,transparent 70%);pointer-events:none}
-  .hero-inner{max-width:1100px;margin:0 auto;position:relative}
-  .hero-eyebrow{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
-  .hero-eyebrow::before{content:'';width:40px;height:1px;background:var(--accent)}
-  .hero-title{font-family:'DM Serif Display',serif;font-size:clamp(3rem,7vw,6.5rem);line-height:1;letter-spacing:-1px;color:var(--text);margin-bottom:1.5rem}
-  .hero-title em{color:var(--accent);font-style:italic}
-  .hero-sub{font-size:1.1rem;color:var(--text2);font-weight:300;max-width:520px;line-height:1.7;margin-bottom:2.5rem}
+  .hero{padding:140px 2.5rem 90px;background:var(--bg);position:relative;overflow:hidden;margin-top:72px}
+  .hero-bg-pattern{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,var(--border) 59px,var(--border) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,var(--border) 59px,var(--border) 60px);opacity:.4}
+  .hero-glow-green{position:absolute;top:-80px;left:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(46,125,50,.15) 0%,transparent 70%);pointer-events:none}
+  .hero-glow-gold{position:absolute;bottom:-100px;right:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(212,160,23,.1) 0%,transparent 70%);pointer-events:none}
+  .hero-inner{max-width:1140px;margin:0 auto;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+  .hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:5px;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem}
+  .hero-eyebrow::before{content:'';width:36px;height:2px;background:var(--gold)}
+  .hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,5vw,4.2rem);line-height:1.08;letter-spacing:-.5px;color:var(--text);margin-bottom:1.2rem}
+  .hero-title em{color:var(--green-light);font-style:italic}
+  .hero-sub{font-size:1.05rem;color:var(--text2);font-weight:300;line-height:1.75;margin-bottom:2.2rem}
   .hero-cta{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
-  .hero-stats{display:flex;gap:3rem;margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);flex-wrap:wrap}
-  .hero-stat-num{font-family:'DM Serif Display',serif;font-size:2.2rem;color:var(--text);line-height:1}
-  .hero-stat-label{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-top:.3rem;font-family:'Space Mono',monospace}
+  .hero-right{display:flex;flex-direction:column;gap:1.2rem}
+  .hero-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.4rem 1.6rem;transition:border-color var(--tr)}
+  .hero-card:hover{border-color:var(--border-accent)}
+  .hero-card-icon{font-size:1.6rem;margin-bottom:.6rem}
+  .hero-card-title{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text);margin-bottom:.3rem}
+  .hero-card-text{font-size:.83rem;color:var(--text3);line-height:1.5}
+  .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-top:3.5rem;padding-top:2.5rem;border-top:1px solid var(--border)}
+  .hero-stat-num{font-family:'Playfair Display',serif;font-size:2rem;color:var(--green-light);line-height:1}
+  .hero-stat-label{font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-top:.3rem;font-family:'Barlow Condensed',sans-serif;font-weight:600}
 
   /* Trust band */
-  .trust-band{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.5rem 2.5rem;display:flex;align-items:center;justify-content:center;gap:3rem;flex-wrap:wrap}
-  .trust-item{display:flex;align-items:center;gap:.6rem;font-size:.82rem;color:var(--text2);font-weight:500}
+  .trust-band{background:var(--green2);padding:1.2rem 2.5rem;display:flex;align-items:center;justify-content:center;gap:3rem;flex-wrap:wrap}
+  .trust-item{display:flex;align-items:center;gap:.6rem;font-size:.82rem;color:rgba(255,255,255,.9);font-weight:500;letter-spacing:.3px}
 
   /* Section */
-  .section{max-width:1200px;margin:0 auto;padding:3rem 2.5rem}
-  .section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1.2rem;gap:1rem;flex-wrap:wrap}
-  .section-label{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem}
-  .section-title{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--text)}
-  .section-count{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--text3);white-space:nowrap}
+  .section{max-width:1200px;margin:0 auto;padding:4rem 2.5rem}
+  .section-header{margin-bottom:3rem;text-align:center}
+  .section-label{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:5px;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem;display:block}
+  .section-title{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--text);margin-bottom:.8rem}
+  .section-sub{font-size:1rem;color:var(--text2);font-weight:300;max-width:560px;margin:0 auto;line-height:1.7}
+  .section-header-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1.2rem;gap:1rem;flex-wrap:wrap}
+  .section-count{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
 
   /* Catalog controls */
   .catalog-controls{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:2rem}
   .search-box{flex:1;min-width:200px;max-width:380px;position:relative}
-  .search-box input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.65rem 1rem .65rem 2.6rem;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.9rem;transition:border-color var(--tr),box-shadow var(--tr)}
-  .search-box input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,151,42,.1)}
+  .search-box input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.65rem 1rem .65rem 2.6rem;border-radius:8px;font-family:'Barlow',sans-serif;font-size:.9rem;transition:border-color var(--tr),box-shadow var(--tr)}
+  .search-box input:focus{outline:none;border-color:var(--green3);box-shadow:0 0 0 3px rgba(56,142,60,.1)}
   .search-box::before{content:'🔍';position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none}
-  .filter-select{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:.65rem 1rem;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer;transition:border-color var(--tr)}
-  .filter-select:focus{outline:none;border-color:var(--accent)}
-  .results-info{font-size:.78rem;color:var(--text3);font-family:'Space Mono',monospace;white-space:nowrap}
+  .filter-select{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:.65rem 1rem;border-radius:8px;font-family:'Barlow',sans-serif;font-size:.88rem;cursor:pointer;transition:border-color var(--tr)}
+  .filter-select:focus{outline:none;border-color:var(--green3)}
+  .results-info{font-size:.78rem;color:var(--text3);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
 
   /* Product grid */
   .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem}
@@ -183,18 +208,18 @@ BASE_STYLE = """
   .card-media img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.4,0,.2,1)}
   .product-card:hover .card-media img{transform:scale(1.04)}
   .card-media-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3.5rem;color:var(--text3)}
-  .card-img-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;font-family:'Space Mono',monospace;font-size:.58rem;padding:.15rem .5rem;border-radius:4px;backdrop-filter:blur(4px)}
-  .card-category-badge{position:absolute;top:12px;left:12px;background:rgba(200,151,42,.92);color:#000;font-family:'Space Mono',monospace;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;padding:.2rem .55rem;border-radius:4px;font-weight:700}
+  .card-img-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:1px;padding:.15rem .5rem;border-radius:4px;backdrop-filter:blur(4px)}
+  .card-category-badge{position:absolute;top:12px;left:12px;background:rgba(46,125,50,.92);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;padding:.2rem .6rem;border-radius:4px;font-weight:700}
   .card-body{padding:1.4rem;flex:1;display:flex;flex-direction:column}
-  .card-title{font-family:'DM Serif Display',serif;font-size:1.22rem;color:var(--text);margin-bottom:.5rem;line-height:1.3}
+  .card-title{font-family:'Playfair Display',serif;font-size:1.18rem;color:var(--text);margin-bottom:.5rem;line-height:1.3}
   .card-desc{font-size:.86rem;color:var(--text2);line-height:1.7;margin-bottom:1.2rem;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .card-footer{display:flex;gap:.6rem}
 
   /* Pagination */
   .pagination{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:3rem;flex-wrap:wrap}
-  .page-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Space Mono',monospace;font-size:.8rem;cursor:pointer;transition:all var(--tr)}
-  .page-btn:hover{border-color:var(--accent);color:var(--accent)}
-  .page-btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+  .page-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Barlow Condensed',sans-serif;font-size:.88rem;cursor:pointer;transition:all var(--tr)}
+  .page-btn:hover{border-color:var(--green3);color:var(--green-light)}
+  .page-btn.active{background:var(--green2);border-color:var(--green2);color:#fff;font-weight:700}
   .page-btn.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
   .page-ellipsis{color:var(--text3);font-size:.8rem;padding:0 .3rem}
 
@@ -205,11 +230,11 @@ BASE_STYLE = """
   .lightbox-controls{display:flex;gap:1rem;margin-top:1.2rem;align-items:center}
   .lightbox-close{position:absolute;top:1.5rem;right:1.5rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);width:36px;height:36px;border-radius:50%;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .lightbox-nav{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);width:44px;height:44px;border-radius:50%;color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
-  .lightbox-nav:hover{background:rgba(200,151,42,.4)}
-  .lightbox-counter{color:rgba(255,255,255,.6);font-family:'Space Mono',monospace;font-size:.75rem}
+  .lightbox-nav:hover{background:rgba(46,125,50,.5)}
+  .lightbox-counter{color:rgba(255,255,255,.6);font-family:'Barlow Condensed',sans-serif;font-size:.85rem;letter-spacing:2px}
   .lightbox-thumbs{display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap;justify-content:center;max-width:520px}
   .lightbox-thumb{width:52px;height:42px;object-fit:cover;border-radius:5px;cursor:pointer;border:2px solid transparent;opacity:.6;transition:all .2s}
-  .lightbox-thumb.active{border-color:var(--accent);opacity:1}
+  .lightbox-thumb.active{border-color:var(--gold);opacity:1}
 
   /* Detail */
   .detail-layout{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
@@ -219,77 +244,120 @@ BASE_STYLE = """
   .detail-main-img:hover img{transform:scale(1.03)}
   .detail-thumbs{display:flex;gap:.6rem;flex-wrap:wrap}
   .detail-thumb{width:72px;height:58px;border-radius:7px;object-fit:cover;border:2px solid var(--border);cursor:pointer;transition:all .2s;opacity:.7}
-  .detail-thumb:hover,.detail-thumb.active{border-color:var(--accent);opacity:1}
+  .detail-thumb:hover,.detail-thumb.active{border-color:var(--green3);opacity:1}
   .detail-img-placeholder{font-size:6rem;color:var(--text3)}
-  .detail-eyebrow{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:.8rem;display:flex;align-items:center;gap:.8rem}
-  .detail-eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
-  .detail-title{font-family:'DM Serif Display',serif;font-size:2.6rem;line-height:1.1;color:var(--text);margin-bottom:1rem}
+  .detail-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--green-light);margin-bottom:.8rem;display:flex;align-items:center;gap:.8rem}
+  .detail-eyebrow::before{content:'';width:24px;height:2px;background:var(--green3)}
+  .detail-title{font-family:'Playfair Display',serif;font-size:2.4rem;line-height:1.1;color:var(--text);margin-bottom:1rem}
   .detail-desc{font-size:1rem;color:var(--text2);line-height:1.8;margin-bottom:2rem}
   .specs-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:2rem}
-  .specs-box-title{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3);padding:.85rem 1.2rem;border-bottom:1px solid var(--border);background:var(--bg3)}
+  .specs-box-title{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3);padding:.85rem 1.2rem;border-bottom:1px solid var(--border);background:var(--bg3);font-weight:600}
   .specs-box table{width:100%}
   .specs-box td{padding:.72rem 1.2rem;font-size:.87rem;border-bottom:1px solid var(--border)}
   .specs-box tr:last-child td{border-bottom:none}
   .specs-box td:first-child{color:var(--text3);font-weight:500;width:44%}
   .detail-actions{display:flex;gap:1rem;flex-wrap:wrap}
   .tag{display:inline-block;background:var(--bg3);color:var(--text2);border:1px solid var(--border);font-size:.7rem;padding:.18rem .55rem;border-radius:100px}
-  .tag.gold{background:rgba(200,151,42,.1);border-color:rgba(200,151,42,.3);color:var(--accent)}
+  .tag.green{background:rgba(46,125,50,.1);border-color:rgba(46,125,50,.3);color:var(--green-light)}
+  .tag.gold{background:rgba(212,160,23,.1);border-color:rgba(212,160,23,.3);color:var(--gold)}
+
+  /* About / Page Hero */
+  .page-hero{padding:120px 2.5rem 70px;background:var(--bg);position:relative;overflow:hidden;margin-top:72px;border-bottom:1px solid var(--border)}
+  .page-hero-inner{max-width:800px;margin:0 auto;text-align:center;position:relative}
+  .page-hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:5px;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;display:flex;align-items:center;justify-content:center;gap:.8rem}
+  .page-hero-eyebrow::before,.page-hero-eyebrow::after{content:'';width:36px;height:1px;background:var(--gold)}
+  .page-hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.4rem,5vw,3.6rem);color:var(--text);margin-bottom:1rem;line-height:1.1}
+  .page-hero-sub{font-size:1.05rem;color:var(--text2);line-height:1.75;font-weight:300}
+
+  /* Cards for About */
+  .card-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+  .card-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+  .card-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+  .info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;transition:all var(--tr)}
+  .info-card:hover{border-color:var(--border-accent);transform:translateY(-2px);box-shadow:var(--chshadow)}
+  .info-card-icon{font-size:2.2rem;margin-bottom:1rem}
+  .info-card-title{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text);margin-bottom:.6rem}
+  .info-card-text{font-size:.87rem;color:var(--text2);line-height:1.7}
+  .highlight-box{background:linear-gradient(135deg,rgba(46,125,50,.08),rgba(212,160,23,.05));border:1px solid rgba(46,125,50,.2);border-radius:16px;padding:3rem;position:relative;overflow:hidden}
+  .highlight-box::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(46,125,50,.12),transparent 70%)}
+
+  /* Products page */
+  .products-list-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.4rem 1.6rem;display:flex;align-items:flex-start;gap:1.2rem;transition:all var(--tr)}
+  .products-list-item:hover{border-color:var(--border-accent);transform:translateX(4px)}
+  .products-list-icon{width:52px;height:52px;background:rgba(46,125,50,.1);border:1px solid rgba(46,125,50,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+  .products-list-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text);margin-bottom:.3rem}
+  .products-list-text{font-size:.84rem;color:var(--text2);line-height:1.6}
+
+  /* Contact */
+  .contact-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:3rem;align-items:start}
+  .contact-info-item{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+  .contact-info-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .contact-info-icon{width:44px;height:44px;background:rgba(46,125,50,.1);border:1px solid rgba(46,125,50,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+  .contact-info-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:.25rem}
+  .contact-info-value{font-size:.95rem;color:var(--text);font-weight:500}
+  .contact-form-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem}
 
   /* Footer */
-  footer{background:var(--bg2);border-top:1px solid var(--border);padding:3rem 2.5rem;margin-top:4rem}
-  .footer-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:2rem;flex-wrap:wrap}
-  .footer-brand{font-family:'DM Serif Display',serif;font-size:1.8rem;color:var(--text)}
-  .footer-brand span{color:var(--accent)}
+  footer{background:var(--bg2);border-top:1px solid var(--border);padding:4rem 2.5rem 2rem}
+  .footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.8fr 1fr 1fr 1.5fr;gap:3rem;margin-bottom:3rem;flex-wrap:wrap}
+  .footer-brand-name{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text);margin-bottom:.3rem}
+  .footer-brand-sub{font-size:.7rem;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:600}
+  .footer-brand-desc{font-size:.83rem;color:var(--text3);line-height:1.65;margin-top:.8rem}
+  .footer-heading{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;font-weight:600}
+  .footer-link{display:block;font-size:.84rem;color:var(--text3);margin-bottom:.5rem;transition:color var(--tr)}
+  .footer-link:hover{color:var(--green-light)}
+  .footer-bottom{max-width:1200px;margin:0 auto;border-top:1px solid var(--border);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .footer-copy{font-size:.78rem;color:var(--text3)}
 
   /* Admin */
-  .admin-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 68px);margin-top:68px}
-  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:68px;height:calc(100vh - 68px);overflow-y:auto}
-  .sidebar-label{font-family:'Space Mono',monospace;font-size:.57rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3);padding:.4rem 1.2rem;margin-bottom:.2rem}
+  .admin-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 72px);margin-top:72px}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:72px;height:calc(100vh - 72px);overflow-y:auto}
+  .sidebar-label{font-family:'Barlow Condensed',sans-serif;font-size:.57rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3);padding:.4rem 1.2rem;margin-bottom:.2rem;font-weight:600}
   .sidebar-link{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.2rem;margin:.1rem .6rem;border-radius:8px;color:var(--text2);font-size:.88rem;font-weight:500;transition:all var(--tr)}
   .sidebar-link:hover{background:var(--bg3);color:var(--text)}
-  .sidebar-link.active{background:rgba(200,151,42,.12);color:var(--accent)}
+  .sidebar-link.active{background:rgba(46,125,50,.12);color:var(--green-light)}
   .main-content{padding:2.5rem}
-  .page-title{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--text);margin-bottom:.3rem}
+  .page-title{font-family:'Playfair Display',serif;font-size:2rem;color:var(--text);margin-bottom:.3rem}
   .page-subtitle{font-size:.84rem;color:var(--text3);margin-bottom:2rem}
   .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
   .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.3rem;transition:border-color var(--tr)}
   .stat-card:hover{border-color:var(--border-accent)}
-  .stat-num{font-family:'DM Serif Display',serif;font-size:2.6rem;color:var(--accent);line-height:1;margin-bottom:.3rem}
-  .stat-label{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
+  .stat-num{font-family:'Playfair Display',serif;font-size:2.6rem;color:var(--green-light);line-height:1;margin-bottom:.3rem}
+  .stat-label{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-weight:600}
 
   /* Filter pills */
   .filter-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
-  .filter-pill{padding:.38rem 1.1rem;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all var(--tr);text-decoration:none}
-  .filter-pill:hover{border-color:var(--accent);color:var(--accent)}
-  .filter-pill.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600}
+  .filter-pill{padding:.38rem 1.1rem;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Barlow',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all var(--tr);text-decoration:none}
+  .filter-pill:hover{border-color:var(--green3);color:var(--green-light)}
+  .filter-pill.active{background:var(--green2);border-color:var(--green2);color:#fff;font-weight:600}
 
   /* Bar chart */
   .bar-chart{display:flex;align-items:flex-end;gap:4px;height:160px;padding:.5rem 0}
   .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:.3rem;min-width:20px}
-  .bar{width:100%;background:rgba(200,151,42,.22);border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.4,0,.2,1);min-height:2px}
-  .bar:hover{background:rgba(200,151,42,.6)}
-  .bar-label{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .bar{width:100%;background:rgba(46,125,50,.22);border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.4,0,.2,1);min-height:2px}
+  .bar:hover{background:rgba(46,125,50,.6)}
+  .bar-label{font-family:'Barlow Condensed',sans-serif;font-size:.52rem;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .bar-val{font-size:.62rem;color:var(--text3)}
 
   /* Tables */
   .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
   table{width:100%;border-collapse:collapse}
-  th{font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:.85rem 1.2rem;background:var(--bg3);font-weight:400;text-align:left;border-bottom:1px solid var(--border)}
+  th{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:.85rem 1.2rem;background:var(--bg3);font-weight:600;text-align:left;border-bottom:1px solid var(--border)}
   td{padding:.85rem 1.2rem;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:rgba(200,151,42,.03)}
+  tr:hover td{background:rgba(46,125,50,.03)}
 
   /* Forms */
   .form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem}
   .form-group{margin-bottom:1.2rem}
-  .form-label{display:block;font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
-  .form-control{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:.72rem 1rem;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.9rem;transition:border-color var(--tr),box-shadow var(--tr)}
-  .form-control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,151,42,.1)}
+  .form-label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem;font-weight:600}
+  .form-control{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:.72rem 1rem;border-radius:8px;font-family:'Barlow',sans-serif;font-size:.9rem;transition:border-color var(--tr),box-shadow var(--tr)}
+  .form-control:focus{outline:none;border-color:var(--green3);box-shadow:0 0 0 3px rgba(56,142,60,.1)}
   textarea.form-control{resize:vertical;min-height:110px}
 
   /* Multi-image upload */
   .upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;transition:all var(--tr);position:relative}
-  .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(200,151,42,.04)}
+  .upload-zone:hover,.upload-zone.dragover{border-color:var(--green3);background:rgba(46,125,50,.04)}
   .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
   .upload-zone-icon{font-size:2rem;margin-bottom:.5rem}
   .upload-zone-text{font-weight:600;font-size:.9rem;color:var(--text2);margin-bottom:.2rem}
@@ -297,14 +365,14 @@ BASE_STYLE = """
   .image-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.6rem;margin-top:1rem}
   .img-preview-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid var(--border)}
   .img-preview-item img{width:100%;height:100%;object-fit:cover}
-  .img-preview-item .primary-badge{position:absolute;bottom:3px;left:3px;background:rgba(200,151,42,.9);color:#000;font-size:.48rem;font-family:'Space Mono',monospace;padding:.1rem .3rem;border-radius:3px;font-weight:700}
+  .img-preview-item .primary-badge{position:absolute;bottom:3px;left:3px;background:rgba(46,125,50,.9);color:#fff;font-size:.48rem;font-family:'Barlow Condensed',sans-serif;padding:.1rem .3rem;border-radius:3px;font-weight:700;letter-spacing:1px}
 
   /* Existing images */
   .existing-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.6rem;margin-bottom:.8rem}
   .existing-img-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid var(--border)}
   .existing-img-item img{width:100%;height:100%;object-fit:cover}
   .existing-img-item .del-img-btn{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(192,57,43,.85);border:none;border-radius:50%;color:#fff;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;line-height:1}
-  .existing-img-item .primary-label{position:absolute;bottom:3px;left:3px;background:rgba(200,151,42,.9);color:#000;font-size:.46rem;font-family:'Space Mono',monospace;padding:.1rem .3rem;border-radius:3px;font-weight:700}
+  .existing-img-item .primary-label{position:absolute;bottom:3px;left:3px;background:rgba(46,125,50,.9);color:#fff;font-size:.46rem;font-family:'Barlow Condensed',sans-serif;padding:.1rem .3rem;border-radius:3px;font-weight:700;letter-spacing:1px}
 
   /* Alert / Modal */
   .alert{padding:.9rem 1.2rem;border-radius:8px;margin-bottom:1.2rem;font-size:.88rem;border:1px solid;display:flex;align-items:center;gap:.6rem}
@@ -316,32 +384,44 @@ BASE_STYLE = """
   @keyframes modalIn{from{opacity:0;transform:scale(.93) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
   .modal-close{position:absolute;top:1rem;right:1rem;background:var(--bg3);border:1px solid var(--border);width:30px;height:30px;border-radius:50%;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all var(--tr)}
   .modal-close:hover{background:var(--danger);border-color:var(--danger);color:#fff}
-  .modal-title{font-family:'DM Serif Display',serif;font-size:1.55rem;margin-bottom:1.5rem;color:var(--text)}
+  .modal-title{font-family:'Playfair Display',serif;font-size:1.55rem;margin-bottom:1.5rem;color:var(--text)}
 
   /* Login */
   .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:2rem}
   .login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:400px;box-shadow:var(--cshadow)}
-  .login-logo{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--text)}
-  .login-logo span{color:var(--accent)}
 
   /* Misc */
   .breadcrumb{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--text3);margin-bottom:2rem}
   .breadcrumb a{color:var(--text2);transition:color var(--tr)}
-  .breadcrumb a:hover{color:var(--accent)}
+  .breadcrumb a:hover{color:var(--green-light)}
   .empty-state{text-align:center;padding:5rem 2rem;color:var(--text3)}
   .empty-state-icon{font-size:4rem;margin-bottom:1rem;opacity:.5}
-  .empty-state h3{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--text2);margin-bottom:.5rem}
+  .empty-state h3{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text2);margin-bottom:.5rem}
   .divider{border:none;border-top:1px solid var(--border)}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
 
+  /* Brands strip */
+  .brands-strip{background:var(--bg3);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.8rem 2.5rem;overflow:hidden}
+  .brands-inner{max-width:1200px;margin:0 auto}
+  .brands-label{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:var(--text3);text-align:center;margin-bottom:1.2rem;font-weight:600}
+  .brands-list{display:flex;gap:2.5rem;align-items:center;flex-wrap:wrap;justify-content:center}
+  .brand-pill{font-family:'Barlow Condensed',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:.4rem .9rem;border:1px solid var(--border);border-radius:6px;transition:all var(--tr)}
+  .brand-pill:hover{border-color:var(--green3);color:var(--green-light)}
+
+  @media(max-width:1024px){
+    .footer-inner{grid-template-columns:1fr 1fr}
+    .hero-inner{grid-template-columns:1fr}
+    .hero-right{display:none}
+  }
   @media(max-width:900px){
-    .detail-layout,.grid-2{grid-template-columns:1fr}
+    .detail-layout,.card-grid-2,.card-grid-3,.card-grid-4,.contact-grid,.grid-2{grid-template-columns:1fr}
     .admin-layout{grid-template-columns:1fr}
     .sidebar{display:none}
-    .hero{padding:110px 1.5rem 60px}
+    .page-hero{padding:100px 1.5rem 60px}
+    .nav-links{display:none}
   }
   @media(max-width:640px){
-    .section{padding:2rem 1.2rem}
+    .section{padding:2.5rem 1.2rem}
     .navbar{padding:0 1.2rem}
     .trust-band{gap:1.2rem;padding:1rem}
   }
@@ -367,19 +447,40 @@ WA_SVG = '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><p
 
 def wa_num(): return CONTACT_WHATSAPP.replace('+','').replace(' ','')
 
-def navbar_public():
+NAWA_LOGO = """<div style="width:44px;height:44px;background:linear-gradient(135deg,#2E7D32,#4CAF50);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+  <svg width="30" height="26" viewBox="0 0 30 26" fill="none">
+    <path d="M2 20 L10 6 L15 14 L20 6 L28 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M10 20 L15 12 L20 20" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+</div>"""
+
+def navbar_public(active="home"):
+    links = [("home", "/", "Home"), ("about", "/about", "About Us"), ("services", "/services", "Products & Services"), ("contact", "/contact", "Contact")]
+    nav_items = "".join(f'<a href="{href}" class="nav-link{"  active" if k==active else ""}">{lbl}</a>' for k, href, lbl in links)
     return f"""<nav class="navbar">
-      <a href="/" class="brand">Ketch<span class="brand-accent">-All</span><span class="brand-tagline">Industrial Safety Equipment</span></a>
+      <a href="/" class="brand">
+        {NAWA_LOGO}
+        <div class="brand-text">
+          <span class="brand-name">NAWA Global</span>
+          <span class="brand-sub">General Trading</span>
+        </div>
+      </a>
+      <div class="nav-links">{nav_items}</div>
       <div class="nav-right">
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"></button>
-        <a href="https://wa.me/{wa_num()}" target="_blank" class="btn outline-gold sm">{WA_SVG} Contact Us</a>
+        <a href="https://wa.me/{wa_num()}" target="_blank" class="btn outline-green sm">{WA_SVG} WhatsApp</a>
+        <a href="/catalog" class="btn primary sm">View Catalog</a>
       </div>
     </nav>"""
 
 def navbar_admin():
     return f"""<nav class="navbar">
-      <a href="/" class="brand">Ketch<span class="brand-accent">-All</span>
-        <span style="display:inline-block;margin-left:.6rem;font-size:.5rem;background:rgba(200,151,42,.15);border:1px solid rgba(200,151,42,.3);color:var(--accent);padding:.1rem .5rem;border-radius:4px;vertical-align:middle;font-family:'Space Mono',monospace;letter-spacing:2px;">ADMIN</span>
+      <a href="/" class="brand">
+        {NAWA_LOGO}
+        <div class="brand-text">
+          <span class="brand-name">NAWA Global</span>
+          <span style="display:inline-block;font-size:.5rem;background:rgba(46,125,50,.15);border:1px solid rgba(46,125,50,.3);color:var(--green-light);padding:.1rem .5rem;border-radius:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase">ADMIN</span>
+        </div>
       </a>
       <div class="nav-right">
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"></button>
@@ -412,26 +513,75 @@ def footer_html():
     return f"""<footer>
       <div class="footer-inner">
         <div>
-          <div class="footer-brand">Ketch<span>-All</span></div>
-          <div style="font-size:.74rem;color:var(--text3);letter-spacing:1px;margin-top:.25rem">Industrial Safety Equipment · Aircraft-Grade Quality</div>
-          <div style="font-size:.76rem;color:var(--text3);margin-top:.6rem">© 2024 Ketch-All. All rights reserved.</div>
-        </div>
-        <div>
-          <div style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:3px;color:var(--text3);margin-bottom:.5rem">CONTACT US</div>
-          <div style="font-size:.88rem;color:var(--text2)">WhatsApp: <strong style="color:var(--accent)">{CONTACT_WHATSAPP}</strong></div>
-          <div style="margin-top:.8rem">
-            <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn" style="font-size:.82rem;padding:.5rem 1.1rem">{WA_SVG} Chat on WhatsApp</a>
+          <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem">
+            {NAWA_LOGO}
+            <div>
+              <div class="footer-brand-name">NAWA Global</div>
+              <div class="footer-brand-sub">General Trading</div>
+            </div>
+          </div>
+          <div class="footer-brand-desc">Premium oilfield &amp; industrial supply partner based in Abu Dhabi, UAE. Trusted by oil &amp; gas, construction, and facility management sectors.</div>
+          <div style="margin-top:1.2rem">
+            <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn" style="font-size:.8rem;padding:.5rem 1rem">{WA_SVG} Chat on WhatsApp</a>
           </div>
         </div>
+        <div>
+          <div class="footer-heading">Quick Links</div>
+          <a href="/" class="footer-link">Home</a>
+          <a href="/about" class="footer-link">About Us</a>
+          <a href="/services" class="footer-link">Products &amp; Services</a>
+          <a href="/catalog" class="footer-link">Product Catalog</a>
+          <a href="/contact" class="footer-link">Contact Us</a>
+        </div>
+        <div>
+          <div class="footer-heading">Services</div>
+          <a href="/services" class="footer-link">Oilfield Equipment</a>
+          <a href="/services" class="footer-link">Industrial Supplies</a>
+          <a href="/services" class="footer-link">Lubricants &amp; Oils</a>
+          <a href="/services" class="footer-link">Safety Products</a>
+          <a href="/services" class="footer-link">Procurement Services</a>
+        </div>
+        <div>
+          <div class="footer-heading">Contact Info</div>
+          <div style="font-size:.84rem;color:var(--text3);margin-bottom:.7rem;display:flex;gap:.6rem;align-items:flex-start">📍 <span>{CONTACT_ADDRESS}</span></div>
+          <div style="font-size:.84rem;color:var(--text3);margin-bottom:.7rem">📞 <a href="tel:{CONTACT_WHATSAPP}" style="color:var(--green-light)">{CONTACT_WHATSAPP}</a></div>
+          <div style="font-size:.84rem;color:var(--text3);margin-bottom:.7rem">📧 <a href="mailto:{CONTACT_EMAIL}" style="color:var(--green-light)">{CONTACT_EMAIL}</a></div>
+          <div style="font-size:.84rem;color:var(--text3)">🌐 <a href="https://{CONTACT_WEBSITE}" target="_blank" style="color:var(--green-light)">{CONTACT_WEBSITE}</a></div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-copy">© 2026 NAWA Global General Trading. All Rights Reserved.</div>
+        <div style="font-size:.76rem;color:var(--text3)">Mussafah, Abu Dhabi, UAE</div>
       </div>
     </footer>"""
+
+BRANDS_STRIP = """<div class="brands-strip">
+  <div class="brands-inner">
+    <div class="brands-label">Authorized Brands & Partners</div>
+    <div class="brands-list">
+      <span class="brand-pill">Molyslip</span>
+      <span class="brand-pill">Arrow</span>
+      <span class="brand-pill">Unispec</span>
+      <span class="brand-pill">Lubriplate</span>
+      <span class="brand-pill">Jet-Lube</span>
+      <span class="brand-pill">Ketch-All</span>
+      <span class="brand-pill">Beta</span>
+      <span class="brand-pill">JOST</span>
+      <span class="brand-pill">3M</span>
+      <span class="brand-pill">Ansell</span>
+      <span class="brand-pill">Fortwest</span>
+      <span class="brand-pill">Deltaplus</span>
+      <span class="brand-pill">CAT</span>
+      <span class="brand-pill">Mitutoyo</span>
+    </div>
+  </div>
+</div>"""
 
 def make_pagination(page: int, total_pages: int, base_url: str) -> str:
     if total_pages <= 1: return ""
     parts = []
     prev_cls = "page-btn" if page > 1 else "page-btn disabled"
     parts.append(f'<a class="{prev_cls}" href="{base_url}&page={page-1}">&#8249;</a>' if page > 1 else f'<span class="{prev_cls}">&#8249;</span>')
-
     show = set([1, total_pages] + list(range(max(1,page-2), min(total_pages+1,page+3))))
     prev = None
     for p in sorted(show):
@@ -440,7 +590,6 @@ def make_pagination(page: int, total_pages: int, base_url: str) -> str:
         cls = "page-btn active" if p == page else "page-btn"
         parts.append(f'<a class="{cls}" href="{base_url}&page={p}">{p}</a>')
         prev = p
-
     parts.append(f'<a class="page-btn" href="{base_url}&page={page+1}">&#8250;</a>' if page < total_pages else '<span class="page-btn disabled">&#8250;</span>')
     return f'<div class="pagination">{"".join(parts)}</div>'
 
@@ -452,16 +601,488 @@ def get_product_images(p: dict) -> list:
     return images
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PUBLIC: HOME with search + pagination
+# PUBLIC: HOME PAGE
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
+async def home(request: Request):
+    save_visit(request.client.host)
+    all_products = load_products()
+    all_cats = sorted(set(p.get("category","General") for p in all_products))
+    recent = all_products[-6:][::-1]
+
+    cards_html = ""
+    for p in recent:
+        imgs = get_product_images(p)
+        if imgs:
+            media = f'<img src="/uploads/{imgs[0]}" alt="{p["name"]}" loading="lazy">'
+        else:
+            media = '<div class="card-media-placeholder">📦</div>'
+        wa_msg = f"Hello! I'm interested in: *{p['name']}*. Please send me details.".replace(' ','%20').replace('*','%2A')
+        wa_link = f"https://wa.me/{wa_num()}?text={wa_msg}"
+        cards_html += f"""<div class="product-card">
+          <div class="card-media" onclick="location.href='/product/{p['id']}'">
+            {media}
+            <span class="card-category-badge">{p.get('category','General')}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">{p['name']}</div>
+            <div class="card-desc">{p.get('description','No description available.')}</div>
+            <div class="card-footer">
+              <a href="/product/{p['id']}" class="btn sm primary" style="flex:1;justify-content:center">View Details</a>
+              <a href="{wa_link}" target="_blank" class="btn sm outline-gold">Quote</a>
+            </div>
+          </div>
+        </div>"""
+
+    featured_section = f"""<div class="section" style="padding-top:0">
+      <div class="section-header-row">
+        <div>
+          <span class="section-label">Featured Products</span>
+          <div class="section-title" style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--text)">Recently Added</div>
+        </div>
+        <a href="/catalog" class="btn outline-green">View Full Catalog →</a>
+      </div>
+      <div class="product-grid">{cards_html if cards_html else '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No products yet</h3><p>Products will appear here once added.</p></div>'}</div>
+    </div>""" if recent else ""
+
+    return f"""<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>NAWA Global General Trading — Premium Oilfield & Industrial Supply Partner</title>
+<meta name="description" content="NAWA Global General Trading — reliable supplier of oilfield spare parts, industrial consumables, lubricants, and maintenance solutions based in Abu Dhabi, UAE."></head>
+<body>
+{navbar_public("home")}
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-bg-pattern"></div>
+  <div class="hero-glow-green"></div>
+  <div class="hero-glow-gold"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">Abu Dhabi, UAE · Est. 2020</div>
+      <h1 class="hero-title">Premium Oilfield &amp;<br><em>Industrial Supply</em><br>Partner</h1>
+      <p class="hero-sub">Reliable sourcing of high-quality oilfield spare parts, industrial consumables, lubricants, safety products, and maintenance solutions — delivered with speed and competitive pricing.</p>
+      <div class="hero-cta">
+        <a href="/catalog" class="btn primary lg">Browse Catalog</a>
+        <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn">{WA_SVG} Request a Quote</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-num">{len(all_products)}+</div><div class="hero-stat-label">Products</div></div>
+        <div><div class="hero-stat-num">{len(all_cats)}+</div><div class="hero-stat-label">Categories</div></div>
+        <div><div class="hero-stat-num">UAE</div><div class="hero-stat-label">Based In</div></div>
+        <div><div class="hero-stat-num">14+</div><div class="hero-stat-label">Brands</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-card"><div class="hero-card-icon">🛢️</div><div class="hero-card-title">Oilfield Equipment</div><div class="hero-card-text">Spare parts, pipe fittings, valves, and field equipment for oil &amp; gas operations.</div></div>
+      <div class="hero-card"><div class="hero-card-icon">🔧</div><div class="hero-card-title">Industrial Supplies</div><div class="hero-card-text">MRO supplies, consumables, hydraulic components, and mechanical parts.</div></div>
+      <div class="hero-card"><div class="hero-card-icon">🛡️</div><div class="hero-card-title">Safety Products</div><div class="hero-card-text">PPE, hand protection, head &amp; eye protection, uniforms, and safety equipment.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Trust band -->
+<div class="trust-band">
+  <div class="trust-item">🛢️ Oilfield Specialists</div>
+  <div class="trust-item">🇦🇪 Abu Dhabi Based</div>
+  <div class="trust-item">🌍 Global Sourcing</div>
+  <div class="trust-item">⚡ Fast Delivery</div>
+  <div class="trust-item">💰 Competitive Pricing</div>
+  <div class="trust-item">💬 WhatsApp Support</div>
+</div>
+
+<!-- About snippet -->
+<div class="section">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center">
+    <div>
+      <span class="section-label">About NAWA Global</span>
+      <h2 style="font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--text);margin-bottom:1.2rem;line-height:1.2">A Trusted Partner for Industrial &amp; Oilfield Supply</h2>
+      <p style="font-size:.97rem;color:var(--text2);line-height:1.8;margin-bottom:1.5rem">NAWA Global General Trading is a reliable supplier of high-quality oilfield spare parts, industrial consumables, lubricants, grease, degreasers, and maintenance solutions. We serve oil &amp; gas, industrial, construction, and facility management sectors with a commitment to quality, speed, and competitive pricing.</p>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <a href="/about" class="btn primary">Learn More About Us</a>
+        <a href="/contact" class="btn outline-green">Get in Touch</a>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="info-card"><div class="info-card-icon">🌐</div><div class="info-card-title">Global Network</div><div class="info-card-text">Strong global supplier network enabling competitive pricing.</div></div>
+      <div class="info-card"><div class="info-card-icon">⚡</div><div class="info-card-title">Fast Response</div><div class="info-card-text">Quick turnaround and reliable delivery schedules.</div></div>
+      <div class="info-card"><div class="info-card-icon">✅</div><div class="info-card-title">Quality Focused</div><div class="info-card-text">Compliance-driven approach with rigorous quality assurance.</div></div>
+      <div class="info-card"><div class="info-card-icon">🤝</div><div class="info-card-title">Customer First</div><div class="info-card-text">Solution-oriented, dedicated to your operational success.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Industries -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3rem 2.5rem">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-header" style="margin-bottom:2rem">
+      <span class="section-label">Industries We Serve</span>
+      <h2 class="section-title">Powering Multiple Sectors</h2>
+    </div>
+    <div class="card-grid-4">
+      <div style="text-align:center;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all var(--tr)" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:2.5rem;margin-bottom:.8rem">🛢️</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text)">Oil &amp; Gas</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all var(--tr)" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:2.5rem;margin-bottom:.8rem">🏗️</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text)">Construction</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all var(--tr)" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:2.5rem;margin-bottom:.8rem">🏭</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text)">Industrial</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:all var(--tr)" onmouseover="this.style.borderColor='var(--border-accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:2.5rem;margin-bottom:.8rem">🏢</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text)">Facility Mgmt</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{featured_section}
+
+{BRANDS_STRIP}
+
+<!-- CTA -->
+<div style="background:linear-gradient(135deg,var(--green2),var(--green3));padding:4rem 2.5rem;text-align:center">
+  <div style="max-width:640px;margin:0 auto">
+    <h2 style="font-family:'Playfair Display',serif;font-size:2.4rem;color:#fff;margin-bottom:1rem">Looking for Reliable Industrial Supply?</h2>
+    <p style="font-size:1rem;color:rgba(255,255,255,.82);line-height:1.7;margin-bottom:2rem">Partner with NAWA Global for dependable sourcing, quality products, and timely delivery across the UAE and beyond.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn">{WA_SVG} Request a Quote</a>
+      <a href="/contact" class="btn" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Contact Us →</a>
+    </div>
+  </div>
+</div>
+
+{footer_html()}
+</body></html>"""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUBLIC: ABOUT PAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/about", response_class=HTMLResponse)
+async def about(request: Request):
+    save_visit(request.client.host)
+    return f"""<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>About Us — NAWA Global General Trading</title>
+<meta name="description" content="About NAWA Global General Trading — trusted oilfield and industrial supply partner based in Abu Dhabi, UAE."></head>
+<body>
+{navbar_public("about")}
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">About NAWA Global</div>
+    <h1 class="page-hero-title">Trusted Partner for<br><em style="color:var(--green-light)">Oilfield & Industrial</em><br>Solutions</h1>
+    <p class="page-hero-sub">Based in Abu Dhabi, UAE — serving oil &amp; gas, industrial, construction, and facility management sectors with quality, speed, and competitive pricing.</p>
+  </div>
+</div>
+
+<!-- About section -->
+<div class="section">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start">
+    <div>
+      <span class="section-label">Who We Are</span>
+      <h2 style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--text);margin-bottom:1.2rem;line-height:1.2">NAWA Global General Trading</h2>
+      <p style="font-size:.97rem;color:var(--text2);line-height:1.8;margin-bottom:1rem">NAWA Global General Trading is a trusted supplier of premium oilfield and industrial products based in Abu Dhabi, UAE. We specialize in delivering high-quality spare parts, consumables, lubricants, and maintenance solutions tailored to meet the needs of various industries.</p>
+      <p style="font-size:.97rem;color:var(--text2);line-height:1.8;margin-bottom:1.5rem">With a strong global supplier network and a commitment to excellence, we ensure reliable sourcing, competitive pricing, and timely delivery for every client. Our team understands the operational demands of the energy and industrial sectors, and we work closely with our clients to provide solutions that truly support their success.</p>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <a href="/contact" class="btn primary">Get in Touch</a>
+        <a href="/services" class="btn outline-green">Our Services →</a>
+      </div>
+    </div>
+    <div>
+      <div class="highlight-box" style="margin-bottom:1.2rem">
+        <div style="font-size:2rem;margin-bottom:.8rem">🎯</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:.6rem">Our Vision</div>
+        <p style="font-size:.92rem;color:var(--text2);line-height:1.75">To be a trusted trading partner delivering reliable industrial and oilfield solutions with excellence — building long-term partnerships based on integrity and performance.</p>
+      </div>
+      <div class="highlight-box">
+        <div style="font-size:2rem;margin-bottom:.8rem">🚀</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:.6rem">Our Mission</div>
+        <p style="font-size:.92rem;color:var(--text2);line-height:1.75">To provide high-quality products, timely delivery, and value-driven services that support our clients' operational success across multiple industries.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- What we do -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:4rem 2.5rem">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-header">
+      <span class="section-label">What We Do</span>
+      <h2 class="section-title">Comprehensive Supply Solutions</h2>
+      <p class="section-sub">We provide a wide range of products and services to simplify procurement and deliver reliable solutions that meet operational demands.</p>
+    </div>
+    <div class="card-grid-3">
+      <div class="info-card"><div class="info-card-icon">🛢️</div><div class="info-card-title">Oilfield Equipment</div><div class="info-card-text">High-quality oilfield spare parts, pipe fittings, valves, pressure gauges, and specialized field equipment.</div></div>
+      <div class="info-card"><div class="info-card-icon">🔧</div><div class="info-card-title">Industrial Supplies</div><div class="info-card-text">MRO supplies, consumables, hydraulic &amp; mechanical components, fasteners, and maintenance products.</div></div>
+      <div class="info-card"><div class="info-card-icon">💧</div><div class="info-card-title">Lubricants &amp; Grease</div><div class="info-card-text">Industrial and automotive lubricants, specialty oils, grease, degreasers, and cleaning chemicals.</div></div>
+      <div class="info-card"><div class="info-card-icon">🛡️</div><div class="info-card-title">Safety Products</div><div class="info-card-text">Full PPE range — hand, head, eye, ear and face protection, uniforms, workwear, harnesses, and LOTO equipment.</div></div>
+      <div class="info-card"><div class="info-card-icon">🌱</div><div class="info-card-title">Environmental</div><div class="info-card-text">Degreasers, cleaning chemicals, underground drainage, sewage products, and environmental compliance solutions.</div></div>
+      <div class="info-card"><div class="info-card-icon">🔍</div><div class="info-card-title">Custom Sourcing</div><div class="info-card-text">Customized procurement services leveraging our global supplier network to find specific products you need.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Our Strengths -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Our Strengths</span>
+    <h2 class="section-title">Why Choose NAWA Global?</h2>
+  </div>
+  <div class="card-grid-2">
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      {''.join(f'<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.2rem;background:var(--surface);border:1px solid var(--border);border-radius:10px"><div style="width:36px;height:36px;background:rgba(46,125,50,.1);border:1px solid rgba(46,125,50,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">{icon}</div><div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text);margin-bottom:.3rem">{title}</div><div style="font-size:.84rem;color:var(--text2);line-height:1.6">{desc}</div></div></div>'
+        for icon, title, desc in [
+          ("🌐", "Global Sourcing Capabilities", "Access to a strong international supplier network for competitive pricing and rare items."),
+          ("⚡", "Fast Turnaround Time", "Quick response to inquiries and efficient order processing to meet tight deadlines."),
+          ("💰", "Competitive Pricing", "Cost optimization strategies that deliver real value without compromising quality."),
+          ("🚚", "Reliable Logistics", "Dependable delivery schedules with careful logistics planning and tracking."),
+        ])}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      {''.join(f'<div style="display:flex;align-items:flex-start;gap:1rem;padding:1.2rem;background:var(--surface);border:1px solid var(--border);border-radius:10px"><div style="width:36px;height:36px;background:rgba(46,125,50,.1);border:1px solid rgba(46,125,50,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">{icon}</div><div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text);margin-bottom:.3rem">{title}</div><div style="font-size:.84rem;color:var(--text2);line-height:1.6">{desc}</div></div></div>'
+        for icon, title, desc in [
+          ("✅", "Quality Assurance", "Rigorous quality checks and compliance-driven procurement processes."),
+          ("🤝", "Customer-First Approach", "Solution-oriented service with dedicated support for every client."),
+          ("📋", "Compliance-Driven", "All products meet industry standards and regulatory requirements."),
+          ("📞", "Dedicated Support", "Direct WhatsApp access for fast quotes, updates, and after-sales support."),
+        ])}
+    </div>
+  </div>
+</div>
+
+<!-- Industries -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3.5rem 2.5rem">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-header">
+      <span class="section-label">Industries We Serve</span>
+      <h2 class="section-title">Powering Operations Across Sectors</h2>
+    </div>
+    <div class="card-grid-4">
+      {''.join(f'<div style="text-align:center;padding:2rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:12px"><div style="font-size:3rem;margin-bottom:1rem">{icon}</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text);margin-bottom:.4rem">{name}</div><div style="font-size:.8rem;color:var(--text3)">{desc}</div></div>'
+        for icon, name, desc in [
+          ("🛢️","Oil & Gas","Upstream, midstream & downstream operations"),
+          ("🏗️","Construction","Infrastructure and civil engineering projects"),
+          ("🏭","Industrial","Manufacturing and processing facilities"),
+          ("🏢","Facility Mgmt","Building maintenance and operations"),
+        ])}
+    </div>
+  </div>
+</div>
+
+{BRANDS_STRIP}
+{footer_html()}
+</body></html>"""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUBLIC: PRODUCTS & SERVICES PAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/services", response_class=HTMLResponse)
+async def services(request: Request):
+    save_visit(request.client.host)
+    return f"""<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>Products & Services — NAWA Global General Trading</title>
+<meta name="description" content="Explore NAWA Global's full range of oilfield, industrial, safety, and lubricant products and services."></head>
+<body>
+{navbar_public("services")}
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Products &amp; Services</div>
+    <h1 class="page-hero-title">Full Spectrum of<br><em style="color:var(--green-light)">Industrial Supply</em></h1>
+    <p class="page-hero-sub">From oilfield spare parts to safety PPE — we supply everything your operations need, sourced globally and delivered reliably.</p>
+  </div>
+</div>
+
+<!-- Core services -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Core Offerings</span>
+    <h2 class="section-title">What We Supply</h2>
+    <p class="section-sub">A comprehensive range covering every industrial supply need.</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:1rem">
+    {''.join(f'<div class="products-list-item"><div class="products-list-icon">{icon}</div><div><div class="products-list-title">{title}</div><div class="products-list-text">{desc}</div></div></div>'
+      for icon, title, desc in [
+        ("🛢️","Oilfield Spare Parts & Equipment","High-quality oilfield components including pipe fittings, press fittings, flowmeters, pressure gauges, instrumentation fluid oil, stud bolts &amp; fasteners, and specialized drilling equipment."),
+        ("🔧","Industrial Consumables & MRO Supplies","Comprehensive MRO (maintenance, repair, operations) supplies including grills, diffusers, exhaust fans, instrumentation switches &amp; cables, solar products, and irrigation systems."),
+        ("💧","Industrial & Automotive Grease","Premium grease products including COPASLIP, Duck Paste, and specialty greases for industrial machinery, automotive applications, and high-temperature environments."),
+        ("🛞","Lubricants & Specialty Oils","Instrumentation fluid oils, specialty lubricants, and performance oils for industrial and automotive equipment — trusted brands like Molyslip, Lubriplate, and Jet-Lube."),
+        ("🧪","Degreasers & Cleaning Chemicals","Industrial-strength degreasers, adhesives, sealants, and cleaning chemicals for maintenance and facility management applications."),
+        ("⚙️","Hydraulic & Mechanical Components","Metal valves, pumps, mechanical seals, oilfield seals, expansion joints, couplings, flange adaptors, rubber products (O-rings, gaskets, packing, hoses), and power belts."),
+        ("🏗️","Pipes, Fittings & Structural","Copper pipes &amp; fittings, PVC/CPVC/PPR/HDPE pipes, ferrous &amp; non-ferrous pipes, flanges &amp; forgings, and underground drainage &amp; sewage products."),
+        ("⚡","Electrical & Instrumentation","LED industrial lights, instrumentation switches &amp; cables, pressure gauges, flowmeters, and solar products."),
+        ("🛡️","Personal Protective Equipment (PPE)","Complete safety portfolio: hand protection (impact/mechanical/chemical), head protection, eye protection, ear protection, face protection, foot protection, and full-body uniforms (IFR/FR/Cotton/PC)."),
+        ("🔍","Custom Sourcing & Procurement","Tailored procurement services utilizing our global supplier network to source specific products, negotiate pricing, and manage the complete supply chain."),
+      ])}
+  </div>
+</div>
+
+<!-- Safety PPE Detail -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:4rem 2.5rem">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-header">
+      <span class="section-label">Safety & PPE</span>
+      <h2 class="section-title">Complete Personal Protection Range</h2>
+      <p class="section-sub">Protecting your workforce with certified, industry-grade safety equipment.</p>
+    </div>
+    <div class="card-grid-3">
+      {''.join(f'<div class="info-card"><div class="info-card-icon">{icon}</div><div class="info-card-title">{title}</div><div class="info-card-text">{desc}</div></div>'
+        for icon, title, desc in [
+          ("🧤","Hand Protection","Impact, mechanical, chemical and new generation gloves for all hazard types."),
+          ("⛑️","Head Protection","Hard hats and helmets compliant with industrial safety standards."),
+          ("🥽","Eye Protection","Safety glasses, goggles, and face shields for various environments."),
+          ("👂","Ear Protection","Earplugs and earmuffs for noise-hazard environments."),
+          ("😷","Face Protection","Respirators, half-face masks, and full-face respiratory protection."),
+          ("👟","Foot Protection","Safety boots for various terrains and hazard conditions."),
+          ("👔","Uniforms & Workwear","IFR/FR/Cotton/PC uniforms, hi-vis workwear, and disposable coveralls."),
+          ("🔒","LOTO & Fall Protection","Lockout/Tagout kits, harnesses, self-retracting lifelines (SRL), and gas monitors."),
+          ("🧰","Other Safety Equipment","Eye wash stations, emergency breathing devices (EEBD/SCBA), and first aid kits."),
+        ])}
+    </div>
+  </div>
+</div>
+
+<!-- Product Range Visual -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Product Range</span>
+    <h2 class="section-title">Extensive Industrial Product Range</h2>
+    <p class="section-sub">Sourced from leading global brands and manufacturers.</p>
+  </div>
+  <div class="card-grid-4">
+    {''.join(f'<div style="padding:1.2rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;transition:all var(--tr)" onmouseover="this.style.borderColor=\'var(--border-accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><div style="font-size:1.8rem;margin-bottom:.6rem">{icon}</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text2)">{name}</div></div>'
+      for icon, name in [
+        ("🔩","Press Pipe Fittings"), ("📊","Flowmeters"), ("⚙️","Stud Bolts"), ("🔴","Grease Gun & Pump"),
+        ("📡","Instrumentation"), ("☀️","Solar Products"), ("🔧","Plastic & Thread Protector"), ("💧","Drainage Systems"),
+        ("📈","Pressure Gauges"), ("🌿","Irrigation Products"), ("🚿","Sanitary Products"), ("💡","LED Lighting"),
+        ("🛡️","Anti-Slip Products"), ("🔌","Switches & Cables"), ("🔄","Vibration Isolators"), ("🔩","Flange & Forging"),
+        ("🪙","Copper Pipes"), ("🔗","Expansion Joints"), ("📦","Power Belt & Bags"), ("🔧","Metal Valves"),
+        ("⛓️","Lifting Chains & Hoist"), ("🚿","PVC/PPR Pipes"), ("🔌","Manhole Covers"), ("🪣","Chemicals & Adhesives"),
+      ])}
+  </div>
+</div>
+
+{BRANDS_STRIP}
+
+<!-- CTA -->
+<div style="background:linear-gradient(135deg,var(--green2),var(--green3));padding:4rem 2.5rem;text-align:center">
+  <div style="max-width:600px;margin:0 auto">
+    <h2 style="font-family:'Playfair Display',serif;font-size:2.2rem;color:#fff;margin-bottom:1rem">Need a Specific Product?</h2>
+    <p style="font-size:.97rem;color:rgba(255,255,255,.82);line-height:1.75;margin-bottom:2rem">Can't find what you're looking for? Our custom sourcing service can find and procure virtually any industrial product you need.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn">{WA_SVG} Request a Quote</a>
+      <a href="/catalog" class="btn" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Browse Catalog →</a>
+    </div>
+  </div>
+</div>
+
+{footer_html()}
+</body></html>"""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUBLIC: CONTACT PAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact(request: Request, sent: str = ""):
+    save_visit(request.client.host)
+    success_msg = '<div class="alert success" style="margin-bottom:1.5rem">✅ Message sent! We will get back to you shortly via WhatsApp or email.</div>' if sent == "1" else ""
+    return f"""<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>Contact Us — NAWA Global General Trading</title>
+<meta name="description" content="Contact NAWA Global General Trading for product inquiries, quotes, and procurement assistance."></head>
+<body>
+{navbar_public("contact")}
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Get in Touch</div>
+    <h1 class="page-hero-title">Contact<br><em style="color:var(--green-light)">NAWA Global</em></h1>
+    <p class="page-hero-sub">Reach out for product inquiries, quotes, or procurement support. We respond quickly via WhatsApp and email.</p>
+  </div>
+</div>
+
+<div class="section">
+  <div class="contact-grid">
+    <!-- Left: info -->
+    <div>
+      <span class="section-label" style="display:block;margin-bottom:1.2rem">Contact Information</span>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📍</div>
+        <div><div class="contact-info-label">Address</div><div class="contact-info-value">{CONTACT_ADDRESS}</div></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📞</div>
+        <div><div class="contact-info-label">Phone / WhatsApp</div><div class="contact-info-value"><a href="tel:{CONTACT_WHATSAPP}" style="color:var(--green-light)">{CONTACT_WHATSAPP}</a></div></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📧</div>
+        <div><div class="contact-info-label">Email</div><div class="contact-info-value"><a href="mailto:{CONTACT_EMAIL}" style="color:var(--green-light)">{CONTACT_EMAIL}</a></div></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">🌐</div>
+        <div><div class="contact-info-label">Website</div><div class="contact-info-value"><a href="https://{CONTACT_WEBSITE}" target="_blank" style="color:var(--green-light)">{CONTACT_WEBSITE}</a></div></div>
+      </div>
+
+      <div style="margin-top:2rem;padding:1.5rem;background:linear-gradient(135deg,rgba(46,125,50,.08),rgba(212,160,23,.05));border:1px solid rgba(46,125,50,.2);border-radius:12px">
+        <div style="font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--text);margin-bottom:.8rem">Chat on WhatsApp</div>
+        <p style="font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:1rem">For the fastest response, contact us directly on WhatsApp. Our team is available to assist with quotes and product inquiries.</p>
+        <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn" style="width:100%;justify-content:center">{WA_SVG} Chat Now on WhatsApp</a>
+      </div>
+    </div>
+
+    <!-- Right: form -->
+    <div class="contact-form-card">
+      <div style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--text);margin-bottom:.4rem">Send an Inquiry</div>
+      <div style="font-size:.83rem;color:var(--text3);margin-bottom:1.5rem">Fill out the form and we'll get back to you promptly.</div>
+      {success_msg}
+      <form method="post" action="/contact">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Your Name *</label><input type="text" name="name" class="form-control" placeholder="John Smith" required></div>
+          <div class="form-group"><label class="form-label">Email Address *</label><input type="email" name="email" class="form-control" placeholder="john@company.com" required></div>
+        </div>
+        <div class="form-group"><label class="form-label">Company</label><input type="text" name="company" class="form-control" placeholder="Your Company Name"></div>
+        <div class="form-group"><label class="form-label">Product / Service Inquiry</label><input type="text" name="product" class="form-control" placeholder="e.g. Oilfield spare parts, Safety PPE, Lubricants..."></div>
+        <div class="form-group"><label class="form-label">Message *</label><textarea name="message" class="form-control" rows="5" placeholder="Describe your requirements, quantity, delivery timeline, etc." required></textarea></div>
+        <button type="submit" class="btn primary" style="width:100%;justify-content:center;padding:.9rem;font-size:.95rem">Send Inquiry →</button>
+        <p style="font-size:.73rem;color:var(--text3);text-align:center;margin-top:.8rem">We typically respond within a few hours during business hours.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+{footer_html()}
+</body></html>"""
+
+@app.post("/contact")
+async def contact_submit(request: Request, name: str = Form(...), email: str = Form(...), company: str = Form(""), product: str = Form(""), message: str = Form(...)):
+    # In production, integrate with email or WhatsApp API here
+    # For now, redirect to success
+    return RedirectResponse("/contact?sent=1", status_code=303)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUBLIC: CATALOG (full product listing with search + pagination)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/catalog", response_class=HTMLResponse)
+async def catalog(request: Request, page: int = 1, q: str = "", cat: str = ""):
     save_visit(request.client.host)
     all_products = load_products()
     all_cats = sorted(set(p.get("category","General") for p in all_products))
 
-    # Filter
     filtered = all_products
     if q:
         ql = q.lower()
@@ -469,14 +1090,12 @@ async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
     if cat:
         filtered = [p for p in filtered if p.get("category","") == cat]
 
-    # Paginate
     total = len(filtered)
     total_pages = max(1, math.ceil(total / PRODUCTS_PER_PAGE))
     page = max(1, min(page, total_pages))
     start = (page-1)*PRODUCTS_PER_PAGE
     page_products = filtered[start:start+PRODUCTS_PER_PAGE]
 
-    # Cards
     cards_html = ""
     for p in page_products:
         imgs = get_product_images(p)
@@ -507,7 +1126,7 @@ async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
     cat_opts = '<option value="">All Categories</option>' + "".join(
         f'<option value="{c}"{"selected" if cat==c else ""}>{c}</option>' for c in all_cats
     )
-    base_url = f"/?q={q}&cat={cat}"
+    base_url = f"/catalog?q={q}&cat={cat}"
     pagination = make_pagination(page, total_pages, base_url)
     r_start = start+1 if total else 0
     r_end = min(start+PRODUCTS_PER_PAGE, total)
@@ -516,46 +1135,24 @@ async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
 
     return f"""<!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>{BASE_STYLE}{THEME_SCRIPT}<title>Ketch-All — Industrial Safety Equipment</title>
-<meta name="description" content="Premium aircraft-grade industrial safety equipment."></head>
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>Product Catalog — NAWA Global General Trading</title></head>
 <body>
 {navbar_public()}
-<div class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-inner">
-    <div class="hero-eyebrow">Aircraft-Grade Quality · Made in USA</div>
-    <h1 class="hero-title">Industrial Safety<br><em>Engineered</em> to Perform</h1>
-    <p class="hero-sub">Precision-built safety and snare equipment crafted from aircraft-grade aluminium — trusted by oil &amp; gas, construction, and industrial sectors globally.</p>
-    <div class="hero-cta">
-      <a href="#catalog" class="btn primary lg">Browse Catalog</a>
-      <a href="https://wa.me/{wa_num()}" target="_blank" class="wa-btn">{WA_SVG} Get a Quote</a>
-    </div>
-    <div class="hero-stats">
-      <div><div class="hero-stat-num">{len(all_products)}+</div><div class="hero-stat-label">Products</div></div>
-      <div><div class="hero-stat-num">{len(all_cats)}+</div><div class="hero-stat-label">Categories</div></div>
-      <div><div class="hero-stat-num">USA</div><div class="hero-stat-label">Origin</div></div>
-      <div><div class="hero-stat-num">A/G</div><div class="hero-stat-label">Aluminium</div></div>
-    </div>
+<div class="page-hero" style="padding:100px 2.5rem 50px">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Product Catalog</div>
+    <h1 class="page-hero-title" style="font-size:2.4rem">{cat if cat else "All Products"}</h1>
   </div>
 </div>
-<div class="trust-band">
-  <div class="trust-item">✈️ Aircraft-Grade Aluminium</div>
-  <div class="trust-item">🇺🇸 Made in USA</div>
-  <div class="trust-item">🛡️ Industrial Certified</div>
-  <div class="trust-item">🌍 Worldwide Shipping</div>
-  <div class="trust-item">💬 WhatsApp Support</div>
-</div>
-
-<div id="catalog" class="section" style="padding-top:3rem">
-  <div class="section-header">
+<div id="catalog" class="section" style="padding-top:2rem">
+  <div class="section-header-row">
     <div>
-      <div class="section-label">Product Catalog</div>
-      <div class="section-title">{cat if cat else "All Products"}</div>
+      <span class="section-label">Catalog</span>
+      <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--text)">{cat if cat else "All Products"}</div>
     </div>
     <span class="section-count">{total} product{'s' if total!=1 else ''}</span>
   </div>
-  <form method="get" action="/" id="catalog-form">
+  <form method="get" action="/catalog" id="catalog-form">
     <div class="catalog-controls">
       <div class="search-box">
         <input type="text" name="q" value="{q}" placeholder="Search products…" oninput="debounce()" autocomplete="off">
@@ -563,7 +1160,7 @@ async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
       <select name="cat" class="filter-select" onchange="this.form.submit()">{cat_opts}</select>
       <input type="hidden" name="page" value="1">
       <span class="results-info">{results_txt}</span>
-      {"<a href='/' class='btn sm'>Clear</a>" if q or cat else ""}
+      {"<a href='/catalog' class='btn sm'>Clear</a>" if q or cat else ""}
     </div>
   </form>
   {f'<div class="product-grid">{cards_html}</div>' if page_products else empty}
@@ -571,7 +1168,6 @@ async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
 </div>
 {footer_html()}
 <script>
-  document.querySelector('a[href="#catalog"]')?.addEventListener('click',e=>{{e.preventDefault();document.getElementById('catalog').scrollIntoView({{behavior:'smooth'}})}});
   let _t;function debounce(){{clearTimeout(_t);_t=setTimeout(()=>document.getElementById('catalog-form').submit(),450)}}
 </script>
 </body></html>"""
@@ -585,7 +1181,7 @@ async def home(request: Request, page: int = 1, q: str = "", cat: str = ""):
 async def product_detail(pid: str, request: Request):
     products = load_products()
     p = next((x for x in products if x["id"] == pid), None)
-    if not p: return RedirectResponse("/")
+    if not p: return RedirectResponse("/catalog")
 
     imgs = get_product_images(p)
     imgs_json = json.dumps([f"/uploads/{i}" for i in imgs])
@@ -593,7 +1189,7 @@ async def product_detail(pid: str, request: Request):
     if imgs:
         main_img = f'<img src="/uploads/{imgs[0]}" alt="{p["name"]}" id="main-gallery-img">'
         thumbs = "".join(
-            f'<img src="/uploads/{img}" class="detail-thumb{"active" if i==0 else ""}" onclick="setMainImg(this,{i})" alt="Image {i+1}">'
+            f'<img src="/uploads/{img}" class="detail-thumb{"  active" if i==0 else ""}" onclick="setMainImg(this,{i})" alt="Image {i+1}">'
             for i, img in enumerate(imgs)
         )
         thumbs_block = f'<div class="detail-thumbs">{thumbs}</div>' if len(imgs)>1 else ""
@@ -610,18 +1206,19 @@ async def product_detail(pid: str, request: Request):
         for k, v in [spec.split(":",1)]
     )
     specs_section = f'<div class="specs-box"><div class="specs-box-title">Specifications</div><table><tbody>{specs_rows}</tbody></table></div>' if specs_rows else ""
-    tags_html = " ".join(f'<span class="tag gold">{t.strip()}</span>' for t in p.get("tags","").split(",") if t.strip())
+    tags_html = " ".join(f'<span class="tag green">{t.strip()}</span>' for t in p.get("tags","").split(",") if t.strip())
     tags_block = f'<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.2rem">{tags_html}</div>' if tags_html else ""
 
     return f"""<!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>{BASE_STYLE}{THEME_SCRIPT}<title>{p['name']} — Ketch-All</title></head>
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>{p['name']} — NAWA Global</title></head>
 <body>
 {navbar_public()}
-<div class="section" style="margin-top:68px;padding-top:2rem">
+<div class="section" style="margin-top:72px;padding-top:2rem">
   <div class="breadcrumb">
     <a href="/">Home</a><span>/</span>
-    <a href="/?cat={p.get('category','')}">{p.get('category','Products')}</a><span>/</span>
+    <a href="/catalog">Catalog</a><span>/</span>
+    <a href="/catalog?cat={p.get('category','')}">{p.get('category','Products')}</a><span>/</span>
     <span>{p['name']}</span>
   </div>
   <div class="detail-layout">
@@ -637,14 +1234,13 @@ async def product_detail(pid: str, request: Request):
       {specs_section}
       <div class="detail-actions">
         <a href="{wa_link}" target="_blank" class="wa-btn">{WA_SVG} Get Quote on WhatsApp</a>
-        <a href="/" class="btn">← All Products</a>
+        <a href="/catalog" class="btn">← All Products</a>
       </div>
-      <p style="margin-top:1rem;font-size:.76rem;color:var(--text3)">📞 {CONTACT_WHATSAPP}</p>
+      <p style="margin-top:1rem;font-size:.76rem;color:var(--text3)">📞 {CONTACT_WHATSAPP} &nbsp;|&nbsp; 📧 {CONTACT_EMAIL}</p>
     </div>
   </div>
 </div>
 
-<!-- Lightbox -->
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" onclick="closeLb()">✕</button>
   <img class="lightbox-img" id="lb-img" src="" alt="">
@@ -689,20 +1285,25 @@ async def login_page(request: Request, error: str = ""):
     err = f'<div class="alert error">⚠️ {error}</div>' if error else ""
     return f"""<!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>{BASE_STYLE}{THEME_SCRIPT}<title>Admin Login — Ketch-All</title></head>
+<head>{BASE_STYLE}{THEME_SCRIPT}<title>Admin Login — NAWA Global</title></head>
 <body>
 <div class="login-wrap">
   <div class="login-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
-      <div class="login-logo">Ketch<span>-All</span></div>
+      <div style="display:flex;align-items:center;gap:.7rem">
+        {NAWA_LOGO}
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.5px;text-transform:uppercase;color:var(--text)">NAWA Global</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:3px;color:var(--text3);text-transform:uppercase">Admin Portal</div>
+        </div>
+      </div>
       <button class="theme-toggle" onclick="toggleTheme()"></button>
     </div>
-    <div style="font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:3px;color:var(--text3);margin-bottom:1.5rem">ADMIN PORTAL</div>
     {err}
     <form method="post" action="{ADMIN_ROUTE}/login">
       <div class="form-group"><label class="form-label">Username</label><input type="text" name="username" class="form-control" autocomplete="username" required></div>
       <div class="form-group"><label class="form-label">Password</label><input type="password" name="password" class="form-control" autocomplete="current-password" required></div>
-      <button type="submit" class="btn primary" style="width:100%;justify-content:center;padding:.8rem;margin-top:.4rem">Sign In</button>
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center;padding:.8rem;margin-top:.4rem">Sign In →</button>
     </form>
     <p style="font-size:.7rem;color:var(--text3);text-align:center;margin-top:1.2rem">Default: admin / admin123</p>
   </div>
@@ -740,7 +1341,7 @@ async def admin_dashboard(request: Request):
     uniq = len(set(v["ip"] for v in visits))
     cats = len(set(p.get("category","") for p in products))
     rows = "".join(
-        f'<tr><td style="font-family:\'Space Mono\',monospace;font-size:.78rem">{v["ip"]}</td>'
+        f'<tr><td style="font-family:\'Barlow Condensed\',monospace;font-size:.78rem">{v["ip"]}</td>'
         f'<td style="color:var(--text2);font-size:.82rem">{v["time"][:19].replace("T"," ")}</td></tr>'
         for v in visits[-8:][::-1]
     )
@@ -761,7 +1362,7 @@ async def admin_dashboard(request: Request):
       <div class="stat-card"><div class="stat-num">{today_v}</div><div class="stat-label">Today</div></div>
       <div class="stat-card"><div class="stat-num">{uniq}</div><div class="stat-label">Unique IPs</div></div>
     </div>
-    <div style="font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:.8rem">Recent Visitors</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.15rem;margin-bottom:.8rem">Recent Visitors</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>IP Address</th><th>Timestamp</th></tr></thead>
@@ -798,9 +1399,9 @@ async def admin_products(request: Request, msg: str = ""):
         rows += f"""<tr>
           <td>{thumbs_row}</td>
           <td><strong style="font-weight:600">{p['name']}</strong></td>
-          <td><span class="tag gold">{p.get('category','—')}</span></td>
+          <td><span class="tag green">{p.get('category','—')}</span></td>
           <td style="color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.81rem">{p.get('description','')[:70]}</td>
-          <td style="color:var(--text3);font-family:'Space Mono',monospace;font-size:.7rem">{len(imgs)} img{'s' if len(imgs)!=1 else ''}</td>
+          <td style="color:var(--text3);font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:1px">{len(imgs)} img{'s' if len(imgs)!=1 else ''}</td>
           <td><div style="display:flex;gap:.4rem">
             <a href="{ADMIN_ROUTE}/products/edit/{p['id']}" class="btn sm">Edit</a>
             <a href="{ADMIN_ROUTE}/products/delete/{p['id']}" class="btn sm danger" onclick="return confirm('Delete this product?')">Delete</a>
@@ -834,11 +1435,11 @@ async def admin_products(request: Request, msg: str = ""):
     <button class="modal-close" onclick="document.getElementById('add-modal').classList.remove('open')">✕</button>
     <div class="modal-title">Add New Product</div>
     <form method="post" action="{ADMIN_ROUTE}/products/add" enctype="multipart/form-data">
-      <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" required placeholder="e.g. Ketch-All Snare Tool Pro"></div>
-      <div class="form-group"><label class="form-label">Category *</label><input type="text" name="category" class="form-control" placeholder="e.g. Snare Tool, Safety Glasses" required></div>
+      <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" required placeholder="e.g. Industrial Safety Gloves"></div>
+      <div class="form-group"><label class="form-label">Category *</label><input type="text" name="category" class="form-control" placeholder="e.g. Safety PPE, Oilfield Equipment" required></div>
       <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control"></textarea></div>
-      <div class="form-group"><label class="form-label">Specifications (Label: Value, one per line)</label><textarea name="specs" class="form-control" rows="4" placeholder="Material: Aircraft-grade Aluminium&#10;Sizes: 3FT, 4FT, 5FT"></textarea></div>
-      <div class="form-group"><label class="form-label">Tags (comma separated)</label><input type="text" name="tags" class="form-control" placeholder="aluminium, safety, drill-pipe"></div>
+      <div class="form-group"><label class="form-label">Specifications (Label: Value, one per line)</label><textarea name="specs" class="form-control" rows="4" placeholder="Material: Nitrile&#10;Sizes: S, M, L, XL"></textarea></div>
+      <div class="form-group"><label class="form-label">Tags (comma separated)</label><input type="text" name="tags" class="form-control" placeholder="safety, gloves, industrial"></div>
       <div class="form-group">
         <label class="form-label">Product Images — up to 10, first = primary</label>
         <div class="upload-zone" id="add-zone">
@@ -1054,7 +1655,6 @@ async def admin_visitors(request: Request, period: str = "week"):
     today_count = sum(1 for v in filtered if v["time"].startswith(today_str))
     uniq = len(set(v["ip"] for v in filtered))
 
-    # Group
     day_counts: dict = {}
     for v in filtered:
         k = datetime.fromisoformat(v["time"]).strftime(gkey)
@@ -1071,17 +1671,16 @@ async def admin_visitors(request: Request, period: str = "week"):
         except: disp = k
         bars_html += f'<div class="bar-wrap"><span class="bar-val">{c}</span><div class="bar" style="height:{h}%" title="{disp}: {c} visits"></div><span class="bar-label">{disp}</span></div>'
 
-    # Top IPs
     ip_cnt: dict = {}
     for v in filtered: ip_cnt[v["ip"]] = ip_cnt.get(v["ip"],0)+1
     top_ips = sorted(ip_cnt.items(), key=lambda x:x[1], reverse=True)[:10]
     top_rows = "".join(
-        f'<tr><td style="font-family:\'Space Mono\',monospace;font-size:.76rem">{ip}</td><td><strong style="color:var(--accent)">{c}</strong></td></tr>'
+        f'<tr><td style="font-family:\'Barlow Condensed\',monospace;font-size:.76rem">{ip}</td><td><strong style="color:var(--green-light)">{c}</strong></td></tr>'
         for ip,c in top_ips
     )
 
     recent_rows = "".join(
-        f'<tr><td style="font-family:\'Space Mono\',monospace;font-size:.76rem">{v["ip"]}</td><td style="color:var(--text2);font-size:.8rem">{v["time"][:19].replace("T"," ")}</td></tr>'
+        f'<tr><td style="font-family:\'Barlow Condensed\',monospace;font-size:.76rem">{v["ip"]}</td><td style="color:var(--text2);font-size:.8rem">{v["time"][:19].replace("T"," ")}</td></tr>'
         for v in filtered[-50:][::-1]
     )
 
@@ -1101,7 +1700,7 @@ async def admin_visitors(request: Request, period: str = "week"):
     <div class="page-subtitle">Track who's viewing your product catalog</div>
 
     <div class="filter-bar">
-      <span style="font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text3);letter-spacing:2px;margin-right:.3rem">PERIOD:</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;color:var(--text3);letter-spacing:2px;margin-right:.3rem;font-weight:600;text-transform:uppercase">Period:</span>
       {pill("week","This Week")}
       {pill("month","This Month")}
       {pill("year","This Year")}
@@ -1115,18 +1714,17 @@ async def admin_visitors(request: Request, period: str = "week"):
       <div class="stat-card"><div class="stat-num">{len(all_visits)}</div><div class="stat-label">All-Time Total</div></div>
     </div>
 
-    <!-- Bar Chart -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-        <div style="font-family:'DM Serif Display',serif;font-size:1.1rem">{label} — Visit Trend</div>
-        <span style="font-family:'Space Mono',monospace;font-size:.62rem;color:var(--text3)">{len(sorted_keys)} data point{'s' if len(sorted_keys)!=1 else ''}</span>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem">{label} — Visit Trend</div>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;color:var(--text3);letter-spacing:1px">{len(sorted_keys)} DATA POINT{'S' if len(sorted_keys)!=1 else ''}</span>
       </div>
       {f'<div class="bar-chart">{bars_html}</div>' if bars_html else '<div style="text-align:center;color:var(--text3);padding:3rem 0;font-size:.9rem">No data for this period</div>'}
     </div>
 
     <div class="grid-2">
       <div>
-        <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:.8rem">Top Visitors</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.8rem">Top Visitors</div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>IP Address</th><th>Visits</th></tr></thead>
@@ -1135,7 +1733,7 @@ async def admin_visitors(request: Request, period: str = "week"):
         </div>
       </div>
       <div>
-        <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:.8rem">Recent 50 Visits</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.8rem">Recent 50 Visits</div>
         <div class="table-wrap" style="max-height:430px;overflow-y:auto">
           <table>
             <thead><tr><th>IP Address</th><th>Timestamp</th></tr></thead>
@@ -1149,7 +1747,7 @@ async def admin_visitors(request: Request, period: str = "week"):
 </body></html>"""
 
 
-# ─── Redirect old /admin paths ─────────────────────────────────────────────────
+# ─── Redirect old paths ────────────────────────────────────────────────────────
 @app.get("/admin/login")
 async def _old1(): return RedirectResponse("/", status_code=302)
 @app.get("/admin/dashboard")
@@ -1160,10 +1758,10 @@ async def _old3(): return RedirectResponse("/", status_code=302)
 
 # ─── Run ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("="*55)
-    print("  Ketch-All Product Catalog — Premium Edition v2")
+    print("="*60)
+    print("  NAWA Global General Trading — Catalog")
     print("  http://localhost:8000")
     print(f"  Admin: http://localhost:8000{ADMIN_ROUTE}/login")
     print("  Default login: admin / admin123")
-    print("="*55)
+    print("="*60)
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
