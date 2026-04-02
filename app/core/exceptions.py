@@ -19,3 +19,7 @@ class ProductNotFoundError(AppError):
 
 class ValidationError(AppError):
     """Raised when input data is invalid."""
+
+
+class DuplicateProductError(ValidationError):
+    """Raised when a product with the same name and category already exists."""

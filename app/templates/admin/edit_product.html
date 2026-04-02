@@ -15,7 +15,16 @@
     <div class="form-card form-card-wide">
       <form method="post" action="{{ settings.admin_route }}/products/edit/{{ product.id }}" enctype="multipart/form-data">
         <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" value="{{ product.name }}" required></div>
-        <div class="form-group"><label class="form-label">Category *</label><input type="text" name="category" class="form-control" value="{{ product.category }}"></div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select name="category" class="form-control">
+            <option value="">Select existing category</option>
+            {% for category in categories %}
+            <option value="{{ category }}"{% if product.category == category %} selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Or Create New Category</label><input type="text" name="new_category" class="form-control" placeholder="e.g. safety ppe"></div>
         <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control">{{ product.description }}</textarea></div>
         <div class="form-group"><label class="form-label">Specifications</label><textarea name="specs" class="form-control">{% for spec in product.specs %}{{ spec }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea></div>
         <div class="form-group"><label class="form-label">Tags</label><input type="text" name="tags" class="form-control" value="{{ product.tags }}"></div>

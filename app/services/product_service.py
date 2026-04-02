@@ -5,10 +5,12 @@ import uuid
 from datetime import datetime
 
 from fastapi import UploadFile
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 
-from app.core.exceptions import ProductNotFoundError
+from app.core.exceptions import DuplicateProductError, ProductNotFoundError, ValidationError
 from app.database.db import SessionLocal
-from app.database.models import Product
+from app.database.models import Category, Product
 from app.models.schemas import PaginatedCatalog, Product as ProductSchema, ProductCreate, ProductUpdate
 from app.services.image_service import ImageService
 
@@ -65,6 +67,40 @@ class ProductService:
             created=record.created_at or datetime.utcnow(),
         )
 
+    @staticmethod
+    def _normalize_text(value: str | None) -> str:
+        return str(value or "").strip().lower()
+
+    def _get_or_create_category(self, db, category_name: str) -> Category:
+        normalized_category = self._normalize_text(category_name)
+        if not normalized_category:
+            raise ValidationError("This field is required.")
+
+        category = (
+            db.query(Category)
+            .filter(Category.name == normalized_category)
+            .first()
+        )
+        if category is not None:
+            return category
+
+        category = Category(name=normalized_category)
+        db.add(category)
+        try:
+            db.commit()
+            db.refresh(category)
+            return category
+        except IntegrityError:
+            db.rollback()
+            category = (
+                db.query(Category)
+                .filter(Category.name == normalized_category)
+                .first()
+            )
+            if category is None:
+                raise ValidationError("Unable to save category")
+            return category
+
     async def _save_images(self, product_id: str, images: list[UploadFile]) -> list[str]:
         saved: list[str] = []
         index = 0
@@ -79,7 +115,12 @@ class ProductService:
     def list_products(self) -> list[ProductSchema]:
         db = SessionLocal()
         try:
-            records = db.query(Product).order_by(Product.created_at.desc()).all()
+            records = (
+                db.query(Product)
+                .options(joinedload(Product.category_ref))
+                .order_by(Product.created_at.desc())
+                .all()
+            )
             return [self._to_product(record) for record in records]
         finally:
             db.close()
@@ -87,7 +128,12 @@ class ProductService:
     def get_product(self, product_id: str) -> ProductSchema:
         db = SessionLocal()
         try:
-            record = db.query(Product).filter(Product.id == product_id).first()
+            record = (
+                db.query(Product)
+                .options(joinedload(Product.category_ref))
+                .filter(Product.id == product_id)
+                .first()
+            )
             if record is None:
                 raise ProductNotFoundError("Product not found")
             return self._to_product(record)
@@ -99,6 +145,7 @@ class ProductService:
         try:
             records = (
                 db.query(Product)
+                .options(joinedload(Product.category_ref))
                 .order_by(Product.created_at.desc())
                 .limit(limit)
                 .all()
@@ -108,17 +155,21 @@ class ProductService:
             db.close()
 
     def get_categories(self) -> list[str]:
-        categories = {product.category.strip() for product in self.list_products() if product.category.strip()}
-        return sorted(categories)
+        db = SessionLocal()
+        try:
+            records = db.query(Category).order_by(Category.name.asc()).all()
+            return [record.name.strip() for record in records if record.name.strip()]
+        finally:
+            db.close()
 
     def search_catalog(self, page: int, query: str, category: str) -> PaginatedCatalog:
         db = SessionLocal()
         try:
             normalized_page = max(1, page)
-            normalized_query = query.strip()
-            normalized_category = category.strip()
+            normalized_query = query.strip().lower()
+            normalized_category = category.strip().lower()
 
-            db_query = db.query(Product)
+            db_query = db.query(Product).options(joinedload(Product.category_ref))
 
             if normalized_query:
                 like = f"%{normalized_query}%"
@@ -167,13 +218,25 @@ class ProductService:
     async def create_product(self, payload: ProductCreate, images: list[UploadFile]) -> ProductSchema:
         db = SessionLocal()
         try:
+            normalized_name = self._normalize_text(payload.name)
+            normalized_category = self._normalize_text(payload.category)
+            category = self._get_or_create_category(db, normalized_category)
+
+            existing = db.query(Product).filter(
+                Product.name == normalized_name,
+                Product.category == normalized_category,
+            ).first()
+            if existing is not None:
+                raise DuplicateProductError("Product already exists")
+
             product_id = str(uuid.uuid4())[:8]
             saved_images = await self._save_images(product_id, images)
 
             record = Product(
                 id=product_id,
-                name=payload.name,
-                category=payload.category,
+                name=normalized_name,
+                category=category.name,
+                category_id=category.id,
                 description=payload.description,
                 specs=self._join_specs(payload.specs),
                 tags=payload.tags,
@@ -182,8 +245,12 @@ class ProductService:
             )
 
             db.add(record)
-            db.commit()
-            db.refresh(record)
+            try:
+                db.commit()
+                db.refresh(record)
+            except IntegrityError:
+                db.rollback()
+                raise DuplicateProductError("Product already exists")
             return self._to_product(record)
         finally:
             db.close()
@@ -196,16 +263,33 @@ class ProductService:
     ) -> ProductSchema:
         db = SessionLocal()
         try:
-            record = db.query(Product).filter(Product.id == product_id).first()
+            record = (
+                db.query(Product)
+                .options(joinedload(Product.category_ref))
+                .filter(Product.id == product_id)
+                .first()
+            )
             if record is None:
                 raise ProductNotFoundError("Product not found")
+
+            normalized_name = self._normalize_text(payload.name)
+            normalized_category = self._normalize_text(payload.category)
+            category = self._get_or_create_category(db, normalized_category)
+            duplicate = db.query(Product).filter(
+                Product.id != product_id,
+                Product.name == normalized_name,
+                Product.category == normalized_category,
+            ).first()
+            if duplicate is not None:
+                raise DuplicateProductError("Product already exists")
 
             existing_images = self._split_images(record.images)
             new_images = await self._save_images(product_id, images)
             combined_images = existing_images + new_images
 
-            record.name = payload.name
-            record.category = payload.category
+            record.name = normalized_name
+            record.category = category.name
+            record.category_id = category.id
             record.description = payload.description
             record.specs = self._join_specs(payload.specs)
             record.tags = payload.tags
@@ -213,23 +297,20 @@ class ProductService:
             record.images = self._join_images(combined_images)
 
             db.add(record)
-            db.commit()
-            db.refresh(record)
-            fresh_record = db.query(Product).filter(Product.id == product_id).first()
+            try:
+                db.commit()
+                db.refresh(record)
+            except IntegrityError:
+                db.rollback()
+                raise DuplicateProductError("Product already exists")
+            fresh_record = (
+                db.query(Product)
+                .options(joinedload(Product.category_ref))
+                .filter(Product.id == product_id)
+                .first()
+            )
             if fresh_record is None:
                 raise ProductNotFoundError("Product not found")
-            print(
-                "Updated product record:",
-                {
-                    "id": fresh_record.id,
-                    "name": fresh_record.name,
-                    "category": fresh_record.category,
-                    "description": fresh_record.description,
-                    "specs": fresh_record.specs,
-                    "tags": fresh_record.tags,
-                    "images": fresh_record.images,
-                },
-            )
             return self._to_product(fresh_record)
         finally:
             db.close()

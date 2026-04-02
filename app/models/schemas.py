@@ -16,7 +16,7 @@ class ProductBase(BaseModel):
     @field_validator("name", "category", mode="before")
     @classmethod
     def validate_required_text(cls, value: object) -> str:
-        text = str(value or "").strip()
+        text = str(value or "").strip().lower()
         if not text:
             raise ValueError("This field is required.")
         return text

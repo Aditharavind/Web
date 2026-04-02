@@ -65,7 +65,16 @@
     <div class="modal-title">Add New Product</div>
     <form method="post" action="{{ settings.admin_route }}/products/add" enctype="multipart/form-data">
       <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" required placeholder="e.g. Industrial Safety Gloves"></div>
-      <div class="form-group"><label class="form-label">Category *</label><input type="text" name="category" class="form-control" placeholder="e.g. Safety PPE, Oilfield Equipment" required></div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select name="category" class="form-control" {% if not categories %}disabled{% endif %}>
+          <option value="">Select existing category</option>
+          {% for category in categories %}
+          <option value="{{ category }}">{{ category }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Or Create New Category</label><input type="text" name="new_category" class="form-control" placeholder="e.g. safety ppe"></div>
       <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control"></textarea></div>
       <div class="form-group"><label class="form-label">Specifications (Label: Value, one per line)</label><textarea name="specs" class="form-control" rows="4" placeholder="Material: Nitrile&#10;Sizes: S, M, L, XL"></textarea></div>
       <div class="form-group"><label class="form-label">Tags (comma separated)</label><input type="text" name="tags" class="form-control" placeholder="safety, gloves, industrial"></div>

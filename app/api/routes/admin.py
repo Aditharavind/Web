@@ -7,7 +7,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import ValidationError as PydanticValidationError
 
 from app.core.config import get_settings
-from app.core.exceptions import AuthenticationError, ProductNotFoundError, ValidationError
+from app.core.exceptions import (
+    AuthenticationError,
+    DuplicateProductError,
+    ProductNotFoundError,
+    ValidationError,
+)
 from app.core.templates import template_context, templates
 from app.models.schemas import ProductCreate, ProductUpdate
 from app.services.auth import SessionService
@@ -30,6 +35,10 @@ def _redirect(path: str) -> RedirectResponse:
 
 def _split_specs(specs: str) -> list[str]:
     return [line.strip() for line in specs.splitlines() if line.strip()]
+
+
+def _resolve_category_input(category: str, new_category: str) -> str:
+    return (new_category or category).strip()
 
 
 def _validation_message(exc: Exception) -> str:
@@ -144,6 +153,7 @@ async def admin_products(
             page_title="Products — Admin",
             admin_section="products",
             product_rows=_product_rows(product_service, products),
+            categories=product_service.get_categories(),
             message=msg,
             error=error,
         ),
@@ -154,7 +164,8 @@ async def admin_products(
 async def add_product(
     request: Request,
     name: str = Form(...),
-    category: str = Form(...),
+    category: str = Form(""),
+    new_category: str = Form(""),
     description: str = Form(""),
     specs: str = Form(""),
     tags: str = Form(""),
@@ -167,19 +178,21 @@ async def add_product(
         await product_service.create_product(
             ProductCreate(
                 name=name,
-                category=category,
+                category=_resolve_category_input(category, new_category),
                 description=description,
                 specs=_split_specs(specs),
                 tags=tags,
             ),
             images,
         )
+    except DuplicateProductError:
+        return _redirect(f"{settings.admin_route}/products?error=Product+already+exists")
     except (ValidationError, PydanticValidationError) as exc:
         return _redirect(
             f"{settings.admin_route}/products?error={quote_plus(_validation_message(exc))}"
         )
 
-    return _redirect(f"{settings.admin_route}/products?msg=Product+added+successfully")
+    return _redirect(f"{settings.admin_route}/products?msg=Product+added")
 
 
 @router.get(f"{settings.admin_route}/products/edit/{{product_id}}", response_class=HTMLResponse)
@@ -201,6 +214,7 @@ async def edit_product_page(
         template_context(
             page_title="Edit — Admin",
             admin_section="products",
+            categories=product_service.get_categories(),
             product=product,
             product_images=product_service.get_product_images(product),
         ),
@@ -212,7 +226,8 @@ async def update_product(
     product_id: str,
     request: Request,
     name: str = Form(...),
-    category: str = Form(...),
+    category: str = Form(""),
+    new_category: str = Form(""),
     description: str = Form(""),
     specs: str = Form(""),
     tags: str = Form(""),
@@ -226,13 +241,15 @@ async def update_product(
             product_id,
             ProductUpdate(
                 name=name,
-                category=category,
+                category=_resolve_category_input(category, new_category),
                 description=description,
                 specs=_split_specs(specs),
                 tags=tags,
             ),
             images,
         )
+    except DuplicateProductError:
+        return _redirect(f"{settings.admin_route}/products?error=Product+already+exists")
     except (ValidationError, ProductNotFoundError, PydanticValidationError) as exc:
         return _redirect(
             f"{settings.admin_route}/products?error={quote_plus(_validation_message(exc))}"

@@ -36,7 +36,7 @@ a{color:inherit;text-decoration:none}
 .brand,.nav-links,.nav-right,.main-content{position:relative;z-index:1}
 .theme-toggle{width:40px;height:22px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;cursor:pointer;position:relative;display:flex;align-items:center;padding:2px;transition:background var(--tr)}
 .theme-toggle::after{content:'';width:16px;height:16px;background:var(--gold);border-radius:50%;transition:transform var(--tr)}
-[data-theme="light"] .theme-toggle::after{transform:translateX(18px)}
+[data-theme="dark"] .theme-toggle::after{transform:translateX(18px)}
 .btn{font-family:'Barlow',sans-serif;font-weight:600;font-size:.85rem;letter-spacing:.3px;padding:.55rem 1.4rem;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;justify-content:center;gap:.4rem;white-space:nowrap}
 .btn:hover{border-color:var(--green3);color:var(--green-light)}
 .btn:focus-visible,.wa-btn:focus-visible,.nav-link:focus-visible,.page-btn:focus-visible,.theme-toggle:focus-visible,.nav-menu-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:2px}

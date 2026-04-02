@@ -13,7 +13,7 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError, DataAccessError, ValidationError
 from app.core.templates import template_context, templates
 from app.database import models  # noqa: F401
-from app.database.db import Base, engine
+from app.database.db import ensure_postgres_schema
 
 
 settings = get_settings()
@@ -22,7 +22,7 @@ settings.uploads_dir.mkdir(parents=True, exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    ensure_postgres_schema()
     yield
 
 

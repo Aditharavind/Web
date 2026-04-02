@@ -1,9 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ page_title }}</title>
+  <script>
+    // Apply the saved theme before CSS loads so the page defaults to light
+    // without flashing, while still honoring a persisted dark preference.
+    (function () {
+      const savedTheme = localStorage.getItem("theme");
+      const theme = savedTheme === "dark" ? "dark" : "light";
+      const root = document.documentElement;
+
+      root.setAttribute("data-theme", theme);
+
+      if (theme === "dark") {
+        document.addEventListener("DOMContentLoaded", function syncDarkBodyClass() {
+          document.body.classList.add("dark");
+        }, { once: true });
+      }
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
   <script src="{{ url_for('static', path='js/theme.js') }}"></script>
