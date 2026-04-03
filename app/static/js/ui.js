@@ -13,6 +13,8 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     };
 
+    setOpenState(false);
+
     button.addEventListener("click", () => {
       if (!nav) return;
       setOpenState(!nav.classList.contains("mobile-open"));

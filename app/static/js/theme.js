@@ -1,5 +1,10 @@
 (function initializeTheme() {
-  const storedTheme = localStorage.getItem("theme");
+  let storedTheme = null;
+  try {
+    storedTheme = localStorage.getItem("theme");
+  } catch {
+    storedTheme = null;
+  }
   // Default to light when nothing valid has been saved yet.
   const theme = storedTheme === "dark" ? "dark" : "light";
 
@@ -35,7 +40,11 @@
         const currentTheme = document.documentElement.getAttribute("data-theme");
         const nextTheme = currentTheme === "dark" ? "light" : "dark";
 
-        localStorage.setItem("theme", nextTheme);
+        try {
+          localStorage.setItem("theme", nextTheme);
+        } catch {
+          // Ignore storage errors and still apply the theme in-memory.
+        }
         applyTheme(nextTheme);
       });
     });

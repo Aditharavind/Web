@@ -1,24 +1,45 @@
 from __future__ import annotations
 
+import logging
 import math
 import uuid
 from datetime import datetime
 
 from fastapi import UploadFile
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import joinedload
 
-from app.core.exceptions import DuplicateProductError, ProductNotFoundError, ValidationError
+from app.core.exceptions import (
+    DataAccessError,
+    DuplicateProductError,
+    ProductNotFoundError,
+    ValidationError,
+)
 from app.database.db import SessionLocal
 from app.database.models import Category, Product
-from app.models.schemas import PaginatedCatalog, Product as ProductSchema, ProductCreate, ProductUpdate
+from app.models.schemas import (
+    PaginatedCatalog,
+    Product as ProductSchema,
+    ProductCreate,
+    ProductUpdate,
+)
 from app.services.image_service import ImageService
 
 
+logger = logging.getLogger(__name__)
+
+
 class ProductService:
-    def __init__(self, image_service: ImageService, products_per_page: int) -> None:
+    def __init__(
+        self,
+        image_service: ImageService,
+        products_per_page: int,
+        max_upload_files: int,
+    ) -> None:
         self.image_service = image_service
         self.products_per_page = products_per_page
+        self.max_upload_files = max_upload_files
 
     @staticmethod
     def _split_specs(specs: str | list[str] | None) -> list[str]:
@@ -68,23 +89,32 @@ class ProductService:
         )
 
     @staticmethod
-    def _normalize_text(value: str | None) -> str:
-        return str(value or "").strip().lower()
+    def _clean_text(value: str | None) -> str:
+        return str(value or "").strip()
+
+    @classmethod
+    def _normalize_text(cls, value: str | None) -> str:
+        return cls._clean_text(value).casefold()
+
+    def _validate_image_count(self, images: list[UploadFile]) -> None:
+        actual_uploads = [image for image in images if (image.filename or "").strip()]
+        if len(actual_uploads) > self.max_upload_files:
+            raise ValidationError(f"You can upload up to {self.max_upload_files} images per product.")
 
     def _get_or_create_category(self, db, category_name: str) -> Category:
-        normalized_category = self._normalize_text(category_name)
-        if not normalized_category:
-            raise ValidationError("This field is required.")
+        cleaned_category = self._clean_text(category_name)
+        if not cleaned_category:
+            raise ValidationError("Category is required.")
 
         category = (
             db.query(Category)
-            .filter(Category.name == normalized_category)
+            .filter(func.lower(Category.name) == cleaned_category.casefold())
             .first()
         )
         if category is not None:
             return category
 
-        category = Category(name=normalized_category)
+        category = Category(name=cleaned_category)
         db.add(category)
         try:
             db.commit()
@@ -94,14 +124,15 @@ class ProductService:
             db.rollback()
             category = (
                 db.query(Category)
-                .filter(Category.name == normalized_category)
+                .filter(func.lower(Category.name) == cleaned_category.casefold())
                 .first()
             )
             if category is None:
-                raise ValidationError("Unable to save category")
+                raise DataAccessError("Unable to save category.")
             return category
 
     async def _save_images(self, product_id: str, images: list[UploadFile]) -> list[str]:
+        self._validate_image_count(images)
         saved: list[str] = []
         index = 0
         for image in images:
@@ -122,6 +153,9 @@ class ProductService:
                 .all()
             )
             return [self._to_product(record) for record in records]
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to list products.")
+            raise DataAccessError("Unable to load products right now.") from exc
         finally:
             db.close()
 
@@ -135,8 +169,11 @@ class ProductService:
                 .first()
             )
             if record is None:
-                raise ProductNotFoundError("Product not found")
+                raise ProductNotFoundError("Product not found.")
             return self._to_product(record)
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to get product %s.", product_id)
+            raise DataAccessError("Unable to load the product right now.") from exc
         finally:
             db.close()
 
@@ -151,6 +188,9 @@ class ProductService:
                 .all()
             )
             return [self._to_product(record) for record in records]
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to load recent products.")
+            raise DataAccessError("Unable to load products right now.") from exc
         finally:
             db.close()
 
@@ -159,6 +199,9 @@ class ProductService:
         try:
             records = db.query(Category).order_by(Category.name.asc()).all()
             return [record.name.strip() for record in records if record.name.strip()]
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to load categories.")
+            raise DataAccessError("Unable to load categories right now.") from exc
         finally:
             db.close()
 
@@ -166,22 +209,24 @@ class ProductService:
         db = SessionLocal()
         try:
             normalized_page = max(1, page)
-            normalized_query = query.strip().lower()
-            normalized_category = category.strip().lower()
+            raw_query = query.strip()
+            raw_category = category.strip()
+            normalized_query = raw_query.casefold()
+            normalized_category = raw_category.casefold()
 
             db_query = db.query(Product).options(joinedload(Product.category_ref))
 
             if normalized_query:
                 like = f"%{normalized_query}%"
                 db_query = db_query.filter(
-                    (Product.name.ilike(like))
-                    | (Product.description.ilike(like))
-                    | (Product.tags.ilike(like))
-                    | (Product.category.ilike(like))
+                    Product.name.ilike(like)
+                    | Product.description.ilike(like)
+                    | Product.tags.ilike(like)
+                    | Product.category.ilike(like)
                 )
 
             if normalized_category:
-                db_query = db_query.filter(Product.category == normalized_category)
+                db_query = db_query.filter(func.lower(Product.category) == normalized_category)
 
             total = db_query.count()
             total_pages = max(1, math.ceil(total / self.products_per_page)) if total else 1
@@ -201,9 +246,12 @@ class ProductService:
                 total=total,
                 total_pages=total_pages,
                 page=current_page,
-                query=normalized_query,
-                category=normalized_category,
+                query=raw_query,
+                category=raw_category,
             )
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to search catalog.")
+            raise DataAccessError("Unable to search the catalog right now.") from exc
         finally:
             db.close()
 
@@ -217,24 +265,31 @@ class ProductService:
 
     async def create_product(self, payload: ProductCreate, images: list[UploadFile]) -> ProductSchema:
         db = SessionLocal()
+        saved_images: list[str] = []
         try:
-            normalized_name = self._normalize_text(payload.name)
-            normalized_category = self._normalize_text(payload.category)
-            category = self._get_or_create_category(db, normalized_category)
+            cleaned_name = self._clean_text(payload.name)
+            cleaned_category = self._clean_text(payload.category)
+            normalized_name = self._normalize_text(cleaned_name)
+            normalized_category = self._normalize_text(cleaned_category)
+            category = self._get_or_create_category(db, cleaned_category)
 
-            existing = db.query(Product).filter(
-                Product.name == normalized_name,
-                Product.category == normalized_category,
-            ).first()
+            existing = (
+                db.query(Product)
+                .filter(
+                    func.lower(Product.name) == normalized_name,
+                    func.lower(Product.category) == normalized_category,
+                )
+                .first()
+            )
             if existing is not None:
-                raise DuplicateProductError("Product already exists")
+                raise DuplicateProductError("Product already exists.")
 
             product_id = str(uuid.uuid4())[:8]
             saved_images = await self._save_images(product_id, images)
 
             record = Product(
                 id=product_id,
-                name=normalized_name,
+                name=cleaned_name,
                 category=category.name,
                 category_id=category.id,
                 description=payload.description,
@@ -248,10 +303,20 @@ class ProductService:
             try:
                 db.commit()
                 db.refresh(record)
-            except IntegrityError:
+            except IntegrityError as exc:
                 db.rollback()
-                raise DuplicateProductError("Product already exists")
+                raise DuplicateProductError("Product already exists.") from exc
             return self._to_product(record)
+        except (DuplicateProductError, ValidationError):
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            raise
+        except SQLAlchemyError as exc:
+            db.rollback()
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            logger.exception("Failed to create product.")
+            raise DataAccessError("Unable to save the product right now.") from exc
         finally:
             db.close()
 
@@ -262,6 +327,7 @@ class ProductService:
         images: list[UploadFile],
     ) -> ProductSchema:
         db = SessionLocal()
+        saved_images: list[str] = []
         try:
             record = (
                 db.query(Product)
@@ -270,24 +336,30 @@ class ProductService:
                 .first()
             )
             if record is None:
-                raise ProductNotFoundError("Product not found")
+                raise ProductNotFoundError("Product not found.")
 
-            normalized_name = self._normalize_text(payload.name)
-            normalized_category = self._normalize_text(payload.category)
-            category = self._get_or_create_category(db, normalized_category)
-            duplicate = db.query(Product).filter(
-                Product.id != product_id,
-                Product.name == normalized_name,
-                Product.category == normalized_category,
-            ).first()
+            cleaned_name = self._clean_text(payload.name)
+            cleaned_category = self._clean_text(payload.category)
+            normalized_name = self._normalize_text(cleaned_name)
+            normalized_category = self._normalize_text(cleaned_category)
+            category = self._get_or_create_category(db, cleaned_category)
+            duplicate = (
+                db.query(Product)
+                .filter(
+                    Product.id != product_id,
+                    func.lower(Product.name) == normalized_name,
+                    func.lower(Product.category) == normalized_category,
+                )
+                .first()
+            )
             if duplicate is not None:
-                raise DuplicateProductError("Product already exists")
+                raise DuplicateProductError("Product already exists.")
 
             existing_images = self._split_images(record.images)
-            new_images = await self._save_images(product_id, images)
-            combined_images = existing_images + new_images
+            saved_images = await self._save_images(product_id, images)
+            combined_images = existing_images + saved_images
 
-            record.name = normalized_name
+            record.name = cleaned_name
             record.category = category.name
             record.category_id = category.id
             record.description = payload.description
@@ -300,9 +372,10 @@ class ProductService:
             try:
                 db.commit()
                 db.refresh(record)
-            except IntegrityError:
+            except IntegrityError as exc:
                 db.rollback()
-                raise DuplicateProductError("Product already exists")
+                raise DuplicateProductError("Product already exists.") from exc
+
             fresh_record = (
                 db.query(Product)
                 .options(joinedload(Product.category_ref))
@@ -310,8 +383,18 @@ class ProductService:
                 .first()
             )
             if fresh_record is None:
-                raise ProductNotFoundError("Product not found")
+                raise ProductNotFoundError("Product not found.")
             return self._to_product(fresh_record)
+        except (DuplicateProductError, ProductNotFoundError, ValidationError):
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            raise
+        except SQLAlchemyError as exc:
+            db.rollback()
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            logger.exception("Failed to update product %s.", product_id)
+            raise DataAccessError("Unable to update the product right now.") from exc
         finally:
             db.close()
 
@@ -320,18 +403,26 @@ class ProductService:
         try:
             record = db.query(Product).filter(Product.id == product_id).first()
             if record is None:
-                raise ProductNotFoundError("Product not found")
+                raise ProductNotFoundError("Product not found.")
 
+            safe_filename = filename.strip()
             existing_images = self._split_images(record.images)
-            images = [image for image in existing_images if image != filename]
-            if len(images) != len(existing_images):
-                self.image_service.delete_image(filename)
+            images = [image for image in existing_images if image != safe_filename]
+            if len(images) == len(existing_images):
+                raise ValidationError("Image not found.")
 
+            self.image_service.delete_image(safe_filename)
             record.image = images[0] if images else None
             record.images = self._join_images(images)
-
             db.add(record)
             db.commit()
+        except (ProductNotFoundError, ValidationError):
+            db.rollback()
+            raise
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.exception("Failed to delete image %s for product %s.", filename, product_id)
+            raise DataAccessError("Unable to delete the image right now.") from exc
         finally:
             db.close()
 
@@ -340,12 +431,19 @@ class ProductService:
         try:
             record = db.query(Product).filter(Product.id == product_id).first()
             if record is None:
-                raise ProductNotFoundError("Product not found")
+                raise ProductNotFoundError("Product not found.")
 
             for image in self._split_images(record.images):
                 self.image_service.delete_image(image)
 
             db.delete(record)
             db.commit()
+        except ProductNotFoundError:
+            db.rollback()
+            raise
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.exception("Failed to delete product %s.", product_id)
+            raise DataAccessError("Unable to delete the product right now.") from exc
         finally:
             db.close()

@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.core.exceptions import DataAccessError
 from app.database.db import SessionLocal
 from app.database.models import Visit as VisitRecord
 from app.models.schemas import Visit
+
+
+logger = logging.getLogger(__name__)
 
 
 class VisitService:
@@ -17,6 +24,9 @@ class VisitService:
         try:
             db.add(VisitRecord(ip=ip_address.strip() or "unknown"))
             db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            logger.exception("Failed to log visit for %s.", ip_address)
         finally:
             db.close()
 
@@ -25,6 +35,9 @@ class VisitService:
         try:
             records = db.query(VisitRecord).order_by(VisitRecord.visited_at.asc()).all()
             return [self._to_visit(record) for record in records]
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to list visits.")
+            raise DataAccessError("Unable to load visitor data right now.") from exc
         finally:
             db.close()
 

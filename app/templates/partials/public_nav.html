@@ -1,4 +1,4 @@
-<nav class="navbar">
+<nav class="navbar" aria-label="Primary">
   <a href="/" class="brand">
     <div class="logo-wrap">
       <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
@@ -12,7 +12,7 @@
     </div>
   </a>
   <button class="nav-menu-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="public-nav-links">Menu</button>
-  <div class="nav-links" id="public-nav-links">
+  <div class="nav-links" id="public-nav-links" aria-hidden="true">
     <a href="/" class="nav-link{% if active_nav == 'home' %} active{% endif %}">Home</a>
     <a href="/about" class="nav-link{% if active_nav == 'about' %} active{% endif %}">About Us</a>
     <a href="/catalog" class="nav-link{% if active_nav == 'catalog' %} active{% endif %}">Catalog</a>
@@ -20,7 +20,7 @@
     <a href="/contact" class="nav-link{% if active_nav == 'contact' %} active{% endif %}">Contact</a>
   </div>
   <div class="nav-right">
-    <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme"></button>
+    <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme" aria-label="Toggle color theme"></button>
     <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn outline-green sm">WhatsApp</a>
     <a href="/catalog" class="btn primary sm">View Catalog</a>
   </div>

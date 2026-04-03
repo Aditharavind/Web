@@ -21,11 +21,12 @@
     <div class="alert error">⚠️ {{ error }}</div>
     {% endif %}
     <form method="post" action="{{ settings.admin_route }}/login">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-group"><label class="form-label">Username</label><input type="text" name="username" class="form-control" autocomplete="username" required></div>
       <div class="form-group"><label class="form-label">Password</label><input type="password" name="password" class="form-control" autocomplete="current-password" required></div>
       <button type="submit" class="btn primary btn-block btn-large">Sign In →</button>
     </form>
-    <p class="form-note">Default: admin / admin123</p>
+    <p class="form-note">Use the administrator credentials configured in your environment.</p>
   </div>
 </div>
 {% endblock %}

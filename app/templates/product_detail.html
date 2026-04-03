@@ -2,18 +2,18 @@
 {% block content %}
 {% include "partials/public_nav.html" %}
 
-<div class="section product-detail-section">
-  <div class="breadcrumb">
+<section class="section product-detail-section">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/">Home</a><span>/</span>
     <a href="/catalog">Catalog</a><span>/</span>
-    <a href="/catalog?cat={{ product.category }}">{{ product.category or "Products" }}</a><span>/</span>
+    <a href="/catalog?{{ build_query_string({'cat': product.category}) }}">{{ product.category or "Products" }}</a><span>/</span>
     <span>{{ product.name }}</span>
-  </div>
-  <div class="detail-layout">
-    <div class="detail-gallery">
+  </nav>
+  <article class="detail-layout">
+    <section class="detail-gallery" aria-label="{{ product.name }} gallery">
       <div class="detail-main-img" data-open-lightbox>
         {% if product_images %}
-        <img src="/uploads/{{ product_images[0] }}" alt="{{ product.name }}" id="main-gallery-img">
+        <img src="/uploads/{{ product_images[0] }}" alt="{{ product.name }}" id="main-gallery-img" fetchpriority="high" decoding="async">
         {% else %}
         <div class="detail-img-placeholder">📦</div>
         {% endif %}
@@ -21,12 +21,12 @@
       {% if product_images|length > 1 %}
       <div class="detail-thumbs">
         {% for image in product_images %}
-        <img src="/uploads/{{ image }}" class="detail-thumb{% if loop.first %} active{% endif %}" alt="Image {{ loop.index }}" data-thumb-index="{{ loop.index0 }}">
+        <img src="/uploads/{{ image }}" class="detail-thumb{% if loop.first %} active{% endif %}" alt="Image {{ loop.index }}" data-thumb-index="{{ loop.index0 }}" loading="lazy" decoding="async">
         {% endfor %}
       </div>
       {% endif %}
-    </div>
-    <div>
+    </section>
+    <section>
       <div class="detail-eyebrow">{{ product.category or "Product" }}</div>
       <h1 class="detail-title">{{ product.name }}</h1>
       {% if product.tags %}
@@ -58,9 +58,9 @@
         <a href="/catalog" class="btn">← All Products</a>
       </div>
       <p class="detail-contact">📞 <a href="tel:{{ settings.contact_whatsapp }}">{{ settings.contact_whatsapp }}</a> | 📧 <a href="{{ email_url }}">{{ settings.contact_email }}</a></p>
-    </div>
-  </div>
-</div>
+    </section>
+  </article>
+</section>
 
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" type="button" data-lightbox-close>✕</button>
@@ -72,7 +72,7 @@
   </div>
   <div class="lightbox-thumbs" id="lb-thumbs"></div>
 </div>
-<div id="product-images-data" data-images='{{ product_image_urls | tojson }}'></div>
+<div id="product-images-data" data-images='{{ product_image_urls | tojson }}' hidden></div>
 
 {% include "partials/footer.html" %}
 {% endblock %}

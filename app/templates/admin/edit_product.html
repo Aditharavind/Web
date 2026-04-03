@@ -9,11 +9,15 @@
     </div>
     <div class="page-title">Edit Product</div>
     <div class="page-subtitle">{{ product.name }}</div>
-    {% if request.query_params.get("msg") %}
-    <div class="alert success">✅ {{ request.query_params.get("msg") }}</div>
+    {% if message %}
+    <div class="alert success">✅ {{ message }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert error">⚠️ {{ error }}</div>
     {% endif %}
     <div class="form-card form-card-wide">
       <form method="post" action="{{ settings.admin_route }}/products/edit/{{ product.id }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" value="{{ product.name }}" required></div>
         <div class="form-group">
           <label class="form-label">Category *</label>
@@ -34,8 +38,11 @@
           <div class="existing-imgs">
             {% for image in product_images %}
             <div class="existing-img-item">
-              <img src="/uploads/{{ image }}" alt="">
-              <a href="{{ settings.admin_route }}/products/delete-image/{{ product.id }}/{{ image }}" class="del-img-btn" data-confirm="Remove image?" title="Remove">✕</a>
+              <img src="/uploads/{{ image }}" alt="" loading="lazy" decoding="async">
+              <form method="post" action="{{ settings.admin_route }}/products/delete-image/{{ product.id }}/{{ image }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="del-img-btn" data-confirm="Remove image?" title="Remove">✕</button>
+              </form>
               {% if loop.first %}<span class="primary-label">PRIMARY</span>{% endif %}
             </div>
             {% endfor %}

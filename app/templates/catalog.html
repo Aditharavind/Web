@@ -2,18 +2,18 @@
 {% block content %}
 {% include "partials/public_nav.html" %}
 
-<div class="page-hero page-hero-compact">
+<section class="page-hero page-hero-compact">
   <div class="page-hero-inner">
     <div class="page-hero-eyebrow">Product Catalog</div>
     <h1 class="page-hero-title page-hero-title-small">{{ catalog.category or "All Products" }}</h1>
   </div>
-</div>
+</section>
 
-<div class="section section-tight-top">
+<section class="section section-tight-top" aria-labelledby="catalog-heading">
   <div class="section-header-row">
     <div>
       <span class="section-label">Catalog</span>
-      <div class="recent-title">{{ catalog.category or "All Products" }}</div>
+      <h2 class="recent-title" id="catalog-heading">{{ catalog.category or "All Products" }}</h2>
     </div>
     <span class="section-count">{{ catalog.total }} product{% if catalog.total != 1 %}s{% endif %}</span>
   </div>
@@ -56,7 +56,7 @@
   {% if pagination %}
   <div class="pagination">
     {% if catalog.page > 1 %}
-    <a class="page-btn" href="/catalog?q={{ catalog.query }}&cat={{ catalog.category }}&page={{ catalog.page - 1 }}">&#8249;</a>
+    <a class="page-btn" href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.category, 'page': catalog.page - 1}) }}">&#8249;</a>
     {% else %}
     <span class="page-btn disabled">&#8249;</span>
     {% endif %}
@@ -65,18 +65,18 @@
       {% if item.kind == 'ellipsis' %}
       <span class="page-ellipsis">…</span>
       {% else %}
-      <a class="page-btn{% if item.active %} active{% endif %}" href="/catalog?q={{ catalog.query }}&cat={{ catalog.category }}&page={{ item.value }}">{{ item.value }}</a>
+      <a class="page-btn{% if item.active %} active{% endif %}" href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.category, 'page': item.value}) }}">{{ item.value }}</a>
       {% endif %}
     {% endfor %}
 
     {% if catalog.page < catalog.total_pages %}
-    <a class="page-btn" href="/catalog?q={{ catalog.query }}&cat={{ catalog.category }}&page={{ catalog.page + 1 }}">&#8250;</a>
+    <a class="page-btn" href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.category, 'page': catalog.page + 1}) }}">&#8250;</a>
     {% else %}
     <span class="page-btn disabled">&#8250;</span>
     {% endif %}
   </div>
   {% endif %}
-</div>
+</section>
 
 {% include "partials/footer.html" %}
 {% endblock %}

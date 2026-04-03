@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from urllib.parse import quote_plus
-
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import ValidationError as PydanticValidationError
@@ -13,6 +11,7 @@ from app.core.exceptions import (
     ProductNotFoundError,
     ValidationError,
 )
+from app.core.security import validate_csrf
 from app.core.templates import template_context, templates
 from app.models.schemas import ProductCreate, ProductUpdate
 from app.services.auth import SessionService
@@ -23,14 +22,43 @@ from app.services.dependencies import (
 )
 from app.services.product_service import ProductService
 from app.services.visit_service import VisitService
+from app.utils.text import build_query_string, decode_query_text
+from app.core.rate_limiter import allow_request
+
+
+# Simple brute-force protection: track recent failed attempts per client for login
+_FAILED_LOGIN: dict[str, list[float]] = {}
+_LOCKOUT_SECONDS = 300
+_MAX_FAILED = 5
+
+
+def _client_key(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def _is_locked(request: Request) -> bool:
+    key = _client_key(request)
+    attempts = _FAILED_LOGIN.get(key, [])
+    now = __import__("time").time()
+    # clear old
+    attempts = [t for t in attempts if t + _LOCKOUT_SECONDS > now]
+    _FAILED_LOGIN[key] = attempts
+    return len(attempts) >= _MAX_FAILED
+
+
+def _record_failed(request: Request) -> None:
+    key = _client_key(request)
+    _FAILED_LOGIN.setdefault(key, []).append(__import__("time").time())
 
 
 router = APIRouter()
 settings = get_settings()
 
 
-def _redirect(path: str) -> RedirectResponse:
-    return RedirectResponse(path, status_code=303)
+def _redirect(path: str, **params: str) -> RedirectResponse:
+    query_string = build_query_string(params)
+    location = f"{path}?{query_string}" if query_string else path
+    return RedirectResponse(location, status_code=303)
 
 
 def _split_specs(specs: str) -> list[str]:
@@ -80,34 +108,60 @@ async def login_page(
     return templates.TemplateResponse(
         request,
         "admin/login.html",
-        template_context(page_title="Admin Login — NAWA Global", error=error),
+        template_context(
+            request,
+            page_title="Admin Login — NAWA Global",
+            page_description="Secure administrator access for the NAWA Global product catalog.",
+            meta_robots="noindex,nofollow",
+            error=decode_query_text(error),
+        ),
     )
 
 
 @router.post(f"{settings.admin_route}/login")
 async def do_login(
+    request: Request,
+    csrf_token: str = Form(...),
     username: str = Form(...),
     password: str = Form(...),
     session_service: SessionService = Depends(get_session_service),
 ) -> RedirectResponse:
+    validate_csrf(request, csrf_token, settings)
+    # Check lockout
+    if _is_locked(request):
+        return _redirect(f"{settings.admin_route}/login", error="Too many failed login attempts. Try again later.")
+    # simple per-IP rate limit for login: allow 10 per 60s
+    if not await allow_request(_client_key(request), 10, 60):
+        return _redirect(f"{settings.admin_route}/login", error="Too many requests. Slow down.")
     try:
         token = session_service.authenticate(username, password)
     except AuthenticationError:
-        return _redirect(f"{settings.admin_route}/login?error=Invalid+credentials")
+        _record_failed(request)
+        return _redirect(f"{settings.admin_route}/login", error="Invalid credentials")
 
     response = _redirect(f"{settings.admin_route}/dashboard")
-    response.set_cookie("session", token, httponly=True, samesite="lax", max_age=28800)
+    response.set_cookie(
+        settings.session_cookie_name,
+        token,
+        httponly=True,
+        secure=settings.secure_cookies,
+        samesite="lax",
+        max_age=settings.session_max_age_seconds,
+        path="/",
+    )
     return response
 
 
-@router.get(f"{settings.admin_route}/logout")
+@router.post(f"{settings.admin_route}/logout")
 async def logout(
     request: Request,
+    csrf_token: str = Form(...),
     session_service: SessionService = Depends(get_session_service),
 ) -> RedirectResponse:
-    session_service.clear(request.cookies.get("session"))
+    validate_csrf(request, csrf_token, settings)
+    session_service.clear(request.cookies.get(settings.session_cookie_name))
     response = _redirect(f"{settings.admin_route}/login")
-    response.delete_cookie("session")
+    response.delete_cookie(settings.session_cookie_name, path="/")
     return response
 
 
@@ -126,7 +180,9 @@ async def dashboard(
         request,
         "admin/dashboard.html",
         template_context(
+            request,
             page_title="Dashboard — Admin",
+            meta_robots="noindex,nofollow",
             admin_section="dashboard",
             products=products,
             visits=visits,
@@ -150,12 +206,14 @@ async def admin_products(
         request,
         "admin/products.html",
         template_context(
+            request,
             page_title="Products — Admin",
+            meta_robots="noindex,nofollow",
             admin_section="products",
             product_rows=_product_rows(product_service, products),
             categories=product_service.get_categories(),
-            message=msg,
-            error=error,
+            message=decode_query_text(msg),
+            error=decode_query_text(error),
         ),
     )
 
@@ -163,6 +221,7 @@ async def admin_products(
 @router.post(f"{settings.admin_route}/products/add")
 async def add_product(
     request: Request,
+    csrf_token: str = Form(...),
     name: str = Form(...),
     category: str = Form(""),
     new_category: str = Form(""),
@@ -174,6 +233,10 @@ async def add_product(
     product_service: ProductService = Depends(get_product_service),
 ) -> RedirectResponse:
     session_service.require_admin(request)
+    validate_csrf(request, csrf_token, settings)
+    # protect product creation from mass requests
+    if not await allow_request(_client_key(request), 20, 60):
+        return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
         await product_service.create_product(
             ProductCreate(
@@ -186,13 +249,11 @@ async def add_product(
             images,
         )
     except DuplicateProductError:
-        return _redirect(f"{settings.admin_route}/products?error=Product+already+exists")
-    except (ValidationError, PydanticValidationError) as exc:
-        return _redirect(
-            f"{settings.admin_route}/products?error={quote_plus(_validation_message(exc))}"
-        )
+        return _redirect(f"{settings.admin_route}/products", error="Product already exists")
+    except (ValidationError, PydanticValidationError, ProductNotFoundError) as exc:
+        return _redirect(f"{settings.admin_route}/products", error=_validation_message(exc))
 
-    return _redirect(f"{settings.admin_route}/products?msg=Product+added")
+    return _redirect(f"{settings.admin_route}/products", msg="Product added")
 
 
 @router.get(f"{settings.admin_route}/products/edit/{{product_id}}", response_class=HTMLResponse)
@@ -212,11 +273,15 @@ async def edit_product_page(
         request,
         "admin/edit_product.html",
         template_context(
+            request,
             page_title="Edit — Admin",
+            meta_robots="noindex,nofollow",
             admin_section="products",
             categories=product_service.get_categories(),
             product=product,
             product_images=product_service.get_product_images(product),
+            message=decode_query_text(request.query_params.get("msg")),
+            error=decode_query_text(request.query_params.get("error")),
         ),
     )
 
@@ -225,6 +290,7 @@ async def edit_product_page(
 async def update_product(
     product_id: str,
     request: Request,
+    csrf_token: str = Form(...),
     name: str = Form(...),
     category: str = Form(""),
     new_category: str = Form(""),
@@ -236,6 +302,9 @@ async def update_product(
     product_service: ProductService = Depends(get_product_service),
 ) -> RedirectResponse:
     session_service.require_admin(request)
+    validate_csrf(request, csrf_token, settings)
+    if not await allow_request(_client_key(request), 20, 60):
+        return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
         await product_service.update_product(
             product_id,
@@ -249,46 +318,51 @@ async def update_product(
             images,
         )
     except DuplicateProductError:
-        return _redirect(f"{settings.admin_route}/products?error=Product+already+exists")
+        return _redirect(f"{settings.admin_route}/products", error="Product already exists")
     except (ValidationError, ProductNotFoundError, PydanticValidationError) as exc:
-        return _redirect(
-            f"{settings.admin_route}/products?error={quote_plus(_validation_message(exc))}"
-        )
+        return _redirect(f"{settings.admin_route}/products", error=_validation_message(exc))
 
-    return _redirect(f"{settings.admin_route}/products?msg=Product+updated+successfully")
+    return _redirect(f"{settings.admin_route}/products", msg="Product updated successfully")
 
 
-@router.get(f"{settings.admin_route}/products/delete-image/{{product_id}}/{{filename}}")
+@router.post(f"{settings.admin_route}/products/delete-image/{{product_id}}/{{filename}}")
 async def delete_product_image(
     product_id: str,
     filename: str,
     request: Request,
+    csrf_token: str = Form(...),
     session_service: SessionService = Depends(get_session_service),
     product_service: ProductService = Depends(get_product_service),
 ) -> RedirectResponse:
     session_service.require_admin(request)
+    validate_csrf(request, csrf_token, settings)
     try:
         product_service.delete_product_image(product_id, filename)
-    except ProductNotFoundError as exc:
-        return _redirect(f"{settings.admin_route}/products?error={quote_plus(str(exc))}")
+    except (ProductNotFoundError, ValidationError) as exc:
+        return _redirect(f"{settings.admin_route}/products", error=str(exc))
     return _redirect(
-        f"{settings.admin_route}/products/edit/{product_id}?msg=Image+deleted+successfully"
+        f"{settings.admin_route}/products/edit/{product_id}",
+        msg="Image deleted successfully",
     )
 
 
-@router.get(f"{settings.admin_route}/products/delete/{{product_id}}")
+@router.post(f"{settings.admin_route}/products/delete/{{product_id}}")
 async def delete_product(
     product_id: str,
     request: Request,
+    csrf_token: str = Form(...),
     session_service: SessionService = Depends(get_session_service),
     product_service: ProductService = Depends(get_product_service),
 ) -> RedirectResponse:
     session_service.require_admin(request)
+    validate_csrf(request, csrf_token, settings)
+    if not await allow_request(_client_key(request), 20, 60):
+        return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
         product_service.delete_product(product_id)
     except ProductNotFoundError as exc:
-        return _redirect(f"{settings.admin_route}/products?error={quote_plus(str(exc))}")
-    return _redirect(f"{settings.admin_route}/products?msg=Product+deleted")
+        return _redirect(f"{settings.admin_route}/products", error=str(exc))
+    return _redirect(f"{settings.admin_route}/products", msg="Product deleted")
 
 
 @router.get(f"{settings.admin_route}/visitors", response_class=HTMLResponse)
@@ -304,7 +378,9 @@ async def visitors(
         request,
         "admin/visitors.html",
         template_context(
+            request,
             page_title="Visitors — Admin",
+            meta_robots="noindex,nofollow",
             admin_section="visitors",
             analytics=analytics,
             period=analytics["period"],

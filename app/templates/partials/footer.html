@@ -1,4 +1,4 @@
-<footer>
+<footer aria-label="Site footer">
   <div class="footer-inner">
     <div>
       <div class="footer-brand-row">
@@ -15,7 +15,7 @@
       </div>
       <div class="footer-brand-desc">Premium oilfield &amp; industrial supply partner based in Abu Dhabi, UAE. Trusted by oil &amp; gas, construction, and facility management sectors.</div>
       <div class="footer-cta">
-        <a href="{{ contact_whatsapp_url }}" target="_blank" class="wa-btn wa-btn-small">Chat on WhatsApp</a>
+        <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="wa-btn wa-btn-small">Chat on WhatsApp</a>
       </div>
     </div>
     <div>
@@ -39,7 +39,7 @@
       <div class="footer-contact">📍 <span>{{ settings.contact_address }}</span></div>
       <div class="footer-contact">📞 <a href="tel:{{ settings.contact_whatsapp }}" class="footer-accent">{{ settings.contact_whatsapp }}</a></div>
       <div class="footer-contact">📧 <a href="mailto:{{ settings.contact_email }}" class="footer-accent">{{ settings.contact_email }}</a></div>
-      <div class="footer-contact">🌐 <a href="https://{{ settings.contact_website }}" target="_blank" class="footer-accent">{{ settings.contact_website }}</a></div>
+      <div class="footer-contact">🌐 <a href="{{ settings.contact_website_url }}" target="_blank" rel="noopener noreferrer" class="footer-accent">{{ settings.contact_website }}</a></div>
     </div>
   </div>
   <div class="footer-bottom">

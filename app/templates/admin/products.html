@@ -46,7 +46,10 @@
             <td>
               <div class="table-actions">
                 <a href="{{ settings.admin_route }}/products/edit/{{ product.id }}" class="btn sm">Edit</a>
-                <a href="{{ settings.admin_route }}/products/delete/{{ product.id }}" class="btn sm danger" data-confirm="Delete this product?">Delete</a>
+                <form method="post" action="{{ settings.admin_route }}/products/delete/{{ product.id }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit" class="btn sm danger" data-confirm="Delete this product?">Delete</button>
+                </form>
               </div>
             </td>
           </tr>
@@ -64,6 +67,7 @@
     <button class="modal-close" type="button" data-modal-close="#add-modal">✕</button>
     <div class="modal-title">Add New Product</div>
     <form method="post" action="{{ settings.admin_route }}/products/add" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" required placeholder="e.g. Industrial Safety Gloves"></div>
       <div class="form-group">
         <label class="form-label">Category *</label>

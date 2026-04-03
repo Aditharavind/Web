@@ -13,8 +13,13 @@ from app.services.visit_service import VisitService
 def get_product_service() -> ProductService:
     settings = get_settings()
     return ProductService(
-        image_service=ImageService(settings.uploads_dir),
+        image_service=ImageService(
+            settings.uploads_dir,
+            max_upload_size_bytes=settings.max_upload_size_bytes,
+            image_max_dimension=settings.image_max_dimension,
+        ),
         products_per_page=settings.products_per_page,
+        max_upload_files=settings.max_upload_files,
     )
 
 

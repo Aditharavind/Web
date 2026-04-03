@@ -1,24 +1,53 @@
 from __future__ import annotations
 
-import os
+import logging
 
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from app.core.config import get_settings
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://nawa_global_user:cpkSm5wj203w0hgohqDGZ8DmSTMj7got@dpg-d775pc7afjfc73d9elo0-a/nawa_global")
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+logger = logging.getLogger(__name__)
+settings = get_settings()
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+def _engine_options(database_url: str) -> dict[str, object]:
+    common: dict[str, object] = {
+        "pool_pre_ping": True,
+        "future": True,
+    }
+    if database_url.startswith("sqlite"):
+        common["connect_args"] = {"check_same_thread": False}
+        return common
+
+    common.update(
+        {
+            "pool_size": 5,
+            "max_overflow": 10,
+            "pool_recycle": 1800,
+        }
+    )
+    return common
+
+
+engine = create_engine(settings.database_url, **_engine_options(settings.database_url))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, future=True)
 Base = declarative_base()
 
 
-def ensure_postgres_schema() -> None:
-    Base.metadata.create_all(bind=engine)
+def _ensure_sqlite_schema(connection: Engine) -> None:
+    logger.info("SQLite database detected; using SQLAlchemy metadata only.")
 
+
+def _ensure_postgres_schema() -> None:
     inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    if "products" not in table_names or "categories" not in table_names:
+        return
+
     product_columns = {column["name"] for column in inspector.get_columns("products")}
     category_columns = {column["name"] for column in inspector.get_columns("categories")}
 
@@ -48,15 +77,6 @@ def ensure_postgres_schema() -> None:
             text(
                 """
                 UPDATE products
-                SET name = LOWER(BTRIM(name))
-                WHERE name IS NOT NULL
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
-                UPDATE products
                 SET category = 'general'
                 WHERE category IS NULL OR BTRIM(category) = ''
                 """
@@ -66,7 +86,16 @@ def ensure_postgres_schema() -> None:
             text(
                 """
                 UPDATE products
-                SET category = LOWER(BTRIM(category))
+                SET name = BTRIM(name)
+                WHERE name IS NOT NULL
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                UPDATE products
+                SET category = BTRIM(category)
                 WHERE category IS NOT NULL
                 """
             )
@@ -137,3 +166,16 @@ def ensure_postgres_schema() -> None:
                     """
                 )
             )
+
+
+def ensure_database_schema() -> None:
+    try:
+        Base.metadata.create_all(bind=engine)
+        if engine.dialect.name == "postgresql":
+            _ensure_postgres_schema()
+        else:
+            _ensure_sqlite_schema(engine)
+        logger.info("Database schema is ready.")
+    except SQLAlchemyError:
+        logger.exception("Database schema initialization failed.")
+        raise

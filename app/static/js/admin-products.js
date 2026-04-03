@@ -23,7 +23,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const grid = document.getElementById(previewId);
       if (!grid) return;
 
-      grid.innerHTML = "";
+      grid.replaceChildren();
       Array.from(input.files || [])
         .slice(0, 10)
         .forEach((file, index) => {
@@ -31,9 +31,16 @@ window.addEventListener("DOMContentLoaded", () => {
           reader.onload = (event) => {
             const item = document.createElement("div");
             item.className = "img-preview-item";
-            item.innerHTML = `<img src="${event.target?.result || ""}" alt="">${
-              index === 0 ? '<span class="primary-badge">PRIMARY</span>' : ""
-            }`;
+            const image = document.createElement("img");
+            image.src = String(event.target?.result || "");
+            image.alt = `Selected upload ${index + 1}`;
+            item.appendChild(image);
+            if (index === 0) {
+              const badge = document.createElement("span");
+              badge.className = "primary-badge";
+              badge.textContent = "PRIMARY";
+              item.appendChild(badge);
+            }
             grid.appendChild(item);
           };
           reader.readAsDataURL(file);

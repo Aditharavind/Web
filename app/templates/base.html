@@ -3,12 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ page_description }}">
+  <meta name="keywords" content="{{ page_keywords }}">
+  <meta name="robots" content="{{ meta_robots }}">
+  <meta name="theme-color" content="#1B5E20">
   <title>{{ page_title }}</title>
-  <script>
+  {% if canonical_url %}
+  <link rel="canonical" href="{{ canonical_url }}">
+  {% endif %}
+  <meta property="og:site_name" content="NAWA Global General Trading">
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ page_description }}">
+  <meta property="og:type" content="{{ og_type }}">
+  <meta property="og:url" content="{{ canonical_url or request.url }}">
+  {% if page_image %}
+  <meta property="og:image" content="{{ page_image }}">
+  {% endif %}
+  <meta name="twitter:card" content="{{ twitter_card }}">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:description" content="{{ page_description }}">
+  {% if page_image %}
+  <meta name="twitter:image" content="{{ page_image }}">
+  {% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script nonce="{{ csp_nonce }}">
     // Apply the saved theme before CSS loads so the page defaults to light
     // without flashing, while still honoring a persisted dark preference.
     (function () {
-      const savedTheme = localStorage.getItem("theme");
+      let savedTheme = null;
+      try {
+        savedTheme = localStorage.getItem("theme");
+      } catch {
+        savedTheme = null;
+      }
       const theme = savedTheme === "dark" ? "dark" : "light";
       const root = document.documentElement;
 
@@ -23,12 +51,38 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
-  <script src="{{ url_for('static', path='js/theme.js') }}"></script>
+  <script defer src="{{ url_for('static', path='js/theme.js') }}"></script>
   <script defer src="{{ url_for('static', path='js/ui.js') }}"></script>
+  <script nonce="{{ csp_nonce }}" type="application/ld+json">
+    {{ {
+      "@context": "https://schema.org",
+      "@type": schema_type or "WebSite",
+      "name": "NAWA Global General Trading",
+      "url": site_url,
+      "description": page_description,
+      "publisher": {
+        "@type": "Organization",
+        "name": "NAWA Global General Trading",
+        "url": site_url,
+        "telephone": settings.contact_whatsapp,
+        "email": settings.contact_email,
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": settings.contact_address
+        }
+      }
+    } | tojson }}
+  </script>
+  {% for item in structured_data %}
+  <script nonce="{{ csp_nonce }}" type="application/ld+json">{{ item | tojson }}</script>
+  {% endfor %}
   {% block head_extra %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-  {% block content %}{% endblock %}
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
   {% block scripts %}{% endblock %}
 </body>
 </html>
