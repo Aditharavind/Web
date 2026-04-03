@@ -1,7 +1,8 @@
 fastapi==0.110.0
 uvicorn==0.29.0
 
-SQLAlchemy==2.0.29
+# Use a modern SQLAlchemy 2.x release compatible with Python 3.13
+SQLAlchemy==2.0.48
 # psycopg (psycopg3) binary wheels; compatible with Python 3.13 on macOS
 psycopg[binary]==3.3.3
 
