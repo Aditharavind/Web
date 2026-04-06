@@ -11,6 +11,7 @@ from app.core.security import validate_csrf
 from app.core.templates import template_context, templates
 from app.models.schemas import ContactInquiry
 from app.services.dependencies import get_product_service, get_visit_service
+from fastapi.concurrency import run_in_threadpool
 from app.services.product_service import ProductService
 from app.services.visit_service import VisitService
 from app.utils.pagination import build_pagination
@@ -71,8 +72,8 @@ async def home(
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:
     _track_visit(request, visit_service)
-    products = product_service.list_products()
-    categories = product_service.get_categories()
+    products = await run_in_threadpool(product_service.list_products)
+    categories = await run_in_threadpool(product_service.get_categories)
     return templates.TemplateResponse(
         request,
         "home.html",
@@ -87,7 +88,7 @@ async def home(
                 canonical_url=normalize_site_url(str(request.url)),
                 active_nav="home",
                 recent_product_cards=_build_product_cards(
-                    product_service.recent_products(6),
+                    await run_in_threadpool(product_service.recent_products, 6),
                     product_service,
                 ),
                 total_products=len(products),
@@ -221,7 +222,7 @@ async def catalog(
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:
     _track_visit(request, visit_service)
-    result = product_service.search_catalog(page=page, query=q, category=cat)
+    result = await run_in_threadpool(product_service.search_catalog, page, q, cat)
     start = (result.page - 1) * settings.products_per_page
     result_start = start + 1 if result.total else 0
     result_end = min(start + settings.products_per_page, result.total)
@@ -254,7 +255,7 @@ async def catalog(
                 ),
                 active_nav="catalog",
                 catalog=result,
-                categories=product_service.get_categories(),
+                categories=await run_in_threadpool(product_service.get_categories),
                 pagination=build_pagination(result.page, result.total_pages),
                 result_start=result_start,
                 result_end=result_end,
@@ -272,8 +273,8 @@ async def product_detail(
     product_service: ProductService = Depends(get_product_service),
 ) -> Response:
     try:
-        product = product_service.get_product(product_id)
-        product_images = product_service.get_product_images(product)
+        product = await run_in_threadpool(product_service.get_product, product_id)
+        product_images = await run_in_threadpool(product_service.get_product_images, product)
     except ProductNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -380,8 +381,8 @@ async def sitemap(
         f"{settings.site_url}/contact",
     ]
     product_urls = [
-        f"{settings.site_url}/product/{product.id}"
-        for product in product_service.list_products()
+    f"{settings.site_url}/product/{product.id}"
+    for product in await run_in_threadpool(product_service.list_products)
     ]
     entries = "\n".join(
         f"<url><loc>{escape(url)}</loc></url>"

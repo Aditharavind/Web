@@ -32,6 +32,8 @@ def get_redis_client():
         if not url:
             raise RuntimeError("REDIS_URL environment variable must be set in production.")
     if not url or aioredis is None:
+        # In non-production environments we allow missing redis (tests/local dev), but in production
+        # get_redis_client will have raised earlier. Return None to indicate unavailable client.
         return None
     _redis_client = aioredis.from_url(url)
     return _redis_client
@@ -43,7 +45,13 @@ async def allow_request(key: str, max_requests: int, window_seconds: int) -> boo
     now = int(time.time())
     window_start = now - window_seconds
     if r is None:
-        # fallback: conservative allow (single-instance deployments should rely on this)
+        # Fail-closed: if Redis is unavailable, deny requests to avoid bypassing rate limits.
+        # In non-production, to ease development/tests, we allow requests.
+        from app.core.config import get_settings
+
+        settings = get_settings()
+        if settings.is_production:
+            return False
         return True
 
     key_name = f"rl:{key}"

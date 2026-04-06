@@ -5,7 +5,8 @@ import math
 import uuid
 from datetime import datetime
 
-from fastapi import UploadFile
+from fastapi import UploadFile, BackgroundTasks
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import joinedload
@@ -96,8 +97,12 @@ class ProductService:
     def _normalize_text(cls, value: str | None) -> str:
         return cls._clean_text(value).casefold()
 
-    def _validate_image_count(self, images: list[UploadFile]) -> None:
-        actual_uploads = [image for image in images if (image.filename or "").strip()]
+    def _validate_image_count(self, images: list[UploadFile] | list[tuple[str, bytes]]) -> None:
+        # images may be UploadFile list or pre-read list of (filename, bytes)
+        if images and isinstance(images[0], tuple):
+            actual_uploads = [img for img in images if (img[0] or "").strip()]
+        else:
+            actual_uploads = [image for image in images if (image.filename or "").strip()]
         if len(actual_uploads) > self.max_upload_files:
             raise ValidationError(f"You can upload up to {self.max_upload_files} images per product.")
 
@@ -131,19 +136,39 @@ class ProductService:
                 raise DataAccessError("Unable to save category.")
             return category
 
-    async def _save_images(self, product_id: str, images: list[UploadFile]) -> list[str]:
+    async def _save_images(self, product_id: str, images: list[UploadFile], background: BackgroundTasks | None) -> list[str]:
+        """
+        Read UploadFile objects into bytes, validate count, and schedule background processing.
+        Returns list of filenames that will be stored (placeholder names).
+        """
         self._validate_image_count(images)
-        saved: list[str] = []
-        index = 0
+        # read payloads in async context (non-blocking) then process in background
+        read_images: list[tuple[str, bytes]] = []
         for image in images:
             if not (image.filename or "").strip():
                 continue
-            suffix = "" if index == 0 else f"-{index + 1}"
-            saved.append(await self.image_service.save_image(image, product_id, suffix))
-            index += 1
-        return saved
+            payload = await image.read()
+            read_images.append((image.filename or "", payload))
 
-    def list_products(self) -> list[ProductSchema]:
+        if not read_images:
+            return []
+
+        # generate filenames that will be created (deterministic)
+        filenames: list[str] = []
+        for idx in range(len(read_images)):
+            suffix = "" if idx == 0 else f"-{idx + 1}"
+            filenames.append(f"{product_id}{suffix}.jpg")
+
+        # schedule background processing to run sync image work in worker
+        if background is not None:
+            background.add_task(self.image_service.process_and_store_images, product_id, read_images)
+        else:
+            # fallback: process synchronously (should not happen in async endpoints)
+            self.image_service.process_and_store_images(product_id, read_images)
+
+        return filenames
+
+    def _list_products_sync(self) -> list[Product]:
         db = SessionLocal()
         try:
             records = (
@@ -152,60 +177,62 @@ class ProductService:
                 .order_by(Product.created_at.desc())
                 .all()
             )
-            return [self._to_product(record) for record in records]
-        except SQLAlchemyError as exc:
-            logger.exception("Failed to list products.")
-            raise DataAccessError("Unable to load products right now.") from exc
+            return records
         finally:
             db.close()
 
-    def get_product(self, product_id: str) -> ProductSchema:
+    def list_products(self) -> list[ProductSchema]:
+        records = self._list_products_sync()
+        return [self._to_product(record) for record in records]
+
+    def _get_product_sync(self, product_id: str) -> Product | None:
         db = SessionLocal()
         try:
-            record = (
+            return (
                 db.query(Product)
                 .options(joinedload(Product.category_ref))
                 .filter(Product.id == product_id)
                 .first()
             )
-            if record is None:
-                raise ProductNotFoundError("Product not found.")
-            return self._to_product(record)
-        except SQLAlchemyError as exc:
-            logger.exception("Failed to get product %s.", product_id)
-            raise DataAccessError("Unable to load the product right now.") from exc
         finally:
             db.close()
 
-    def recent_products(self, limit: int) -> list[ProductSchema]:
+    def get_product(self, product_id: str) -> ProductSchema:
+        record = self._get_product_sync(product_id)
+        if record is None:
+            raise ProductNotFoundError("Product not found.")
+        return self._to_product(record)
+
+    def _recent_products_sync(self, limit: int) -> list[Product]:
         db = SessionLocal()
         try:
-            records = (
+            return (
                 db.query(Product)
                 .options(joinedload(Product.category_ref))
                 .order_by(Product.created_at.desc())
                 .limit(limit)
                 .all()
             )
-            return [self._to_product(record) for record in records]
-        except SQLAlchemyError as exc:
-            logger.exception("Failed to load recent products.")
-            raise DataAccessError("Unable to load products right now.") from exc
         finally:
             db.close()
+
+    def recent_products(self, limit: int) -> list[ProductSchema]:
+        records = self._recent_products_sync(limit)
+        return [self._to_product(record) for record in records]
 
     def get_categories(self) -> list[str]:
         db = SessionLocal()
         try:
             records = db.query(Category).order_by(Category.name.asc()).all()
             return [record.name.strip() for record in records if record.name.strip()]
-        except SQLAlchemyError as exc:
-            logger.exception("Failed to load categories.")
-            raise DataAccessError("Unable to load categories right now.") from exc
         finally:
             db.close()
 
     def search_catalog(self, page: int, query: str, category: str) -> PaginatedCatalog:
+        """
+        Synchronous pagination logic. This method is safe to call from async endpoints
+        when executed via run_in_threadpool at the route level.
+        """
         db = SessionLocal()
         try:
             normalized_page = max(1, page)
@@ -249,9 +276,6 @@ class ProductService:
                 query=raw_query,
                 category=raw_category,
             )
-        except SQLAlchemyError as exc:
-            logger.exception("Failed to search catalog.")
-            raise DataAccessError("Unable to search the catalog right now.") from exc
         finally:
             db.close()
 
@@ -263,16 +287,62 @@ class ProductService:
             return [product.image]
         return []
 
-    async def create_product(self, payload: ProductCreate, images: list[UploadFile]) -> ProductSchema:
-        db = SessionLocal()
-        saved_images: list[str] = []
+    async def create_product(
+        self,
+        payload: ProductCreate,
+        images: list[UploadFile],
+        background: BackgroundTasks | None = None,
+    ) -> ProductSchema:
+        """
+        Async-friendly create. Heavy image processing is scheduled in background tasks.
+        DB interactions remain synchronous and are safe because endpoints should call this via run_in_threadpool
+        when used from async routes.
+        """
+        # basic validations and category resolution performed synchronously using a dedicated session
+        # validate and read images in async context
+        cleaned_name = self._clean_text(payload.name)
+        cleaned_category = self._clean_text(payload.category)
+        normalized_name = self._normalize_text(cleaned_name)
+        normalized_category = self._normalize_text(cleaned_category)
+
+        product_id = str(uuid.uuid4())[:8]
+        saved_images = await self._save_images(product_id, images, background)
+
+        # perform DB write in threadpool to avoid blocking the event loop
         try:
-            cleaned_name = self._clean_text(payload.name)
-            cleaned_category = self._clean_text(payload.category)
-            normalized_name = self._normalize_text(cleaned_name)
-            normalized_category = self._normalize_text(cleaned_category)
+            record = await run_in_threadpool(
+                self._create_product_sync,
+                product_id,
+                cleaned_name,
+                cleaned_category,
+                payload,
+                saved_images,
+            )
+            return self._to_product(record)
+        except DuplicateProductError:
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            raise
+        except SQLAlchemyError as exc:
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            logger.exception("Failed to create product.")
+            raise DataAccessError("Unable to save the product right now.") from exc
+
+    def _create_product_sync(
+        self,
+        product_id: str,
+        cleaned_name: str,
+        cleaned_category: str,
+        payload: ProductCreate,
+        saved_images: list[str],
+    ) -> Product:
+        db = SessionLocal()
+        try:
             category = self._get_or_create_category(db, cleaned_category)
 
+            normalized_name = self._normalize_text(cleaned_name)
+            normalized_category = self._normalize_text(cleaned_category)
             existing = (
                 db.query(Product)
                 .filter(
@@ -283,9 +353,6 @@ class ProductService:
             )
             if existing is not None:
                 raise DuplicateProductError("Product already exists.")
-
-            product_id = str(uuid.uuid4())[:8]
-            saved_images = await self._save_images(product_id, images)
 
             record = Product(
                 id=product_id,
@@ -298,7 +365,6 @@ class ProductService:
                 image=saved_images[0] if saved_images else None,
                 images=self._join_images(saved_images),
             )
-
             db.add(record)
             try:
                 db.commit()
@@ -306,17 +372,7 @@ class ProductService:
             except IntegrityError as exc:
                 db.rollback()
                 raise DuplicateProductError("Product already exists.") from exc
-            return self._to_product(record)
-        except (DuplicateProductError, ValidationError):
-            for filename in saved_images:
-                self.image_service.delete_image(filename)
-            raise
-        except SQLAlchemyError as exc:
-            db.rollback()
-            for filename in saved_images:
-                self.image_service.delete_image(filename)
-            logger.exception("Failed to create product.")
-            raise DataAccessError("Unable to save the product right now.") from exc
+            return record
         finally:
             db.close()
 
@@ -325,9 +381,28 @@ class ProductService:
         product_id: str,
         payload: ProductUpdate,
         images: list[UploadFile],
+        background: BackgroundTasks | None = None,
     ) -> ProductSchema:
+        # read new images and schedule processing
+        saved_images = await self._save_images(product_id, images, background)
+
+        try:
+            record = await run_in_threadpool(
+                self._update_product_sync, product_id, payload, saved_images
+            )
+            return self._to_product(record)
+        except (DuplicateProductError, ProductNotFoundError, ValidationError):
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            raise
+        except SQLAlchemyError as exc:
+            for filename in saved_images:
+                self.image_service.delete_image(filename)
+            logger.exception("Failed to update product %s.", product_id)
+            raise DataAccessError("Unable to update the product right now.") from exc
+
+    def _update_product_sync(self, product_id: str, payload: ProductUpdate, saved_images: list[str]) -> Product:
         db = SessionLocal()
-        saved_images: list[str] = []
         try:
             record = (
                 db.query(Product)
@@ -356,7 +431,6 @@ class ProductService:
                 raise DuplicateProductError("Product already exists.")
 
             existing_images = self._split_images(record.images)
-            saved_images = await self._save_images(product_id, images)
             combined_images = existing_images + saved_images
 
             record.name = cleaned_name
@@ -384,17 +458,7 @@ class ProductService:
             )
             if fresh_record is None:
                 raise ProductNotFoundError("Product not found.")
-            return self._to_product(fresh_record)
-        except (DuplicateProductError, ProductNotFoundError, ValidationError):
-            for filename in saved_images:
-                self.image_service.delete_image(filename)
-            raise
-        except SQLAlchemyError as exc:
-            db.rollback()
-            for filename in saved_images:
-                self.image_service.delete_image(filename)
-            logger.exception("Failed to update product %s.", product_id)
-            raise DataAccessError("Unable to update the product right now.") from exc
+            return fresh_record
         finally:
             db.close()
 

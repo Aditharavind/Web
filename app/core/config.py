@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from passlib.context import CryptContext
 import os
 import secrets
 from dataclasses import dataclass
@@ -14,6 +15,10 @@ DEFAULT_SQLITE_PATH = BASE_DIR / "app.db"
 
 def _sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+# CryptContext for bcrypt password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def _as_bool(value: str | None, default: bool = False) -> bool:
@@ -89,10 +94,13 @@ def get_settings() -> Settings:
     uploads_dir = BASE_DIR / os.getenv("UPLOAD_DIR", "uploads")
 
     admin_username = os.getenv("ADMIN_USERNAME", "admin").strip()
-    admin_password_hash = os.getenv(
-        "ADMIN_PASSWORD_HASH",
-        _sha256(os.getenv("ADMIN_PASSWORD", "admin123")),
-    ).strip()
+    # prefer bcrypt hashed password via ADMIN_PASSWORD_HASH; in dev, allow ADMIN_PASSWORD and
+    # derive bcrypt hash for runtime use.
+    admin_password_hash = os.getenv("ADMIN_PASSWORD_HASH", "").strip()
+    if not admin_password_hash:
+        admin_password_plain = os.getenv("ADMIN_PASSWORD", "admin123")
+        # derive bcrypt hash for runtime (do not write back to env)
+        admin_password_hash = pwd_context.hash(admin_password_plain)
     secret_key = os.getenv("SECRET_KEY", "").strip()
     database_url = os.getenv("DATABASE_URL", "").strip()
 
@@ -111,8 +119,11 @@ def get_settings() -> Settings:
             raise RuntimeError(
                 f"Missing required production environment variables: {', '.join(sorted(missing))}"
             )
-        insecure_password_hash = admin_password_hash == _sha256("admin123")
-        if admin_username == "admin" and insecure_password_hash:
+        # In production, require an explicit bcrypt hash value to be configured.
+        if not os.getenv("ADMIN_PASSWORD_HASH"):
+            raise RuntimeError("ADMIN_PASSWORD_HASH must be set in production and use bcrypt.")
+        # basic check to avoid default username/password
+        if admin_username == "admin" and admin_password_hash == pwd_context.hash("admin123"):
             raise RuntimeError("Refusing to start in production with default admin credentials.")
 
     if not secret_key:

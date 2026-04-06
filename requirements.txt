@@ -19,3 +19,6 @@ sentry-sdk>=1.45.0
 
 httpx>=0.28.1,<0.29
 
+passlib[bcrypt]>=1.8.0
+gunicorn>=21.2.0
+

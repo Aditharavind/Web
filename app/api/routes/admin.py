@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import ValidationError as PydanticValidationError
 
@@ -221,6 +221,7 @@ async def admin_products(
 @router.post(f"{settings.admin_route}/products/add")
 async def add_product(
     request: Request,
+    background: BackgroundTasks,
     csrf_token: str = Form(...),
     name: str = Form(...),
     category: str = Form(""),
@@ -238,6 +239,7 @@ async def add_product(
     if not await allow_request(_client_key(request), 20, 60):
         return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
+        # schedule image processing in background to avoid blocking request lifecycle
         await product_service.create_product(
             ProductCreate(
                 name=name,
@@ -247,6 +249,7 @@ async def add_product(
                 tags=tags,
             ),
             images,
+            background=background,
         )
     except DuplicateProductError:
         return _redirect(f"{settings.admin_route}/products", error="Product already exists")
@@ -290,6 +293,7 @@ async def edit_product_page(
 async def update_product(
     product_id: str,
     request: Request,
+    background: BackgroundTasks,
     csrf_token: str = Form(...),
     name: str = Form(...),
     category: str = Form(""),
@@ -316,6 +320,7 @@ async def update_product(
                 tags=tags,
             ),
             images,
+            background=background,
         )
     except DuplicateProductError:
         return _redirect(f"{settings.admin_route}/products", error="Product already exists")

@@ -167,6 +167,23 @@ def _ensure_postgres_schema() -> None:
                 )
             )
 
+        # Create functional index on lower(name) to speed up case-insensitive searches
+        indexes = {idx["name"] for idx in refreshed_inspector.get_indexes("products")}
+        if "idx_products_name_lower" not in indexes:
+            connection.execute(
+                text(
+                    "CREATE INDEX idx_products_name_lower ON products (lower(name));"
+                )
+            )
+
+        # Create a tsvector GIN index for simple full-text search across name and description
+        if "idx_products_search_tsv" not in indexes:
+            connection.execute(
+                text(
+                    "CREATE INDEX idx_products_search_tsv ON products USING GIN (to_tsvector('english', coalesce(name,'') || ' ' || coalesce(description,'')));"
+                )
+            )
+
 
 def ensure_database_schema() -> None:
     try:
