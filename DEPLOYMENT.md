@@ -1,5 +1,14 @@
 Production deployment checklist
 
+Supported Python versions
+
+- Recommended: Python 3.11.x (preferred) or Python 3.12.x.
+- Do NOT use Python 3.13 on macOS (ARM) or many Linux images: prebuilt wheels for
+  packages such as pydantic-core may not be available and will trigger compile failures.
+
+Use a pinned runtime (see `.python-version` and `runtime.txt`) to ensure CI and production use a
+compatible interpreter.
+
 1. HTTPS / TLS
 
 - Use a reverse proxy (NGINX, Traefik) or cloud load balancer to terminate TLS.
