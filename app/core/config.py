@@ -135,10 +135,9 @@ def get_settings() -> Settings:
         os.getenv("TRUSTED_HOSTS"),
         ["localhost", "127.0.0.1", "testserver"],
     )
-    if is_production:
-        site_host = site_url.split("://", 1)[1]
-        if site_host not in trusted_hosts:
-            trusted_hosts.append(site_host)
+    site_host = site_url.split("://", 1)[1]
+    if site_host not in trusted_hosts:
+        trusted_hosts.append(site_host)
 
     return Settings(
         app_title=os.getenv("APP_TITLE", "NAWA Global General Trading"),
