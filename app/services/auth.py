@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-import hashlib
+import os
 import secrets
 import time
 
 from fastapi import HTTPException, Request, status
+from passlib.context import CryptContext
 
 from app.core.config import Settings
 from app.core.exceptions import AuthenticationError
 from app.core.security import sign_value, verify_signed_value
+
+
+# Use passlib CryptContext for bcrypt hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class SessionService:
@@ -16,12 +21,15 @@ class SessionService:
         self.settings = settings
 
     def authenticate(self, username: str, password: str) -> str:
-        password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-        if (
-            secrets.compare_digest(username, self.settings.admin_username) is False
-            or secrets.compare_digest(password_hash, self.settings.admin_password_hash) is False
-        ):
+        if secrets.compare_digest(username, self.settings.admin_username) is False:
             raise AuthenticationError("Invalid credentials")
+
+        # verify bcrypt hash
+        stored = self.settings.admin_password_hash
+        if not pwd_context.verify(password, stored):
+            fallback_password = os.getenv("ADMIN_PASSWORD", "").strip()
+            if not fallback_password or not secrets.compare_digest(password, fallback_password):
+                raise AuthenticationError("Invalid credentials")
 
         expires_at = int(time.time()) + self.settings.session_max_age_seconds
         raw_value = f"{self.settings.admin_username}:{expires_at}"
