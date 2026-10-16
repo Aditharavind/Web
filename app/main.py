@@ -13,16 +13,22 @@ from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.admin import router as admin_router
-from app.api.routes.public import router as public_router
 from app.api.routes.health import router as health_router
+from app.api.routes.public import router as public_router
 from app.core.config import get_settings
-from app.core.exceptions import AppError, DataAccessError, ProductNotFoundError, ValidationError
+from app.core.exceptions import AppError, ProductNotFoundError, ValidationError
 from app.core.logging import setup_logging
 from app.core.monitoring import setup_monitoring
-from app.core.security import CSRF_COOKIE_NAME, build_csp, generate_nonce, get_or_create_csrf_token
+from app.core.rate_limiter import get_redis_client
+from app.core.security import (
+    CSRF_COOKIE_NAME,
+    build_csp,
+    generate_nonce,
+    get_or_create_csrf_token,
+)
 from app.core.templates import template_context, templates
 from app.database import models  # noqa: F401
-from app.database.db import ensure_database_schema
+from app.database.db import engine, ensure_database_schema
 
 
 settings = get_settings()
@@ -60,24 +66,35 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "max-age=31536000; includeSubDomains; preload"
             )
 
-        if request.url.path.startswith(settings.admin_route):
-            response.headers["Cache-Control"] = "no-store"
-        elif response.headers.get("content-type", "").startswith("text/html") and "Cache-Control" not in response.headers:
-            response.headers["Cache-Control"] = "no-cache"
-        # Preload critical CSS to improve first render / Lighthouse
-        if response.headers.get("content-type", "").startswith("text/html"):
-            response.headers.setdefault("Link", f'<{settings.site_url}/static/css/app.css>; rel=preload; as=style')
-
-        csrf_token = get_or_create_csrf_token(request, settings)
-        response.set_cookie(
-            CSRF_COOKIE_NAME,
-            csrf_token,
-            httponly=True,
-            secure=settings.secure_cookies,
-            samesite="strict",
-            max_age=settings.session_max_age_seconds,
-            path="/",
+        path = request.url.path
+        is_html = response.headers.get("content-type", "").startswith("text/html")
+        is_asset = any(
+            path == prefix or path.startswith(f"{prefix}/")
+            for prefix in ("/static", "/uploads")
         )
+        is_admin = path == settings.admin_route or path.startswith(
+            f"{settings.admin_route}/"
+        )
+        if is_admin:
+            response.headers["Cache-Control"] = "no-store"
+        elif is_html and "Cache-Control" not in response.headers:
+            response.headers["Cache-Control"] = "no-cache"
+
+        if is_html and not is_asset:
+            response.headers.setdefault(
+                "Link", "</static/css/app.css>; rel=preload; as=style"
+            )
+            csrf_token = get_or_create_csrf_token(request, settings)
+            if request.cookies.get(CSRF_COOKIE_NAME) != csrf_token:
+                response.set_cookie(
+                    CSRF_COOKIE_NAME,
+                    csrf_token,
+                    httponly=True,
+                    secure=settings.secure_cookies,
+                    samesite="strict",
+                    max_age=settings.session_max_age_seconds,
+                    path="/",
+                )
         return response
 
 
@@ -93,32 +110,20 @@ def _error_payload(status_code: int, message: str) -> dict[str, object]:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     logger.info("Starting application in %s mode.", settings.environment)
-    ensure_database_schema()
-    from app.core.rate_limiter import get_redis_client
-    redis = get_redis_client()
-    if redis is not None:
-        await redis.ping()
-    yield
-    if redis is not None:
-        await redis.aclose()
-    logger.info("Application shutdown complete.")
-
-
-app = FastAPI(title=settings.app_title, debug=False, lifespan=lifespan,
-              docs_url=None if settings.is_production else "/docs",
-              redoc_url=None if settings.is_production else "/redoc",
-              openapi_url=None if settings.is_production else "/openapi.json")
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(GZipMiddleware, minimum_size=500)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
-if settings.is_production:
-    app.add_middleware(HTTPSRedirectMiddleware)
-
-# setup optional monitoring (Sentry)
-try:
-    setup_monitoring(app)
-except Exception:
-    logger.exception("Failed to initialize monitoring")
+    redis = None
+    try:
+        ensure_database_schema()
+        redis = get_redis_client()
+        if redis is not None:
+            await redis.ping()
+        yield
+    finally:
+        try:
+            if redis is not None:
+                await redis.aclose()
+        finally:
+            engine.dispose()
+            logger.info("Application shutdown cleanup complete.")
 
 
 class AccessLogMiddleware(BaseHTTPMiddleware):
@@ -132,6 +137,29 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
             response.status_code,
         )
         return response
+
+
+app = FastAPI(
+    title=settings.app_title,
+    debug=False,
+    lifespan=lifespan,
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
+)
+
+# Starlette runs user middleware in reverse registration order. Preserve:
+# access log -> HTTPS (production) -> trusted host -> gzip -> security headers.
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
+if settings.is_production:
+    app.add_middleware(HTTPSRedirectMiddleware)
+
+try:
+    setup_monitoring(app)
+except Exception:
+    logger.exception("Failed to initialize optional monitoring")
 
 app.add_middleware(AccessLogMiddleware)
 
@@ -152,12 +180,8 @@ async def app_error_handler(request: Request, exc: AppError) -> Response:
         status_code = 404
         public_message = "The requested resource was not found."
     else:
-        status_code = 500 if isinstance(exc, DataAccessError) else 500
-        public_message = (
-            "A temporary server error occurred. Please try again later."
-            if status_code == 500
-            else str(exc)
-        )
+        status_code = 500
+        public_message = "A temporary server error occurred. Please try again later."
 
     if status_code >= 500:
         logger.exception("Application error on %s", request.url.path, exc_info=exc)
@@ -165,7 +189,9 @@ async def app_error_handler(request: Request, exc: AppError) -> Response:
         logger.warning("Application error on %s: %s", request.url.path, exc)
 
     if _wants_json(request):
-        return JSONResponse(_error_payload(status_code, public_message), status_code=status_code)
+        return JSONResponse(
+            _error_payload(status_code, public_message), status_code=status_code
+        )
 
     return templates.TemplateResponse(
         request,
@@ -191,7 +217,11 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         else str(exc.detail or "The request could not be completed.")
     )
     if _wants_json(request):
-        return JSONResponse(_error_payload(exc.status_code, detail), status_code=exc.status_code)
+        return JSONResponse(
+            _error_payload(exc.status_code, detail),
+            status_code=exc.status_code,
+            headers=exc.headers,
+        )
 
     return templates.TemplateResponse(
         request,
@@ -204,6 +234,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
             meta_robots="noindex,nofollow",
         ),
         status_code=exc.status_code,
+        headers=exc.headers,
     )
 
 
