@@ -1,5 +1,4 @@
 import re
-from dataclasses import replace
 
 import pytest
 from httpx import AsyncClient, ASGITransport
@@ -22,7 +21,7 @@ async def test_health():
 @pytest.mark.asyncio
 async def test_csrf_and_admin_authorization():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
-        response = await client.post("/contact", data={"csrf_token": "bad", "name": "Test", "email": "a@b.com", "message": "Hi"})
+        response = await client.post(f"{get_settings().admin_route}/login", data={"csrf_token": "bad", "username": "admin", "password": "bad"})
         assert response.status_code == 403
         response = await client.get(f"{get_settings().admin_route}/products")
         assert response.status_code == 303
@@ -37,14 +36,14 @@ async def test_burst_rate_limit():
 
 
 @pytest.mark.asyncio
-async def test_contact_never_claims_undelivered_enquiry_sent():
+async def test_contact_uses_direct_channels_only():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         page = await client.get("/contact")
-        token = client.cookies.get("csrf_token")
-        response = await client.post("/contact", data={"csrf_token": token, "name": "Test", "email": "a@b.com", "message": "Hello"})
-        assert response.status_code == 303
-        assert "sent=1" not in response.headers["location"]
-        assert "error=" in response.headers["location"]
+        assert 'href="https://wa.me/971505464847"' in page.text
+        assert 'href="mailto:info@nawaglobalgtd.com"' in page.text
+        assert '<form' not in page.text
+        response = await client.post("/contact", data={"message": "Hello"})
+        assert response.status_code == 405
 
 
 def test_production_rejects_missing_secrets(monkeypatch):

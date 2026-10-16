@@ -16,7 +16,7 @@
     <div class="alert error">⚠️ {{ error }}</div>
     {% endif %}
     <div class="form-card form-card-wide">
-      <form method="post" action="{{ settings.admin_route }}/products/edit/{{ product.id }}" enctype="multipart/form-data">
+      <form id="edit-product-form" method="post" action="{{ settings.admin_route }}/products/edit/{{ product.id }}" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="form-group"><label class="form-label">Product Name *</label><input type="text" name="name" class="form-control" value="{{ product.name }}" required></div>
         <div class="form-group">
@@ -39,10 +39,7 @@
             {% for image in product_images %}
             <div class="existing-img-item">
               <img src="/uploads/{{ image }}" alt="" loading="lazy" decoding="async">
-              <form method="post" action="{{ settings.admin_route }}/products/delete-image/{{ product.id }}/{{ image }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="del-img-btn" data-confirm="Remove image?" title="Remove">✕</button>
-              </form>
+              <button type="submit" form="delete-image-{{ loop.index }}" class="del-img-btn" data-confirm="Remove image?" title="Remove image" aria-label="Remove image {{ loop.index }}">✕</button>
               {% if loop.first %}<span class="primary-label">PRIMARY</span>{% endif %}
             </div>
             {% endfor %}
@@ -64,6 +61,11 @@
           <a href="{{ settings.admin_route }}/products" class="btn">Cancel</a>
         </div>
       </form>
+      {% for image in product_images %}
+      <form id="delete-image-{{ loop.index }}" method="post" action="{{ settings.admin_route }}/products/delete-image/{{ product.id }}/{{ image }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      </form>
+      {% endfor %}
     </div>
   </div>
 </div>

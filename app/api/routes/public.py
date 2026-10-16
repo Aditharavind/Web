@@ -1,22 +1,17 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
-from pydantic import ValidationError as PydanticValidationError
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from xml.sax.saxutils import escape
 
 from app.core.config import get_settings
 from app.core.exceptions import ProductNotFoundError
-from app.core.security import validate_csrf
 from app.core.templates import template_context, templates
-from app.models.schemas import ContactInquiry
 from app.services.dependencies import get_product_service, get_visit_service
 from app.services.product_service import ProductService
 from app.services.visit_service import VisitService
 from app.utils.pagination import build_pagination
 from app.utils.text import (
-    build_query_string,
-    decode_query_text,
     mailto_url,
     normalize_site_url,
     whatsapp_message_url,
@@ -26,7 +21,6 @@ from app.utils.text import (
 
 router = APIRouter()
 settings = get_settings()
-from app.core.rate_limiter import allow_request
 
 
 
@@ -149,8 +143,6 @@ async def services_page(
 @router.get("/contact", response_class=HTMLResponse)
 async def contact(
     request: Request,
-    sent: str = "",
-    error: str = "",
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:
     _track_visit(request, visit_service)
@@ -166,45 +158,10 @@ async def contact(
                 ),
                 canonical_url=f"{settings.site_url}/contact",
                 active_nav="contact",
-                inquiry_sent=sent == "1",
-                inquiry_error=decode_query_text(error),
                 schema_type="ContactPage",
             ),
         },
     )
-
-
-@router.post("/contact")
-async def contact_submit(
-    request: Request,
-    csrf_token: str = Form(...),
-    name: str = Form(...),
-    email: str = Form(...),
-    company: str = Form(""),
-    product: str = Form(""),
-    message: str = Form(...),
-) -> RedirectResponse:
-    validate_csrf(request, csrf_token, settings)
-    # basic rate limit per client to avoid spam
-    key = request.client.host if request.client else "unknown"
-    if not await allow_request(f"contact:{key}", 5, 60):
-        return RedirectResponse("/contact?" + "error=Too+many+requests", status_code=303)
-    try:
-        ContactInquiry(
-            name=name,
-            email=email,
-            company=company,
-            product=product,
-            message=message,
-        )
-    except PydanticValidationError as exc:
-        first_error = exc.errors()[0]
-        error_message = str(first_error.get("msg", "Invalid inquiry details."))
-        return RedirectResponse(
-            f"/contact?{build_query_string({'error': error_message})}",
-            status_code=303,
-        )
-    return RedirectResponse("/contact?" + build_query_string({"error": "Online enquiries are not configured yet. Please contact us using email or WhatsApp."}), status_code=303)
 
 
 @router.get("/catalog", response_class=HTMLResponse)

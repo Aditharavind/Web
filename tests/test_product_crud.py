@@ -60,3 +60,16 @@ async def test_template_rendering_home():
     assert response.status_code == 200
     assert "NAWA Global" in response.text
     assert "data-theme-toggle" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_edit_respects_total_gallery_limit(monkeypatch):
+    service = get_product_service()
+    monkeypatch.setattr(service, "max_upload_files", 1)
+    product = await service.create_product(ProductCreate(name="Full gallery", category="Tools"), [image_upload()])
+    original = product.images[:]
+    with pytest.raises(ValidationError, match="up to 1 images"):
+        await service.update_product(product.id, ProductUpdate(name="Full gallery", category="Tools"), [image_upload("blue")])
+    assert service.get_product(product.id).images == original
+    assert all((service.image_service.upload_dir / name).exists() for name in original)
+    service.delete_product(product.id)

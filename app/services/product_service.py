@@ -362,6 +362,9 @@ class ProductService:
                 raise DuplicateProductError("Product already exists.")
 
             existing_images = self._split_images(record.images) or ([record.image] if record.image else [])
+            incoming_count = sum(bool((image.filename or "").strip()) for image in images)
+            if len(existing_images) + incoming_count > self.max_upload_files:
+                raise ValidationError(f"A product can have up to {self.max_upload_files} images. Remove an existing image before adding more.")
             saved_images = await self._save_images(product_id, images)
             combined_images = existing_images + saved_images
 

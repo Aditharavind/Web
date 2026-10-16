@@ -79,7 +79,7 @@ where accompanying text supplies their meaning. Motion respects reduced-motion s
 ## Release status
 
 This is a review candidate. The contact page uses direct email/WhatsApp links while
-form delivery remains undecided. Publication and AWS deployment have not occurred.
+direct enquiry channels are the confirmed approach. Publication and AWS deployment have not occurred.
 
 ## Validation
 
@@ -88,3 +88,20 @@ pages, no horizontal overflow, one main landmark and one H1 per page, working
 mobile menu controls, and no local HTTP errors. Desktop and mobile screenshots
 were reviewed separately and are excluded from the source tree. PostgreSQL/Redis production integration remains
 a separate deployment check.
+
+## Admin edit regression verification
+
+The image-removal forms were nested inside the edit form. They now sit outside
+the edit form and their individual buttons reference them with HTML form IDs.
+Browser verification covers adding a product with an image, editing text/category/
+specifications, appending images, removing an image, saving again, catalogue
+updates and deleting the product. HTTP regression tests cover the same lifecycle
+and verify that forms are not nested. Gallery limits count existing plus new images.
+
+The obsolete contact POST handler and contact-form-only validation schema were
+removed after confirmation that enquiries use WhatsApp/email directly.
+
+The repository files and references were checked again. Existing database records
+and uploads are not reset by this update. PostgreSQL/Redis and AWS-specific TLS,
+backups and process configuration require verification on the selected target host;
+they are not claimed as completed by these local browser/SQLite checks.

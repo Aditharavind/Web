@@ -4,7 +4,7 @@
 
 This branch is preparation for deployment, not a deployed or fully security-audited
 release. Verify dependency advisories, PostgreSQL, Redis and browser behavior before
-production launch. The contact enquiry delivery channel remains a business decision.
+production launch. Contact enquiries use direct WhatsApp/email links; no form delivery service is needed.
 
 ## Configuration
 
@@ -112,7 +112,7 @@ clears the browser cookie. Rotate SECRET_KEY to invalidate all sessions during a
 
 ## Remaining launch gates
 
-- Confirm domain, AWS account/region, budget and enquiry delivery channel.
+- Confirm AWS account/region and budget; configure DNS for nawaglobalgtd.com.
 - Recheck dependency advisories at launch (the local audit currently reports no known vulnerabilities).
 - Run PostgreSQL/Redis integration checks and repeat visual review after final content approval.
 - Provision backups, TLS, monitoring and a tested restore path.

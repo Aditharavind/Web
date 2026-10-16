@@ -24,9 +24,7 @@ Run `python -m pytest -q` for isolated tests. Tests never use the development da
 See [DEPLOYMENT.md](DEPLOYMENT.md). Configuration names are in `.env.example`.
 Environment files are not loaded automatically. A process manager must supply them.
 
-The contact form currently has no delivery integration. It explicitly directs users
-to email or WhatsApp instead of claiming that a message was sent. Choose the delivery
-channel before enabling form submissions in production.
+Contact enquiries use direct email and WhatsApp links. No contact form is exposed.
 
 ## Corporate content and design
 
