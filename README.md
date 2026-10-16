@@ -77,3 +77,7 @@ Python caches, local databases and secrets are excluded from Git.
 The admin currently supports image previews and automatic resizing/orientation,
 but does not include an interactive crop editor. Launch checks, live service
 verification and the logout revocation limitation are documented in DEPLOYMENT.md.
+
+The dependency review and its verification limits are recorded in
+[docs/dependency-review.md](docs/dependency-review.md). HTTPX is test-only;
+the documented server uses Uvicorn directly and does not require Gunicorn.

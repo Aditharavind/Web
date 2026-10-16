@@ -1,18 +1,16 @@
-# Resolved runtime dependencies; validated with Python 3.12.
+# Runtime lock for Python 3.11/3.12; regenerate from requirements.txt with uv pip compile --universal.
 alembic==1.20.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
+async-timeout==5.0.1 ; python_full_version < '3.11.3'
 bcrypt==3.2.2
 certifi==2026.7.22
 cffi==2.1.1
 click==8.5.0
 fastapi==0.143.2
-greenlet==3.5.6
-gunicorn==26.2.0
+greenlet==3.5.6 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
 h11==0.16.0
-httpcore==1.0.9
-httpx==0.28.1
 idna==3.20
 jinja2==3.1.6
 mako==1.4.3
@@ -21,15 +19,15 @@ opentelemetry-api==1.45.1
 passlib==1.7.4
 pillow==12.3.0
 psycopg2-binary==2.9.13
-pycparser==3.11
+pycparser==3.11 ; implementation_name != 'PyPy'
 pydantic==2.14.1
-pydantic_core==2.50.1
+pydantic-core==2.50.1
 python-multipart==0.0.32
 redis==8.1.0
 sentry-sdk==2.72.0
 sqlalchemy==2.0.48
 starlette==1.8.0
+typing-extensions==4.16.0
 typing-inspection==0.4.4
-typing_extensions==4.16.0
 urllib3==2.8.0
 uvicorn==0.54.0
