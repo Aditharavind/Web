@@ -269,8 +269,8 @@ def sitemap(
         for path in ("/", "/about", "/services", "/catalog", "/contact")
     ]
     urls.extend(
-        _canonical_url(f"/product/{product.id}")
-        for product in product_service.list_products()
+        _canonical_url(f"/product/{product_id}")
+        for product_id in product_service.list_product_ids()
     )
     entries = "\n".join(f"<url><loc>{escape(url)}</loc></url>" for url in urls)
     xml = (
