@@ -12,3 +12,7 @@ uploads/*
 !uploads/.gitkeep
 .coverage
 htmlcov/
+
+# Local tooling and macOS metadata
+.ruff_cache/
+.DS_Store

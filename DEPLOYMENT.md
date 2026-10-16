@@ -33,9 +33,11 @@ multiple customer accounts are introduced. HTTPS/TLS is required for this deploy
 
 ## Database lifecycle
 
-Use a new empty database: all previous committed database content and images were
-test fixtures and were removed with owner authorization. Do not stamp an unknown
-existing schema or run destructive resets against customer databases.
+For a fresh installation, initialize a new empty database with the migrations below.
+Existing local product records and uploads must be backed up before any transfer.
+A SQLite-to-PostgreSQL data transfer needs a separate reviewed plan if those records
+are to be retained. Do not stamp an unknown existing schema or run destructive resets
+against customer databases.
 
 ```bash
 python -m pip install -r requirements.lock
@@ -93,7 +95,8 @@ Nginx must terminate TLS with a valid certificate and forward Host, X-Forwarded-
 and a validated client address. For a single direct-facing Nginx proxy, overwrite
 X-Forwarded-For with `$remote_addr`; do not trust arbitrary incoming forwarding headers.
 Set `client_max_body_size 45m` to bound multipart bodies (10 images, 4 MiB each plus
-form overhead). Redirect HTTP to HTTPS. Proxy static files through the app initially;
+form overhead). Adjust this proxy limit if upload settings change. Individual images
+are limited to 20 megapixels and are re-encoded as JPEG. Redirect HTTP to HTTPS. Proxy static files through the app initially;
 unversioned CSS/JS revalidate on requests, avoiding stale year-long browser caches.
 
 ## Verification and recovery
@@ -113,6 +116,8 @@ clears the browser cookie. Rotate SECRET_KEY to invalidate all sessions during a
 ## Remaining launch gates
 
 - Confirm AWS account/region and budget; configure DNS for nawaglobalgtd.com.
-- Recheck dependency advisories at launch (the local audit currently reports no known vulnerabilities).
+- Complete the final requirements review and recheck dependency advisories at launch.
 - Run PostgreSQL/Redis integration checks and repeat visual review after final content approval.
 - Provision backups, TLS, monitoring and a tested restore path.
+- Resolve or explicitly accept the documented stateless-session logout limitation.
+- Confirm whether an interactive image crop editor is required; it is not implemented.

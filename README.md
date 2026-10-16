@@ -18,6 +18,7 @@ Open http://127.0.0.1:8000. The default local administrator route is `/admin12`.
 Development defaults are `admin` / `admin123`; production rejects that password.
 The local database and uploads are generated at runtime and excluded from Git.
 Run `python -m pytest -q` for isolated tests. Tests never use the development database.
+Run `node --test tests/js/*.test.cjs` for JavaScript checks (Node 22; no npm install needed).
 
 ## Production
 
@@ -53,10 +54,26 @@ Design screenshots are review artifacts and are not included in the application 
 
 `requirements.txt` declares direct runtime dependencies; `requirements.lock` pins
 the tested runtime environment. `dev_requirements.txt` adds test tools.
-CI installs the locked dependencies, checks migrations and runs tests. Optional
+CI checks Python 3.11 and 3.12, installs the locked dependencies, checks migrations,
+and runs Python and JavaScript tests. Optional
 Sentry monitoring is configured in the application through `SENTRY_DSN`.
 
 The stylesheets have separate responsibilities: `app.css` contains shared controls,
 product views and admin layouts; `corporate.css` contains public website styling;
 `fonts.css` defines the locally served fonts. Obsolete pre-redesign selectors have
 been removed, while shared rules needed by the admin panel are retained.
+
+## Files kept outside Git and deployment
+
+Keep the full repository for development: tests, documentation, migration history,
+font licences and package initializers all have a purpose. Tests and documentation
+are not served by the website; removing them does not reduce request processing.
+
+`uploads/.gitkeep` preserves the empty runtime directory in a fresh checkout.
+Product images belong in the persistent upload directory and must be backed up
+with the database. Do not delete them during cleanup. Virtual environments,
+Python caches, local databases and secrets are excluded from Git.
+
+The admin currently supports image previews and automatic resizing/orientation,
+but does not include an interactive crop editor. Launch checks, live service
+verification and the logout revocation limitation are documented in DEPLOYMENT.md.

@@ -53,7 +53,8 @@ when management confirms the relevant relationships and logo use.
 The user confirmed the domain: **nawaglobalgtd.com**. The live domain could not be
 retrieved during this review; the repository was the source for the supply categories.
 
-The following details are carried from that repository and need management confirmation:
+The company name and contact numbers below were confirmed by the owner. Location
+and product scope still need management confirmation:
 
 - Confirmed registered name: Nawa Global General Trading LLC SPC.
 - Confirmed email: info@nawaglobalgtd.com.
@@ -83,11 +84,12 @@ direct enquiry channels are the confirmed approach. Publication and AWS deployme
 
 ## Validation
 
-11 local tests pass. Browser checks at 1440, 768 and 390 px verify the five public
-pages, no horizontal overflow, one main landmark and one H1 per page, working
+The automated regression suite covers the backend and selected JavaScript behavior.
+Earlier browser checks at 1440, 768 and 390 px covered the five public
+pages, horizontal overflow, main landmarks and H1 headings, working
 mobile menu controls, and no local HTTP errors. Desktop and mobile screenshots
 were reviewed separately and are excluded from the source tree. PostgreSQL/Redis production integration remains
-a separate deployment check.
+a separate deployment check. Repeat browser verification after the latest UI changes.
 
 ## Admin edit regression verification
 
