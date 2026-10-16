@@ -1,6 +1,14 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.database.db import Base
@@ -11,7 +19,11 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True, index=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+    )
 
     products = relationship("Product", back_populates="category_ref")
 
@@ -25,13 +37,17 @@ class Product(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     category = Column(String, nullable=False, index=True)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False, index=True)
+    category_id = Column(
+        Integer, ForeignKey("categories.id"), nullable=False, index=True
+    )
     description = Column(Text)
     specs = Column(Text)
     tags = Column(String)
     image = Column(String)
     images = Column(Text)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
 
     category_ref = relationship("Category", back_populates="products")
 
@@ -41,4 +57,9 @@ class Visit(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     ip = Column(String, nullable=False, index=True)
-    visited_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False, index=True)
+    visited_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+        index=True,
+    )
