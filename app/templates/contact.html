@@ -21,11 +21,11 @@
           <h2>A direct conversation.</h2>
           <p class="registered-name">{{ settings.company_name }}</p>
           <div class="primary-contact-panel">
-            <span class="primary-badge">PRIMARY CONTACT</span>
+            <span class="primary-contact-label">PRIMARY CONTACT</span>
             <a href="tel:{{ settings.contact_whatsapp }}" class="primary-phone">{{ icon('phone', 26) }} {{ primary_phone_display }}</a>
             <div class="primary-contact-actions">
               <a class="action primary" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp primary {{ icon('arrow', 18) }}</a>
-              <a class="text-link" href="tel:{{ settings.contact_whatsapp }}">Call primary {{ icon('phone', 16) }}</a>
+              <a class="action contact-call" href="tel:{{ settings.contact_whatsapp }}">Call primary {{ icon('phone', 16) }}</a>
             </div>
           </div>
           <div class="secondary-contact-panel">
