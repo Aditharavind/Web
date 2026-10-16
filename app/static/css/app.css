@@ -15,9 +15,7 @@ html {
   --green3: #388e3c;
   --green-light: #4caf50;
   --gold: #d4a017;
-  --gold-light: #e8b84b;
   --danger: #c0392b;
-  --success: #27ae60;
   --tr: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 :root {
@@ -1074,7 +1072,7 @@ td {
   padding: 2rem;
 }
 .mono-cell {
-  font-family: "Barlow Condensed", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.78rem;
 }
 .green-strong {

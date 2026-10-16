@@ -58,7 +58,7 @@ h3,
   display: block;
   font-family: "Inter", Arial, sans-serif;
   font-size: 10px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0.17em;
   line-height: 1.6;
   color: var(--green);
@@ -703,7 +703,7 @@ h3,
   font-family: "Inter", sans-serif;
   font-size: 10px;
   letter-spacing: 0.04em;
-  font-weight: 650;
+  font-weight: 700;
   margin-bottom: 22px;
 }
 .footer-layout > div > a:not(.footer-wordmark) {
@@ -1217,7 +1217,7 @@ h3,
   gap: 13px;
   font-family: "Manrope", sans-serif;
   font-size: clamp(24px, 2.3vw, 32px);
-  font-weight: 650;
+  font-weight: 700;
   color: var(--green);
 }
 .primary-contact-actions {
