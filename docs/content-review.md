@@ -86,5 +86,5 @@ form delivery remains undecided. Publication and AWS deployment have not occurre
 11 local tests pass. Browser checks at 1440, 768 and 390 px verify the five public
 pages, no horizontal overflow, one main landmark and one H1 per page, working
 mobile menu controls, and no local HTTP errors. Desktop and mobile screenshots
-are included in `docs/previews/`. PostgreSQL/Redis production integration remains
+were reviewed separately and are excluded from the source tree. PostgreSQL/Redis production integration remains
 a separate deployment check.

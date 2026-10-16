@@ -32,6 +32,33 @@ channel before enabling form submissions in production.
 
 The redesigned public website uses locally served Inter and Manrope fonts and local
 SVG icons. Key editorial content is in `app/core/content.py`; reusable interface
-styles are in `app/static/css/corporate.css`. See `CONTENT_REVIEW.md` for the proposed
+styles are in `app/static/css/corporate.css`. See `docs/content-review.md` for the proposed
 mission, vision, values and the identity/contact details requiring confirmation.
-Desktop and mobile screenshots are under `docs/previews/`.
+Design screenshots are review artifacts and are not included in the application source.
+
+## Project structure
+
+| Path | Responsibility |
+| --- | --- |
+| `app/api/routes/` | Public pages, admin endpoints and health checks |
+| `app/core/` | Configuration, security, logging and shared editorial content |
+| `app/database/` | Database connection and SQLAlchemy table definitions |
+| `app/models/schemas.py` | Validated input/output schemas |
+| `app/services/` | Authentication, product/image handling and visitor analytics |
+| `app/templates/` | Page templates and reusable partials |
+| `app/static/` | Styles, scripts, icons and locally served fonts |
+| `app/utils/` | Pagination and text/URL helpers |
+| `alembic/` | Versioned database migrations |
+| `tests/` | Isolated automated checks |
+| `docs/` | Content review notes |
+| `uploads/` | Runtime product images; contents excluded from Git |
+
+`requirements.txt` declares direct runtime dependencies; `requirements.lock` pins
+the tested runtime environment. `dev_requirements.txt` adds test tools.
+CI installs the locked dependencies, checks migrations and runs tests. Optional
+Sentry monitoring is configured in the application through `SENTRY_DSN`.
+
+The stylesheets have separate responsibilities: `app.css` contains shared controls,
+product views and admin layouts; `corporate.css` contains public website styling;
+`fonts.css` defines the locally served fonts. Obsolete pre-redesign selectors have
+been removed, while shared rules needed by the admin panel are retained.

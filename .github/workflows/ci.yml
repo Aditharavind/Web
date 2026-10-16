@@ -9,11 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -29,16 +24,12 @@ jobs:
           DATABASE_URL: sqlite:///./test.db
         run: |
           alembic upgrade head
+      - name: Check migration/model alignment
+        env:
+          DATABASE_URL: sqlite:///./test.db
+        run: alembic check
       - name: Run tests
         env:
           DATABASE_URL: sqlite:///./test.db
-          REDIS_URL: redis://127.0.0.1:6379/0
         run: |
           pytest -q
-      - name: Sentry health check
-        run: |
-          python ci/sentry_verify.py || true
-      - name: Lighthouse CI (optional)
-        if: github.event_name == 'push'
-        run: |
-          echo "Skipping lighthouse in CI by default. Configure LHCI in a separate job if you host a preview server."

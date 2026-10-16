@@ -6,7 +6,7 @@ from pydantic import ValidationError as PydanticValidationError
 from xml.sax.saxutils import escape
 
 from app.core.config import get_settings
-from app.core.exceptions import ProductNotFoundError, ValidationError
+from app.core.exceptions import ProductNotFoundError
 from app.core.security import validate_csrf
 from app.core.templates import template_context, templates
 from app.models.schemas import ContactInquiry
