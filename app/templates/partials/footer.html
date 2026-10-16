@@ -3,7 +3,7 @@
   <div class="shell footer-layout">
     <div class="footer-identity">
       <a href="/"
-         class="footer-wordmark">NAWA<span> GLOBAL</span></a><span class="footer-trading">GENERAL TRADING</span>
+         class="footer-wordmark">NAWA<span> GLOBAL</span></a><span class="footer-trading">{{ settings.company_name }}</span>
       <p>
         Oilfield and industrial supply.
         <br>
@@ -21,11 +21,11 @@
     </div>
     <div>
       <h2>Start a conversation</h2>
-      <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a><a href="tel:{{ settings.contact_whatsapp }}">{{ settings.contact_whatsapp }}</a><a href="{{ contact_whatsapp_url }}"
+      <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a><a href="tel:{{ settings.contact_whatsapp }}">{{ primary_phone_display }} · Primary</a><a href="{{ contact_whatsapp_url }}"
    target="_blank"
    rel="noopener noreferrer"
    class="text-link">WhatsApp {{ icon('arrow', 16) }}</a><span class="footer-domain">nawaglobalgtd.com</span>
     </div>
   </div>
-  <div class="shell legal-line"><span>© {{ current_year }} NAWA Global General Trading. All rights reserved.</span><span>Based in Abu Dhabi, United Arab Emirates.</span></div>
+  <div class="shell legal-line"><span>© {{ current_year }} {{ settings.company_name }}. All rights reserved.</span><span>Based in Abu Dhabi, United Arab Emirates.</span></div>
 </footer>

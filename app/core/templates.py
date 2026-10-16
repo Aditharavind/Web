@@ -29,6 +29,9 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
         "process": content.PROCESS,
         "current_year": datetime.now().year,
         "site_url": settings.site_url,
+        "primary_phone_display": "+971 50 546 4847" if settings.contact_whatsapp == "+971505464847" else settings.contact_whatsapp,
+        "secondary_phone_display": "+971 50 661 2605" if settings.contact_secondary == "+971506612605" else settings.contact_secondary,
+        "secondary_whatsapp_url": f"https://wa.me/{whatsapp_number(settings.contact_secondary)}",
         "contact_whatsapp_number": whatsapp_number(settings.contact_whatsapp),
         "contact_whatsapp_url": f"https://wa.me/{whatsapp_number(settings.contact_whatsapp)}",
         "page_description": (

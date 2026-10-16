@@ -59,6 +59,8 @@ class Settings:
     trusted_hosts: list[str]
     database_url: str
     products_per_page: int
+    company_name: str
+    contact_secondary: str
     contact_whatsapp: str
     contact_email: str
     contact_website: str
@@ -144,6 +146,8 @@ def get_settings() -> Settings:
         trusted_hosts=trusted_hosts,
         database_url=database_url,
         products_per_page=max(1, int(os.getenv("PRODUCTS_PER_PAGE", "9"))),
+        company_name=os.getenv("COMPANY_NAME", "Nawa Global General Trading LLC SPC").strip(),
+        contact_secondary=os.getenv("CONTACT_SECONDARY", "+971506612605").strip(),
         contact_whatsapp=os.getenv("CONTACT_WHATSAPP", "+971505464847").strip(),
         contact_email=os.getenv("CONTACT_EMAIL", "info@nawaglobalgtd.com").strip(),
         contact_website=contact_website,

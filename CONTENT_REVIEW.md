@@ -55,9 +55,11 @@ retrieved during this review; the repository was the source for the supply categ
 
 The following details are carried from that repository and need management confirmation:
 
-- Display name: NAWA Global General Trading (confirm the exact licensed name/suffix).
-- Email: info@nawaglobalgtd.com (confirm the mailbox is active).
-- Telephone/WhatsApp: +971505464847 (confirm ownership and WhatsApp availability).
+- Confirmed registered name: Nawa Global General Trading LLC SPC.
+- Confirmed email: info@nawaglobalgtd.com.
+- Confirmed primary telephone/WhatsApp: +971505464847.
+- Confirmed secondary telephone/WhatsApp: +971506612605.
+- Primary contact is highlighted with direct call/WhatsApp actions; the secondary is subordinate.
 - Location: Mussafah, Abu Dhabi, United Arab Emirates (provide a full office address if desired).
 - Product scope: confirm all six capability groups and examples are actually offered.
 
