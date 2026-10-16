@@ -157,7 +157,7 @@ if settings.is_production:
     app.add_middleware(HTTPSRedirectMiddleware)
 
 try:
-    setup_monitoring(app)
+    setup_monitoring()
 except Exception:
     logger.exception("Failed to initialize optional monitoring")
 
