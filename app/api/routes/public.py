@@ -5,6 +5,7 @@ from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, PlainTextResponse, Response
+from starlette.background import BackgroundTask
 
 from app.core.config import get_settings
 from app.core.exceptions import ProductNotFoundError
@@ -28,13 +29,14 @@ def _canonical_url(path: str, **params: str | int | None) -> str:
 
 def _render_page(request: Request, template: str, **context: object) -> Response:
     return templates.TemplateResponse(
-        request, template, template_context(request, **context)
+        request, template, template_context(request, **context),
+        background=getattr(request.state, "visit_background", None),
     )
 
 
 def _track_visit(request: Request, visit_service: VisitService) -> None:
     client = request.client.host if request.client else "unknown"
-    visit_service.log_visit(client)
+    request.state.visit_background = BackgroundTask(visit_service.log_visit, client)
 
 
 def _build_product_cards(
