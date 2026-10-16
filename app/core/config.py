@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from passlib.context import CryptContext
 import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from passlib.context import CryptContext
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_SQLITE_PATH = BASE_DIR / "app.db"
@@ -19,15 +19,39 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def _as_bool(value: str | None, default: bool = False) -> bool:
     if value is None:
         return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError("Boolean settings must use true/false, yes/no, on/off, or 1/0.")
 
 
 def _normalize_site_url(value: str) -> str:
     site_url = value.strip()
     if not site_url:
         raise ValueError("SITE_URL must not be empty.")
-    if not site_url.startswith(("http://", "https://")):
+    if "://" not in site_url:
         site_url = f"https://{site_url}"
+    try:
+        parsed = urlsplit(site_url)
+        parsed.port  # Validate the optional port.
+        valid = (
+            parsed.scheme in {"http", "https"}
+            and parsed.hostname
+            and not parsed.username
+            and not parsed.password
+            and parsed.path in {"", "/"}
+            and not parsed.query
+            and not parsed.fragment
+            and not any(character.isspace() for character in site_url)
+        )
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError(
+            "Website URLs must be HTTP(S) origins without credentials, paths, queries, or fragments."
+        )
     return site_url.rstrip("/")
 
 
@@ -79,9 +103,15 @@ class Settings:
 
 @lru_cache
 def get_settings() -> Settings:
-    environment = os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).strip().lower()
+    environment = (
+        os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).strip().lower()
+    )
+    if environment not in {"development", "testing", "production"}:
+        raise ValueError("ENVIRONMENT must be development, testing, or production.")
     is_production = environment == "production"
-    debug = _as_bool(os.getenv("DEBUG"), default=not is_production) and not is_production
+    debug = (
+        _as_bool(os.getenv("DEBUG"), default=not is_production) and not is_production
+    )
 
     site_url = _normalize_site_url(
         os.getenv("SITE_URL", os.getenv("CONTACT_WEBSITE", "http://localhost:8000")),
@@ -111,14 +141,22 @@ def get_settings() -> Settings:
         if missing:
             raise ValueError("Missing production settings: " + ", ".join(missing))
         if len(secret_key) < 32 or secret_key == "dev-secret-key-change-me":
-            raise ValueError("SECRET_KEY must be a strong random value of at least 32 characters.")
+            raise ValueError(
+                "SECRET_KEY must be a strong random value of at least 32 characters."
+            )
         if not site_url.startswith("https://"):
             raise ValueError("Production SITE_URL must use HTTPS.")
         if not _as_bool(os.getenv("SECURE_COOKIES"), default=True):
             raise ValueError("Production requires secure cookies.")
         if not admin_password_hash.startswith(("$2a$", "$2b$", "$2y$")):
             raise ValueError("ADMIN_PASSWORD_HASH must be a bcrypt hash.")
-        if pwd_context.verify("admin123", admin_password_hash):
+        try:
+            default_password = pwd_context.verify("admin123", admin_password_hash)
+        except (ValueError, TypeError) as exc:
+            raise ValueError(
+                "ADMIN_PASSWORD_HASH must be a valid bcrypt hash."
+            ) from exc
+        if default_password:
             raise ValueError("Default admin password is forbidden in production.")
 
     secret_key = secret_key or "dev-secret-key-change-me"
@@ -126,8 +164,12 @@ def get_settings() -> Settings:
 
     trusted_hosts = _parse_csv(
         os.getenv("TRUSTED_HOSTS"),
-        ["localhost", "127.0.0.1", "testserver"],
+        [] if is_production else ["localhost", "127.0.0.1", "testserver"],
     )
+    if is_production and "*" in trusted_hosts:
+        raise ValueError(
+            "Production TRUSTED_HOSTS must name explicit hosts or domain patterns."
+        )
     site_host = urlsplit(site_url).hostname
     if site_host not in trusted_hosts:
         trusted_hosts.append(site_host)
@@ -146,7 +188,9 @@ def get_settings() -> Settings:
         trusted_hosts=trusted_hosts,
         database_url=database_url,
         products_per_page=max(1, int(os.getenv("PRODUCTS_PER_PAGE", "9"))),
-        company_name=os.getenv("COMPANY_NAME", "Nawa Global General Trading LLC SPC").strip(),
+        company_name=os.getenv(
+            "COMPANY_NAME", "Nawa Global General Trading LLC SPC"
+        ).strip(),
         contact_secondary=os.getenv("CONTACT_SECONDARY", "+971506612605").strip(),
         contact_whatsapp=os.getenv("CONTACT_WHATSAPP", "+971505464847").strip(),
         contact_email=os.getenv("CONTACT_EMAIL", "info@nawaglobalgtd.com").strip(),
@@ -160,10 +204,13 @@ def get_settings() -> Settings:
         static_dir=BASE_DIR / "app" / "static",
         templates_dir=BASE_DIR / "app" / "templates",
         session_cookie_name=os.getenv("SESSION_COOKIE_NAME", "session"),
-        session_max_age_seconds=max(300, int(os.getenv("SESSION_MAX_AGE_SECONDS", "28800"))),
+        session_max_age_seconds=max(
+            300, int(os.getenv("SESSION_MAX_AGE_SECONDS", "28800"))
+        ),
         secure_cookies=_as_bool(os.getenv("SECURE_COOKIES"), default=is_production),
         max_upload_files=max(1, int(os.getenv("MAX_UPLOAD_FILES", "10"))),
-        max_upload_size_bytes=max(1024, int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(4 * 1024 * 1024)))),
+        max_upload_size_bytes=max(
+            1024, int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(4 * 1024 * 1024)))
+        ),
         image_max_dimension=max(256, int(os.getenv("IMAGE_MAX_DIMENSION", "1600"))),
     )
-
