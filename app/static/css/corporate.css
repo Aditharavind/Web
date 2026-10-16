@@ -101,28 +101,6 @@ h3,
   gap: 12px;
   flex-shrink: 0;
 }
-.wordmark-symbol {
-  display: flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 42px;
-  background: var(--green);
-  border-radius: 2px;
-  color: white;
-  font-family: "Manrope", sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1;
-}
-.wordmark-symbol span {
-  position: absolute;
-  font-size: 16px;
-  color: #d8c494;
-  top: 0;
-  right: 2px;
-}
 .public-site .brand-name {
   font-size: 20px;
   letter-spacing: -0.035em;
@@ -973,11 +951,6 @@ h3,
   .public-site .brand-name {
     font-size: 18px;
   }
-  .wordmark-symbol {
-    width: 33px;
-    height: 37px;
-    font-size: 25px;
-  }
   .landing-hero {
     padding: 46px 0 35px;
   }
@@ -1272,4 +1245,14 @@ h3,
   .primary-contact-actions .action {
     width: 100%;
   }
+}
+
+/* Official supplied artwork; preserve its proportions and transparency. */
+.public-site .official-brand { flex-direction: column; gap: 0; justify-content: center; }
+.official-logo { display: block; width: 126px; height: 70px; object-fit: contain; }
+.public-site .official-brand .brand-sub { margin: 0; font-size: 8px; letter-spacing: .06em; }
+.footer-logo { display: block; width: 190px; max-width: 100%; height: auto; }
+@media (max-width: 640px) {
+  .official-logo { width: 100px; height: 55px; }
+  .public-site .official-brand .brand-sub { font-size: 7px; }
 }
