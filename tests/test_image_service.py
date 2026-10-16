@@ -94,3 +94,17 @@ def test_delete_rejects_path_traversal(service):
     service.delete_image("keep.jpg")
     service.delete_image("keep.jpg")
     assert not target.exists()
+
+
+@pytest.mark.asyncio
+async def test_png_checksum_failure_is_validation_error(service):
+    import base64
+
+    malformed = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+    )
+    with pytest.raises(ValidationError, match="could not be processed"):
+        await service.save_image(
+            UploadFile(BytesIO(malformed), filename="broken.png"), "product"
+        )
+    assert list(service.upload_dir.iterdir()) == []

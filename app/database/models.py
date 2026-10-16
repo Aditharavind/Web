@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    BigInteger,
     Column,
     DateTime,
     ForeignKey,
@@ -63,3 +64,10 @@ class Visit(Base):
         nullable=False,
         index=True,
     )
+
+
+class AdminSession(Base):
+    __tablename__ = "admin_sessions"
+
+    token_hash = Column(String(64), primary_key=True)
+    expires_at = Column(BigInteger, nullable=False, index=True)

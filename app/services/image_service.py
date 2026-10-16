@@ -88,6 +88,7 @@ class ImageService:
                         processed.close()
         except (
             UnidentifiedImageError,
+            SyntaxError,
             OSError,
             Image.DecompressionBombError,
             Image.DecompressionBombWarning,

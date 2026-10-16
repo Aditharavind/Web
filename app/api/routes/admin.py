@@ -54,7 +54,7 @@ def _render_admin(request: Request, template: str, **context: object) -> Respons
 async def _allow_product_write(
     request: Request, csrf_token: str, session_service: SessionService
 ) -> bool:
-    session_service.require_admin(request)
+    await run_in_threadpool(session_service.require_admin, request)
     validate_csrf(request, csrf_token, settings)
     return await allow_request(f"products:{_client_key(request)}", 20, 60)
 
@@ -147,8 +147,10 @@ async def do_login(
 def logout(
     request: Request,
     csrf_token: str = Form(...),
+    session_service: SessionService = Depends(get_session_service),
 ) -> RedirectResponse:
     validate_csrf(request, csrf_token, settings)
+    session_service.clear(request.cookies.get(settings.session_cookie_name))
     response = _redirect(f"{settings.admin_route}/login")
     response.delete_cookie(settings.session_cookie_name, path="/")
     return response

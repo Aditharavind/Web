@@ -28,7 +28,7 @@ def test_malformed_signature_is_rejected(token):
 def test_signed_session_value_remains_compatible(monkeypatch):
     monkeypatch.setattr(security.time, "time", lambda: 1000)
     settings = get_settings()
-    token = security.sign_value(f"{settings.admin_username}:1100", settings.secret_key)
+    token = SessionService(settings).authenticate(settings.admin_username, "admin123")
     assert SessionService(settings)._decode_token(token)
     assert not SessionService(settings)._decode_token(token + "☃")
 

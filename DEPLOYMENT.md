@@ -110,8 +110,10 @@ Back up PostgreSQL and uploads together to restricted storage outside the instan
 Define retention and test a restore. Keep the previous release available; database
 rollback requires a reviewed migration/restore plan. Use journald for logs and optionally
 Sentry. Monitor disk usage and database growth, and choose visitor-data retention before
-traffic grows. A stolen stateless admin session remains usable until expiry; logout only
-clears the browser cookie. Rotate SECRET_KEY to invalidate all sessions during an incident.
+traffic grows. Admin sessions are stored as token hashes in `admin_sessions`;
+logout removes the session record and clears the browser cookie. Other sessions
+remain active. Password-hash or SECRET_KEY rotation invalidates existing cookies.
+Expired session records are pruned on successful login.
 
 ## Remaining launch gates
 
@@ -119,5 +121,16 @@ clears the browser cookie. Rotate SECRET_KEY to invalidate all sessions during a
 - Complete the final requirements review and recheck dependency advisories at launch.
 - Run PostgreSQL/Redis integration checks and repeat visual review after final content approval.
 - Provision backups, TLS, monitoring and a tested restore path.
-- Resolve or explicitly accept the documented stateless-session logout limitation.
 - Confirm whether an interactive image crop editor is required; it is not implemented.
+
+## Session migration introduced during final verification
+
+Migration `0003_admin_sessions` adds the session table and expiry index without
+changing products, categories, visits or image paths. Run `alembic upgrade head`
+with the migration role before starting production, and grant the application role
+access to the new table. Existing cookies require a new login after this release.
+In development, the normal schema initialization creates missing tables; do not
+run migrations blindly against an existing unversioned local SQLite database.
+
+Local verification results and remaining host checks are in
+[docs/final-verification.md](docs/final-verification.md).

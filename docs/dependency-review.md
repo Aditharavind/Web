@@ -28,6 +28,7 @@ Passlib 1.7.4 still emits a `crypt` deprecation warning. Its existing bcrypt set
 is retained to preserve compatibility. Python 3.13 is not supported or validated;
 stay on Python 3.11/3.12 until the password stack is separately modernized.
 
-Live PostgreSQL/Redis, final browser review, TLS, backups and server-side session
-revocation remain deployment gates described in DEPLOYMENT.md. This dependency
-review does not claim those checks have passed.
+Live PostgreSQL/Redis, TLS and backups remain deployment gates described in
+DEPLOYMENT.md. The later final verification pass adds session revocation and
+records browser results in final-verification.md. This dependency review does not
+claim the remaining host checks have passed.

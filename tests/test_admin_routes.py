@@ -108,8 +108,10 @@ async def test_edit_feedback_category_and_logout():
         )
         assert blocked.status_code == 403
         assert service.get_product(product.id).name == "Renamed"
+        copied_session = client.cookies.get(get_settings().session_cookie_name)
         logged_out = await client.post(f"{prefix}/logout", data={"csrf_token": token})
         assert logged_out.headers["location"] == f"{prefix}/login"
         assert get_settings().session_cookie_name not in client.cookies
+        client.cookies.set(get_settings().session_cookie_name, copied_session)
         protected = await client.get(f"{prefix}/dashboard")
         assert protected.status_code == 303

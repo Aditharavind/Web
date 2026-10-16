@@ -20,7 +20,9 @@ def test_sqlite_foreign_keys_are_enforced():
             )
 
 
-@pytest.mark.parametrize("revision", [None, "0001_initial", "0002_indexes", "unknown"])
+@pytest.mark.parametrize(
+    "revision", [None, "0001_initial", "0002_indexes", "0003_admin_sessions", "unknown"]
+)
 def test_production_requires_current_migration(monkeypatch, revision):
     engine = create_engine("sqlite://")
     monkeypatch.setattr(db, "engine", engine)
@@ -37,7 +39,7 @@ def test_production_requires_current_migration(monkeypatch, revision):
                     text("INSERT INTO alembic_version VALUES (:revision)"),
                     {"revision": revision},
                 )
-        if revision == "0002_indexes":
+        if revision == "0003_admin_sessions":
             db.ensure_database_schema()
         else:
             with pytest.raises(RuntimeError, match="alembic upgrade head"):
