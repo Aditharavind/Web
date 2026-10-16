@@ -59,3 +59,18 @@ async def test_product_metadata_and_sitemap_use_configured_urls(monkeypatch):
     assert record["url"] in urls
     assert all(url.startswith("https://nawaglobalgtd.com/") for url in urls)
     assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_product_displays_plain_and_structured_specs_safely():
+    service = get_product_service()
+    product = await service.create_product(
+        ProductCreate(name="Specification test", category="Tools", specs=["Material: Steel", "Suitable for outdoor use", "<script>alert(1)</script>"]), []
+    )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        page = await client.get(f"/product/{product.id}")
+    assert page.status_code == 200
+    assert "Suitable for outdoor use" in page.text
+    assert "Material" in page.text and "Steel" in page.text
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page.text
+    assert "<script>alert(1)</script>" not in page.text

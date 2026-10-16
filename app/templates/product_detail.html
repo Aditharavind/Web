@@ -54,12 +54,16 @@
               <div class="table-wrap">
                 <table>
                   <tbody>
-                    {% for spec in product.specs if ':' in spec %}
+                    {% for spec in product.specs %}
+                      {% if ":" in spec %}
                       {% set parts = spec.split(':', 1) %}
                       <tr>
                         <td>{{ parts[0].strip() }}</td>
                         <td>{{ parts[1].strip() }}</td>
                       </tr>
+                      {% else %}
+                      <tr><td colspan="2">{{ spec }}</td></tr>
+                      {% endif %}
                     {% endfor %}
                   </tbody>
                 </table>
@@ -79,12 +83,12 @@
       </article>
     </section>
     <div class="lightbox" id="lightbox">
-      <button class="lightbox-close" type="button" data-lightbox-close>✕</button>
+      <button class="lightbox-close" type="button" data-lightbox-close aria-label="Close image viewer">✕</button>
       <img class="lightbox-img" id="lb-img" src="" alt="">
       <div class="lightbox-controls">
-        <button class="lightbox-nav" type="button" data-lightbox-step="-1">‹</button>
+        <button class="lightbox-nav" type="button" data-lightbox-step="-1" aria-label="Previous image">‹</button>
         <span class="lightbox-counter" id="lb-ctr"></span>
-        <button class="lightbox-nav" type="button" data-lightbox-step="1">›</button>
+        <button class="lightbox-nav" type="button" data-lightbox-step="1" aria-label="Next image">›</button>
       </div>
       <div class="lightbox-thumbs" id="lb-thumbs"></div>
     </div>
