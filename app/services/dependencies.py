@@ -9,7 +9,7 @@ from app.services.product_service import ProductService
 from app.services.visit_service import VisitService
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_product_service() -> ProductService:
     settings = get_settings()
     return ProductService(
@@ -23,11 +23,11 @@ def get_product_service() -> ProductService:
     )
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_visit_service() -> VisitService:
     return VisitService()
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_session_service() -> SessionService:
     return SessionService(get_settings())
