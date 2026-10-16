@@ -6,11 +6,10 @@ from typing import Any
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
-from app.core.config import get_settings
 from app.core import content
+from app.core.config import get_settings
 from app.core.security import get_or_create_csrf_token
-from app.utils.text import build_query_string, decode_query_text, whatsapp_number
-
+from app.utils.text import build_query_string, whatsapp_number
 
 settings = get_settings()
 templates = Jinja2Templates(directory=str(settings.templates_dir))
@@ -29,10 +28,13 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
         "process": content.PROCESS,
         "current_year": datetime.now().year,
         "site_url": settings.site_url,
-        "primary_phone_display": "+971 50 546 4847" if settings.contact_whatsapp == "+971505464847" else settings.contact_whatsapp,
-        "secondary_phone_display": "+971 50 661 2605" if settings.contact_secondary == "+971506612605" else settings.contact_secondary,
+        "primary_phone_display": "+971 50 546 4847"
+        if settings.contact_whatsapp == "+971505464847"
+        else settings.contact_whatsapp,
+        "secondary_phone_display": "+971 50 661 2605"
+        if settings.contact_secondary == "+971506612605"
+        else settings.contact_secondary,
         "secondary_whatsapp_url": f"https://wa.me/{whatsapp_number(settings.contact_secondary)}",
-        "contact_whatsapp_number": whatsapp_number(settings.contact_whatsapp),
         "contact_whatsapp_url": f"https://wa.me/{whatsapp_number(settings.contact_whatsapp)}",
         "page_description": (
             "NAWA Global General Trading supports oilfield and industrial procurement with "
@@ -50,7 +52,6 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
         "schema_type": "WebSite",
         "structured_data": [],
         "build_query_string": build_query_string,
-        "decode_query_text": decode_query_text,
         "csp_nonce": getattr(request.state, "csp_nonce", "") if request else "",
         "csrf_token": get_or_create_csrf_token(request, settings) if request else "",
     }
