@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
 
-
 MAX_TEXT_LENGTH = 255
 MAX_DESCRIPTION_LENGTH = 4000
-
-
 
 
 class ProductBase(BaseModel):
@@ -22,7 +19,9 @@ class ProductBase(BaseModel):
     @field_validator("name", "category", mode="before")
     @classmethod
     def validate_required_text(cls, value: object) -> str:
-        text = str(value or "").strip()
+        if not isinstance(value, str):
+            raise ValueError("This field must be text.")
+        text = value.strip()
         if not text:
             raise ValueError("This field is required.")
         return text
@@ -30,7 +29,11 @@ class ProductBase(BaseModel):
     @field_validator("description", "tags", mode="before")
     @classmethod
     def normalize_optional_text(cls, value: object) -> str:
-        return str(value or "").strip()
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            raise ValueError("This field must be text.")
+        return value.strip()
 
     @field_validator("specs", mode="before")
     @classmethod
@@ -39,7 +42,9 @@ class ProductBase(BaseModel):
             return []
         if not isinstance(value, list):
             raise ValueError("Specifications must be a list.")
-        cleaned = [str(item).strip() for item in value if str(item).strip()]
+        if any(not isinstance(item, str) for item in value):
+            raise ValueError("Specifications must contain text only.")
+        cleaned = [item.strip() for item in value if item.strip()]
         if len(cleaned) > 50:
             raise ValueError("No more than 50 specifications are allowed.")
         return cleaned
@@ -47,16 +52,19 @@ class ProductBase(BaseModel):
 
 class Product(ProductBase):
     id: str
-    image: Optional[str] = None
+    image: str | None = None
     images: list[str] = Field(default_factory=list)
     created: datetime
 
 
 class ProductCreate(ProductBase):
-    pass
+    # Bound submitted rows while allowing existing longer descriptions to render.
+    specs: list[Annotated[str, Field(max_length=MAX_DESCRIPTION_LENGTH)]] = Field(
+        default_factory=list, max_length=50
+    )
 
 
-class ProductUpdate(ProductBase):
+class ProductUpdate(ProductCreate):
     pass
 
 
