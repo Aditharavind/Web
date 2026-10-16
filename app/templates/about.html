@@ -1,65 +1,58 @@
-{% extends "base.html" %}
-{% block content %}
-{% include "partials/public_nav.html" %}
-
-<div class="page-hero">
-  <div class="page-hero-inner">
-    <div class="page-hero-eyebrow">About Us</div>
-    <h1 class="page-hero-title">Built for Demanding<br><em class="green-em">Industrial Supply</em></h1>
-    <p class="page-hero-sub">NAWA Global General Trading delivers dependable sourcing, quality products, and responsive support for industrial and oilfield operations.</p>
-  </div>
-</div>
-
-<div class="section">
-  <div class="card-grid-2">
-    <div class="highlight-box">
-      <span class="section-label">Who We Are</span>
-      <h2 class="section-heading-left">Reliable sourcing. Practical support. Competitive delivery.</h2>
-      <p class="section-copy">NAWA Global General Trading is a trusted supplier of oilfield spare parts, industrial consumables, lubricants, grease, degreasers, and maintenance solutions. We support oil &amp; gas, construction, industrial, and facility management teams with fast turnaround and a quality-first mindset.</p>
-    </div>
-    <div class="stack-gap">
-      <div class="info-card"><div class="info-card-icon">🧭</div><div class="info-card-title">Mission</div><div class="info-card-text">To be the dependable industrial supply partner our customers can count on for quality, speed, and value.</div></div>
-      <div class="info-card"><div class="info-card-icon">🔍</div><div class="info-card-title">Focus</div><div class="info-card-text">Oilfield equipment, MRO supplies, safety PPE, lubricants, specialty products, and custom sourcing.</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="section">
-  <div class="section-header">
-    <span class="section-label">Our Strengths</span>
-    <h2 class="section-title">Why Choose NAWA Global?</h2>
-  </div>
-  <div class="card-grid-2">
-    <div class="stack-gap">
-      <div class="strength-row"><div class="strength-icon">🌐</div><div><div class="strength-title">Global Sourcing Capabilities</div><div class="strength-text">Access to a strong international supplier network for competitive pricing and rare items.</div></div></div>
-      <div class="strength-row"><div class="strength-icon">⚡</div><div><div class="strength-title">Fast Turnaround Time</div><div class="strength-text">Quick response to inquiries and efficient order processing to meet tight deadlines.</div></div></div>
-      <div class="strength-row"><div class="strength-icon">💰</div><div><div class="strength-title">Competitive Pricing</div><div class="strength-text">Cost optimization strategies that deliver real value without compromising quality.</div></div></div>
-      <div class="strength-row"><div class="strength-icon">🚚</div><div><div class="strength-title">Reliable Logistics</div><div class="strength-text">Dependable delivery schedules with careful logistics planning and tracking.</div></div></div>
-    </div>
-    <div class="stack-gap">
-      <div class="strength-row"><div class="strength-icon">✅</div><div><div class="strength-title">Quality Assurance</div><div class="strength-text">Rigorous quality checks and compliance-driven procurement processes.</div></div></div>
-      <div class="strength-row"><div class="strength-icon">🤝</div><div><div class="strength-title">Customer-First Approach</div><div class="strength-text">Solution-oriented service with dedicated support for every client.</div></div></div>
-      <div class="strength-row"><div class="strength-icon">📋</div><div><div class="strength-title">Compliance-Driven</div><div class="strength-text">All products meet industry standards and regulatory requirements.</div></div></div>
-      <div class="strength-row"><div class="strength-icon">📞</div><div><div class="strength-title">Dedicated Support</div><div class="strength-text">Direct WhatsApp access for fast quotes, updates, and after-sales support.</div></div></div>
-    </div>
-  </div>
-</div>
-
-<div class="alt-band">
-  <div class="alt-band-inner">
-    <div class="section-header">
-      <span class="section-label">Industries We Serve</span>
-      <h2 class="section-title">Powering Operations Across Sectors</h2>
-    </div>
-    <div class="card-grid-4">
-      <div class="industry-card"><div class="industry-icon">🛢️</div><div class="industry-title">Oil &amp; Gas</div><div class="industry-copy">Upstream, midstream &amp; downstream operations</div></div>
-      <div class="industry-card"><div class="industry-icon">🏗️</div><div class="industry-title">Construction</div><div class="industry-copy">Infrastructure and civil engineering projects</div></div>
-      <div class="industry-card"><div class="industry-icon">🏭</div><div class="industry-title">Industrial</div><div class="industry-copy">Manufacturing and processing facilities</div></div>
-      <div class="industry-card"><div class="industry-icon">🏢</div><div class="industry-title">Facility Mgmt</div><div class="industry-copy">Building maintenance and operations</div></div>
-    </div>
-  </div>
-</div>
-
-{% include "partials/brands.html" %}
-{% include "partials/footer.html" %}
+{% extends "base.html" %}{% from 'partials/icons.html' import icon %}
+{% block body_class %}public-site{% endblock %}
+{% block page_layout %}
+  {% include "partials/public_nav.html" %}
+  <main id="main-content">
+    <header class="editorial-hero">
+      <div class="shell">
+        <span class="eyebrow">ABOUT NAWA GLOBAL</span>
+        <h1>
+          A practical partner.
+          <br>
+          <span>A clearer path to supply.</span>
+        </h1>
+        <p class="lead">An Abu Dhabi-based general trading business focused on oilfield products, industrial essentials and requirement-led sourcing.</p>
+      </div>
+    </header>
+    <section class="editorial-section">
+      <div class="shell intro-layout">
+        <div>
+          <span class="eyebrow">WHO WE ARE</span>
+          <h2>
+            Industry needs more
+            <br>
+            than a product list.
+          </h2>
+        </div>
+        <div>
+          <p class="body-large">It needs the right specification, a clear offer and a shared understanding of what comes next.</p>
+          <p>NAWA Global General Trading brings together oilfield components, mechanical and MRO supplies, lubricants, instrumentation and workplace protection products. We support customers with product enquiries and procurement coordination, from the initial requirement through the agreed order arrangements.</p>
+          <p>Our role is to make the sourcing conversation practical: clarify part references and quantities, communicate available options and keep attention on the details that matter to the customer.</p>
+        </div>
+      </div>
+    </section>
+    <section class="editorial-section soft-section">
+      <div class="shell purpose-grid">
+        <article class="purpose-card"><span class="eyebrow">01 / OUR MISSION</span>
+          <h2>
+            Clarity in every
+            <br>
+            procurement step.
+          </h2>
+          <p>{{ mission }}</p>
+        </article><article class="purpose-card"><span class="eyebrow">02 / OUR VISION</span>
+          <h2>
+            Relationships built
+            <br>
+            for the long term.
+          </h2>
+          <p>{{ vision }}</p>
+        </article>
+      </div>
+    </section>
+    <section class="editorial-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">OUR CORE VALUES</span><h2>The principles behind our work.</h2></div><p>These principles guide how we approach requirements, communicate with customers and develop supplier relationships.</p></div><div class="capability-grid">{% for item in values %}<article class="value-card"><span class="line-icon">{{ icon(item.icon,28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>{% endfor %}</div></div></section>
+    <section class="editorial-section soft-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">WHY CHOOSE NAWA GLOBAL</span><h2>Useful support at the details.</h2></div></div><div class="reason-grid">{% for item in reasons %}<article class="reason-card"><span class="line-icon">{{ icon(item.icon,28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>{% endfor %}</div></div></section>
+    {% include "partials/quote_cta.html" %}
+  </main>
+  {% include "partials/footer.html" %}
 {% endblock %}

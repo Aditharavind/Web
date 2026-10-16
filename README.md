@@ -27,3 +27,11 @@ Environment files are not loaded automatically. A process manager must supply th
 The contact form currently has no delivery integration. It explicitly directs users
 to email or WhatsApp instead of claiming that a message was sent. Choose the delivery
 channel before enabling form submissions in production.
+
+## Corporate content and design
+
+The redesigned public website uses locally served Inter and Manrope fonts and local
+SVG icons. Key editorial content is in `app/core/content.py`; reusable interface
+styles are in `app/static/css/corporate.css`. See `CONTENT_REVIEW.md` for the proposed
+mission, vision, values and the identity/contact details requiring confirmation.
+Desktop and mobile screenshots are under `docs/previews/`.

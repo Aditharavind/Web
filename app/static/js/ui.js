@@ -2,14 +2,19 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-nav-toggle]").forEach((button) => {
     const nav = button.closest(".navbar");
     const controlsId = button.getAttribute("aria-controls");
-    const controlledNav = controlsId ? document.getElementById(controlsId) : null;
+    const controlledNav = controlsId
+      ? document.getElementById(controlsId)
+      : null;
 
     const setOpenState = (isOpen) => {
       if (!nav) return;
       nav.classList.toggle("mobile-open", isOpen);
       button.setAttribute("aria-expanded", String(isOpen));
       if (controlledNav) {
-        controlledNav.setAttribute("aria-hidden", String(!isOpen));
+        controlledNav.setAttribute(
+          "aria-hidden",
+          String(!isOpen && window.innerWidth <= 900),
+        );
       }
     };
 
@@ -18,6 +23,10 @@ window.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => {
       if (!nav) return;
       setOpenState(!nav.classList.contains("mobile-open"));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setOpenState(false);
     });
 
     nav?.querySelectorAll("a").forEach((link) => {

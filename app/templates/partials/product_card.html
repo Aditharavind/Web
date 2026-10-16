@@ -1,3 +1,4 @@
+{% from 'partials/icons.html' import icon %}
 {% set product = card.product %}
 {% set images = card.images %}
 <article class="product-card">
@@ -5,7 +6,7 @@
     {% if images %}
     <img src="/uploads/{{ images[0] }}" alt="{{ product.name }}" loading="lazy" decoding="async">
     {% else %}
-    <div class="card-media-placeholder">📦</div>
+    <div class="card-media-placeholder">{{ icon('layers',40) }}</div>
     {% endif %}
     <span class="card-category-badge">{{ product.category or 'General' }}</span>
     {% if images|length > 1 %}
@@ -14,7 +15,7 @@
   </a>
   <div class="card-body">
     <h3 class="card-title">{{ product.name }}</h3>
-    <div class="card-desc">{{ product.description or 'No description available.' }}</div>
+    <div class="card-desc">{{ product.description or 'Contact our team for product details and availability.' }}</div>
     <div class="card-footer">
       <a href="/product/{{ product.id }}" class="btn sm primary card-btn-fill">View Details</a>
       <a href="{{ card.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn sm outline-green">WhatsApp</a>

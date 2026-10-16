@@ -28,8 +28,8 @@ def build_csp(settings: Settings, nonce: str) -> str:
         "frame-ancestors": ["'none'"],
         "form-action": ["'self'"],
         "img-src": ["'self'", "data:", f"https://{site_host}"],
-        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        "font-src": ["'self'", "https://fonts.gstatic.com"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "font-src": ["'self'"],
         "script-src": ["'self'", f"'nonce-{nonce}'"],
         "connect-src": ["'self'"],
     }

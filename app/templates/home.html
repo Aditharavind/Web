@@ -1,108 +1,35 @@
 {% extends "base.html" %}
-{% block content %}
-{% include "partials/public_nav.html" %}
-
-<div class="hero">
-  <div class="hero-bg-pattern"></div>
-  <div class="hero-glow-green"></div>
-  <div class="hero-glow-gold"></div>
-  <div class="hero-inner">
-    <div>
-      <div class="hero-eyebrow">Abu Dhabi, UAE · Est. 2020</div>
-      <h1 class="hero-title">Premium Oilfield &amp;<br><em>Industrial Supply</em><br>Partner</h1>
-      <p class="hero-sub">Reliable sourcing of high-quality oilfield spare parts, industrial consumables, lubricants, safety products, and maintenance solutions — delivered with speed and competitive pricing.</p>
-      <div class="hero-cta">
-        <a href="/catalog" class="btn primary lg">Browse Catalog</a>
-        <a href="{{ whatsapp_quote_url }}" target="_blank" class="wa-btn">Request a Quote</a>
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}public-site{% endblock %}
+{% block page_layout %}
+  {% include "partials/public_nav.html" %}
+  <main id="main-content">
+    <section class="landing-hero"><div class="shell hero-layout"><div class="hero-message"><span class="eyebrow">ABU DHABI, UAE / OILFIELD & INDUSTRIAL SUPPLY</span><h1>Supply that keeps<br><span>industry moving.</span></h1><p class="lead">{{ company_intro }}</p><div class="actions"><a href="/contact" class="action primary">Discuss your requirement {{ icon('arrow', 20) }}</a><a href="/services" class="text-link">Explore our capabilities {{ icon('arrow', 18) }}</a></div><div class="hero-note"><span class="status-dot"></span>Components. Consumables. Procurement support.</div></div>{% include "partials/industrial_art.html" %}</div></section>
+    <div class="scope-strip">
+      <div class="shell"><span>OILFIELD COMPONENTS</span><span>MRO ESSENTIALS</span><span>LUBRICANTS</span><span>SAFETY & WORKWEAR</span><span>REQUIREMENT-LED SOURCING</span></div>
+    </div>
+    <section class="editorial-section">
+      <div class="shell intro-layout">
+        <div>
+          <span class="eyebrow">THE NAWA GLOBAL APPROACH</span>
+          <h2>
+            Understand the requirement.
+            <br>
+            Make procurement clearer.
+          </h2>
+        </div>
+        <div>
+          <p class="body-large">NAWA Global General Trading supports oilfield and industrial procurement from Abu Dhabi, bringing product sourcing and order coordination into one practical conversation.</p>
+          <p>Whether you have a defined part reference or a mixed list of maintenance essentials, the starting point is the same: understand what is needed, clarify the options and agree the next steps.</p>
+          <a href="/about" class="text-link">Meet NAWA Global {{ icon('arrow', 18) }}</a>
+        </div>
       </div>
-      <div class="hero-stats">
-        <div><div class="hero-stat-num">{{ total_products }}+</div><div class="hero-stat-label">Products</div></div>
-        <div><div class="hero-stat-num">{{ total_categories }}+</div><div class="hero-stat-label">Categories</div></div>
-        <div><div class="hero-stat-num">UAE</div><div class="hero-stat-label">Based In</div></div>
-        <div><div class="hero-stat-num">14+</div><div class="hero-stat-label">Brands</div></div>
-      </div>
-    </div>
-    <div class="hero-right">
-      <div class="hero-card"><div class="hero-card-icon">🛢️</div><div class="hero-card-title">Oilfield Equipment</div><div class="hero-card-text">Spare parts, pipe fittings, valves, and field equipment for oil &amp; gas operations.</div></div>
-      <div class="hero-card"><div class="hero-card-icon">🔧</div><div class="hero-card-title">Industrial Supplies</div><div class="hero-card-text">MRO supplies, consumables, hydraulic components, and mechanical parts.</div></div>
-      <div class="hero-card"><div class="hero-card-icon">🛡️</div><div class="hero-card-title">Safety Products</div><div class="hero-card-text">PPE, hand protection, head &amp; eye protection, uniforms, and safety equipment.</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="trust-band">
-  <div class="trust-item">🛢️ Oilfield Specialists</div>
-  <div class="trust-item">🇦🇪 Abu Dhabi Based</div>
-  <div class="trust-item">🌍 Global Sourcing</div>
-  <div class="trust-item">⚡ Fast Delivery</div>
-  <div class="trust-item">💰 Competitive Pricing</div>
-  <div class="trust-item">💬 WhatsApp Support</div>
-</div>
-
-<div class="section">
-  <div class="two-col-feature">
-    <div>
-      <span class="section-label">About NAWA Global</span>
-      <h2 class="section-heading-left">A Trusted Partner for Industrial &amp; Oilfield Supply</h2>
-      <p class="section-copy">NAWA Global General Trading is a reliable supplier of high-quality oilfield spare parts, industrial consumables, lubricants, grease, degreasers, and maintenance solutions. We serve oil &amp; gas, industrial, construction, and facility management sectors with a commitment to quality, speed, and competitive pricing.</p>
-      <div class="button-row">
-        <a href="/about" class="btn primary">Learn More About Us</a>
-        <a href="/contact" class="btn outline-green">Get in Touch</a>
-      </div>
-    </div>
-    <div class="grid-2 cards-compact">
-      <div class="info-card"><div class="info-card-icon">🌐</div><div class="info-card-title">Global Network</div><div class="info-card-text">Strong global supplier network enabling competitive pricing.</div></div>
-      <div class="info-card"><div class="info-card-icon">⚡</div><div class="info-card-title">Fast Response</div><div class="info-card-text">Quick turnaround and reliable delivery schedules.</div></div>
-      <div class="info-card"><div class="info-card-icon">✅</div><div class="info-card-title">Quality Focused</div><div class="info-card-text">Compliance-driven approach with rigorous quality assurance.</div></div>
-      <div class="info-card"><div class="info-card-icon">🤝</div><div class="info-card-title">Customer First</div><div class="info-card-text">Solution-oriented, dedicated to your operational success.</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="alt-band">
-  <div class="alt-band-inner">
-    <div class="section-header section-header-tight">
-      <span class="section-label">Industries We Serve</span>
-      <h2 class="section-title">Powering Multiple Sectors</h2>
-    </div>
-    <div class="card-grid-4">
-      <div class="industry-card"><div class="industry-icon">🛢️</div><div class="industry-title">Oil &amp; Gas</div></div>
-      <div class="industry-card"><div class="industry-icon">🏗️</div><div class="industry-title">Construction</div></div>
-      <div class="industry-card"><div class="industry-icon">🏭</div><div class="industry-title">Industrial</div></div>
-      <div class="industry-card"><div class="industry-icon">🏢</div><div class="industry-title">Facility Mgmt</div></div>
-    </div>
-  </div>
-</div>
-
-{% if recent_product_cards %}
-<div class="section section-tight-top">
-  <div class="section-header-row">
-    <div>
-      <span class="section-label">Featured Products</span>
-      <div class="recent-title">Recently Added</div>
-    </div>
-    <a href="/catalog" class="btn outline-green">View Full Catalog →</a>
-  </div>
-  <div class="product-grid">
-    {% for card in recent_product_cards %}
-    {% include "partials/product_card.html" %}
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
-{% include "partials/brands.html" %}
-
-<div class="cta-banner">
-  <div class="cta-banner-inner">
-    <h2 class="cta-banner-title">Looking for Reliable Industrial Supply?</h2>
-    <p class="cta-banner-copy">Partner with NAWA Global for dependable sourcing, quality products, and timely delivery across the UAE and beyond.</p>
-    <div class="button-row button-row-center">
-      <a href="{{ whatsapp_quote_url }}" target="_blank" class="wa-btn">Request a Quote</a>
-      <a href="/contact" class="btn btn-on-green">Contact Us →</a>
-    </div>
-  </div>
-</div>
-
-{% include "partials/footer.html" %}
+    </section>
+    <section class="editorial-section soft-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">OUR CAPABILITIES</span><h2>Built around operational needs.</h2></div><a href="/services" class="text-link">Products & sourcing {{ icon('arrow', 18) }}</a></div><div class="capability-grid">{% for item in capabilities %}<a href="/services#{{ item.slug }}" class="capability-card"><div class="card-top"><span class="line-icon">{{ icon(item.icon,30) }}</span><span class="index-number">0{{ loop.index }}</span></div><h3>{{ item.name }}</h3><p>{{ item.text }}</p><span class="card-link">Explore capability {{ icon('arrow', 18) }}</span></a>{% endfor %}</div></div></section>
+    <section class="editorial-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">WHY WORK WITH US</span><h2>Practical support.<br>Clear commercial conversations.</h2></div><p>Good procurement depends on the details—and on people who keep those details in view.</p></div><div class="reason-grid">{% for item in reasons %}<article class="reason-card"><span class="line-icon">{{ icon(item.icon,26) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>{% endfor %}</div></div></section>
+    <section class="editorial-section soft-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">SECTORS WE SUPPORT</span><h2>Where industry gets to work.</h2></div><p>A focused supply offering for operational, maintenance and project requirements.</p></div><div class="sector-grid">{% for item in sectors %}<article class="sector-card">{{ icon(item.icon,32) }}<h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>{% endfor %}</div></div></section>
+    {% if recent_product_cards %}<section class="editorial-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">PRODUCT CATALOGUE</span><h2>Explore the range.</h2></div><a href="/catalog" class="text-link">Browse catalogue {{ icon('arrow', 18) }}</a></div><div class="product-grid">{% for card in recent_product_cards %}{% include "partials/product_card.html" %}{% endfor %}</div></div></section>{% endif %}
+    {% include "partials/quote_cta.html" %}
+  </main>
+  {% include "partials/footer.html" %}
 {% endblock %}

@@ -114,5 +114,5 @@ clears the browser cookie. Rotate SECRET_KEY to invalidate all sessions during a
 
 - Confirm domain, AWS account/region, budget and enquiry delivery channel.
 - Recheck dependency advisories at launch (the local audit currently reports no known vulnerabilities).
-- Run PostgreSQL/Redis integration checks and a visual browser review.
+- Run PostgreSQL/Redis integration checks and repeat visual review after final content approval.
 - Provision backups, TLS, monitoring and a tested restore path.

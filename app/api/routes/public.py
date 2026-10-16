@@ -71,26 +71,23 @@ async def home(
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:
     _track_visit(request, visit_service)
-    counts = product_service.counts()
     return templates.TemplateResponse(
         request,
         "home.html",
         {
             **template_context(
                 request,
-                page_title="NAWA Global General Trading — Premium Oilfield & Industrial Supply Partner",
+                page_title="NAWA Global | Oilfield & Industrial Supply | Abu Dhabi",
                 page_description=(
                     "NAWA Global General Trading supplies oilfield equipment, industrial "
                     "consumables, lubricants, PPE, and custom sourcing support in Abu Dhabi and across the UAE."
                 ),
-                canonical_url=normalize_site_url(str(request.url)),
+                canonical_url=f"{settings.site_url}{request.url.path}",
                 active_nav="home",
                 recent_product_cards=_build_product_cards(
                     product_service.recent_products(6),
                     product_service,
                 ),
-                total_products=counts["products"],
-                total_categories=counts["categories"],
                 whatsapp_number=whatsapp_number(settings.contact_whatsapp),
                 whatsapp_quote_url=whatsapp_message_url(
                     settings.contact_whatsapp,
@@ -116,9 +113,9 @@ async def about(
                 page_title="About Us — NAWA Global General Trading",
                 page_description=(
                     "Learn about NAWA Global General Trading, our industrial sourcing capabilities, "
-                    "quality-first approach, and sectors we serve."
+                    "mission, vision, values and approach to oilfield and industrial procurement."
                 ),
-                canonical_url=normalize_site_url(str(request.url)),
+                canonical_url=f"{settings.site_url}{request.url.path}",
                 active_nav="about",
             ),
         },
@@ -137,12 +134,12 @@ async def services_page(
         {
             **template_context(
                 request,
-                page_title="Products & Services — NAWA Global General Trading",
+                page_title="Products & Sourcing | NAWA Global",
                 page_description=(
                     "Explore NAWA Global's oilfield spare parts, industrial supplies, lubricants, "
                     "safety PPE, and custom procurement services."
                 ),
-                canonical_url=normalize_site_url(str(request.url)),
+                canonical_url=f"{settings.site_url}{request.url.path}",
                 active_nav="services",
             ),
         },
@@ -231,7 +228,7 @@ async def catalog(
         {
             **template_context(
                 request,
-                page_title="Product Catalog — NAWA Global General Trading",
+                page_title="Product Catalogue | NAWA Global",
                 page_description=(
                     "Browse NAWA Global's catalog of oilfield equipment, industrial products, "
                     "lubricants, and PPE."
@@ -291,7 +288,7 @@ async def product_detail(
                     if product.description
                     else f"View specifications and inquiry options for {product.name} from NAWA Global."
                 ),
-                canonical_url=normalize_site_url(str(request.url)),
+                canonical_url=f"{settings.site_url}{request.url.path}",
                 active_nav="catalog",
                 product=product,
                 product_images=product_images,
@@ -327,7 +324,7 @@ async def product_detail(
                                 "name": "Catalog",
                                 "item": f"{settings.site_url}/catalog",
                             },
-                            {"@type": "ListItem", "position": 3, "name": product.name, "item": str(request.url)},
+                            {"@type": "ListItem", "position": 3, "name": product.name, "item": f"{settings.site_url}{request.url.path}"},
                         ],
                     },
                     {
@@ -344,7 +341,7 @@ async def product_detail(
                             "@type": "Brand",
                             "name": "NAWA Global General Trading",
                         },
-                        "url": str(request.url),
+                        "url": f"{settings.site_url}{request.url.path}",
                     },
                 ],
             ),

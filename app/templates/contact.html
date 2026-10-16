@@ -1,67 +1,24 @@
-{% extends "base.html" %}
-{% block content %}
-{% include "partials/public_nav.html" %}
-
-<div class="page-hero">
-  <div class="page-hero-inner">
-    <div class="page-hero-eyebrow">Get in Touch</div>
-    <h1 class="page-hero-title">Contact<br><em class="green-em">NAWA Global</em></h1>
-    <p class="page-hero-sub">Reach out for product inquiries, quotes, or procurement support. We respond quickly via WhatsApp and email.</p>
-  </div>
-</div>
-
-<div class="section">
-  <div class="contact-grid">
-    <div>
-      <span class="section-label section-label-spaced">Contact Information</span>
-      <div class="contact-info-item">
-        <div class="contact-info-icon">📍</div>
-        <div><div class="contact-info-label">Address</div><div class="contact-info-value">{{ settings.contact_address }}</div></div>
+{% extends "base.html" %}{% from 'partials/icons.html' import icon %}
+{% block body_class %}public-site{% endblock %}
+{% block page_layout %}
+  {% include "partials/public_nav.html" %}
+  <main id="main-content">
+    <header class="editorial-hero">
+      <div class="shell">
+        <span class="eyebrow">CONTACT & ENQUIRIES</span>
+        <h1>
+          Let’s start with
+          <br>
+          <span>what you need.</span>
+        </h1>
+        <p class="lead">Send a part reference, a product list or a sourcing requirement. Contact our team by email, phone or WhatsApp.</p>
       </div>
-      <div class="contact-info-item">
-        <div class="contact-info-icon">📞</div>
-        <div><div class="contact-info-label">Phone / WhatsApp</div><div class="contact-info-value"><a href="tel:{{ settings.contact_whatsapp }}" class="link-green">{{ settings.contact_whatsapp }}</a></div></div>
-      </div>
-      <div class="contact-info-item">
-        <div class="contact-info-icon">📧</div>
-        <div><div class="contact-info-label">Email</div><div class="contact-info-value"><a href="mailto:{{ settings.contact_email }}" class="link-green">{{ settings.contact_email }}</a></div></div>
-      </div>
-      <div class="contact-info-item">
-        <div class="contact-info-icon">🌐</div>
-        <div><div class="contact-info-label">Website</div><div class="contact-info-value"><a href="{{ settings.contact_website_url }}" target="_blank" rel="noopener noreferrer" class="link-green">{{ settings.contact_website }}</a></div></div>
-      </div>
-
-      <div class="whatsapp-card">
-        <div class="whatsapp-card-title">Chat on WhatsApp</div>
-        <p class="products-list-text">For the fastest response, contact us directly on WhatsApp. Our team is available to assist with quotes and product inquiries.</p>
-        <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="wa-btn wa-btn-block">Chat Now on WhatsApp</a>
-      </div>
-    </div>
-
-    <div class="contact-form-card">
-      <div class="form-heading">Send an Inquiry</div>
-      <div class="form-subheading">Fill out the form and we'll get back to you promptly.</div>
-      {% if inquiry_sent %}
-      <div class="alert success">✅ Message sent! We will get back to you shortly via WhatsApp or email.</div>
-      {% endif %}
-      {% if inquiry_error %}
-      <div class="alert error">⚠️ {{ inquiry_error }}</div>
-      {% endif %}
-      <form method="post" action="/contact">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <div class="grid-2">
-          <div class="form-group"><label class="form-label">Your Name *</label><input type="text" name="name" class="form-control" placeholder="John Smith" required></div>
-          <div class="form-group"><label class="form-label">Email Address *</label><input type="email" name="email" class="form-control" placeholder="john@company.com" required></div>
-        </div>
-        <div class="form-group"><label class="form-label">Company</label><input type="text" name="company" class="form-control" placeholder="Your Company Name"></div>
-        <div class="form-group"><label class="form-label">Product / Service Inquiry</label><input type="text" name="product" class="form-control" placeholder="e.g. Oilfield spare parts, Safety PPE, Lubricants..."></div>
-        <div class="form-group"><label class="form-label">Message *</label><textarea name="message" class="form-control" rows="5" placeholder="Describe your requirements, quantity, delivery timeline, etc." required></textarea></div>
-        <button type="submit" class="btn primary btn-block btn-large">Send Inquiry →</button>
-        <p class="form-note">We typically respond within a few hours during business hours.</p>
-      </form>
-    </div>
-  </div>
-</div>
-
-{% include "partials/footer.html" %}
+    </header>
+    <section class="editorial-section"><div class="shell contact-layout"><div><span class="eyebrow">SPEAK WITH NAWA GLOBAL</span><h2>A direct conversation.</h2><div class="contact-details"><a href="mailto:{{ settings.contact_email }}">{{ icon('mail', 24) }}<span><small>EMAIL ENQUIRIES</small>{{ settings.contact_email }}</span>{{ icon('arrow', 18) }}</a><a href="tel:{{ settings.contact_whatsapp }}">{{ icon('phone', 24) }}<span><small>PHONE / WHATSAPP</small>{{ settings.contact_whatsapp }}</span>{{ icon('arrow', 18) }}</a><div>{{ icon('pin', 24) }}<span><small>LOCATION</small>{{ settings.contact_address }}</span></div></div><a class="action primary"
+   href="{{ contact_whatsapp_url }}"
+   target="_blank"
+   rel="noopener noreferrer">Start a WhatsApp conversation {{ icon('arrow', 20) }}</a>{% if inquiry_error %}<p role="alert" class="contact-notice">{{ inquiry_error }}</p>{% endif %}</div><aside class="rfq-panel"><span class="eyebrow">A MORE USEFUL RFQ</span><h2>Help us understand<br>the requirement.</h2><p>Include these details where available:</p><ol><li>Product description, make and part number</li><li>Specification, drawing or reference photograph</li><li>Required quantity and unit of measure</li><li>Delivery location and requested date</li><li>Any applicable standards or documentation</li></ol><p class="rfq-note">For mixed requirements, attach your item list to an email.</p><a href="mailto:{{ settings.contact_email }}?subject=Product%20enquiry%20%E2%80%94%20NAWA%20Global"
+   class="text-link">Prepare an email enquiry {{ icon('arrow', 18) }}</a></aside></div></section>
+  </main>
+  {% include "partials/footer.html" %}
 {% endblock %}

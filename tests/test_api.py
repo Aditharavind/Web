@@ -40,7 +40,7 @@ async def test_burst_rate_limit():
 async def test_contact_never_claims_undelivered_enquiry_sent():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         page = await client.get("/contact")
-        token = re.search(r'name="csrf_token" value="([^"]+)"', page.text).group(1)
+        token = client.cookies.get("csrf_token")
         response = await client.post("/contact", data={"csrf_token": token, "name": "Test", "email": "a@b.com", "message": "Hello"})
         assert response.status_code == 303
         assert "sent=1" not in response.headers["location"]

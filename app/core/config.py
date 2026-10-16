@@ -84,7 +84,7 @@ def get_settings() -> Settings:
     site_url = _normalize_site_url(
         os.getenv("SITE_URL", os.getenv("CONTACT_WEBSITE", "http://localhost:8000")),
     )
-    contact_website = os.getenv("CONTACT_WEBSITE", site_url.replace("https://", "").replace("http://", "")).strip()
+    contact_website = os.getenv("CONTACT_WEBSITE", "nawaglobalgtd.com").strip()
     contact_website_url = _normalize_site_url(contact_website or site_url)
     uploads_dir = BASE_DIR / os.getenv("UPLOAD_DIR", "uploads")
 
