@@ -19,7 +19,7 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError, ProductNotFoundError, ValidationError
 from app.core.logging import setup_logging
 from app.core.monitoring import setup_monitoring
-from app.core.rate_limiter import get_redis_client
+from app.core.rate_limiter import close_redis_client, get_redis_client
 from app.core.security import (
     CSRF_COOKIE_NAME,
     build_csp,
@@ -120,7 +120,7 @@ async def lifespan(_: FastAPI):
     finally:
         try:
             if redis is not None:
-                await redis.aclose()
+                await close_redis_client(redis)
         finally:
             engine.dispose()
             logger.info("Application shutdown cleanup complete.")

@@ -1,16 +1,17 @@
 """Atomic distributed limits, with a bounded development-only fallback."""
+
 from __future__ import annotations
 
 import os
-import time
 import secrets
+import time
 from collections import OrderedDict, deque
 
 import redis.asyncio as aioredis
 
 from app.core.config import get_settings
 
-_redis_client = None
+_redis_client: aioredis.Redis | None = None
 _local: OrderedDict[str, deque[float]] = OrderedDict()
 _SCRIPT = """
 local key = KEYS[1]
@@ -25,26 +26,48 @@ return 1
 """
 
 
-def get_redis_client():
+def get_redis_client() -> aioredis.Redis | None:
     global _redis_client
     if _redis_client is not None:
         return _redis_client
-    url = os.getenv("REDIS_URL", "")
+    url = os.getenv("REDIS_URL", "").strip()
     if not url:
         if get_settings().is_production:
             raise RuntimeError("REDIS_URL is required in production.")
         return None
-    _redis_client = aioredis.from_url(url)
+    _redis_client = aioredis.from_url(
+        url,
+        socket_connect_timeout=2,
+        socket_timeout=2,
+        max_connections=20,
+    )
     return _redis_client
 
 
+async def close_redis_client(client: aioredis.Redis) -> None:
+    """Detach the cached client even if closing its connections fails."""
+    global _redis_client
+    if _redis_client is client:
+        _redis_client = None
+    await client.aclose()
+
+
 async def allow_request(key: str, max_requests: int, window_seconds: int) -> bool:
+    if max_requests <= 0 or window_seconds <= 0:
+        raise ValueError("Rate limits require a positive maximum and window.")
     redis = get_redis_client()
     if redis is not None:
-        return bool(await redis.eval(
-            _SCRIPT, 1, f"rl:{key}:{window_seconds}:{max_requests}",
-            time.time(), window_seconds, max_requests, secrets.token_hex(16),
-        ))
+        return bool(
+            await redis.eval(
+                _SCRIPT,
+                1,
+                f"rl:{key}:{window_seconds}:{max_requests}",
+                time.time(),
+                window_seconds,
+                max_requests,
+                secrets.token_hex(16),
+            )
+        )
     now = time.monotonic()
     bucket_key = f"{key}:{window_seconds}:{max_requests}"
     bucket = _local.setdefault(bucket_key, deque())
