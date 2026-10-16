@@ -147,10 +147,8 @@ async def do_login(
 def logout(
     request: Request,
     csrf_token: str = Form(...),
-    session_service: SessionService = Depends(get_session_service),
 ) -> RedirectResponse:
     validate_csrf(request, csrf_token, settings)
-    session_service.clear(request.cookies.get(settings.session_cookie_name))
     response = _redirect(f"{settings.admin_route}/login")
     response.delete_cookie(settings.session_cookie_name, path="/")
     return response

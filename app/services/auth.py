@@ -4,15 +4,10 @@ import secrets
 import time
 
 from fastapi import HTTPException, Request, status
-from passlib.context import CryptContext
 
-from app.core.config import Settings
+from app.core.config import Settings, pwd_context
 from app.core.exceptions import AuthenticationError
 from app.core.security import sign_value, verify_signed_value
-
-
-# Use passlib CryptContext for bcrypt hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class SessionService:
@@ -20,14 +15,19 @@ class SessionService:
         self.settings = settings
 
     def authenticate(self, username: str, password: str) -> str:
-        if secrets.compare_digest(username, self.settings.admin_username) is False:
+        if not secrets.compare_digest(
+            username.encode("utf-8"), self.settings.admin_username.encode("utf-8")
+        ):
             raise AuthenticationError("Invalid credentials")
 
-        stored = self.settings.admin_password_hash
+        # bcrypt only considers the first 72 bytes; never accept a truncated password.
+        if len(password.encode("utf-8")) > 72:
+            raise AuthenticationError("Invalid credentials")
         try:
-            if not pwd_context.verify(password, stored):
-                raise AuthenticationError("Invalid credentials")
-        except Exception:
+            valid = pwd_context.verify(password, self.settings.admin_password_hash)
+        except (ValueError, TypeError) as exc:
+            raise AuthenticationError("Invalid credentials") from exc
+        if not valid:
             raise AuthenticationError("Invalid credentials")
 
         expires_at = int(time.time()) + self.settings.session_max_age_seconds
@@ -47,12 +47,15 @@ class SessionService:
             return False
 
         try:
-            return int(expires_at) >= int(time.time())
+            remaining = int(expires_at) - int(time.time())
+            return 0 < remaining <= self.settings.session_max_age_seconds
         except ValueError:
             return False
 
     def is_admin(self, request: Request) -> bool:
-        return self._decode_token(request.cookies.get(self.settings.session_cookie_name))
+        return self._decode_token(
+            request.cookies.get(self.settings.session_cookie_name)
+        )
 
     def require_admin(self, request: Request) -> None:
         if not self.is_admin(request):
@@ -60,6 +63,3 @@ class SessionService:
                 status_code=status.HTTP_303_SEE_OTHER,
                 headers={"Location": f"{self.settings.admin_route}/login"},
             )
-
-    def clear(self, token: str | None) -> None:
-        return None
