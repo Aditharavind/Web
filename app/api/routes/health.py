@@ -15,6 +15,6 @@ async def health_check():
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-    except Exception as exc:
-        return JSONResponse({"status": "unhealthy", "db": False, "error": str(exc)}, status_code=503)
+    except Exception:
+        return JSONResponse({"status": "unhealthy", "db": False}, status_code=503)
     return JSONResponse({"status": "ok", "db": True})

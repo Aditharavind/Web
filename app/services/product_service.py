@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import UploadFile
 from sqlalchemy import func
@@ -85,7 +85,7 @@ class ProductService:
             tags=tags,
             image=record.image or (images[0] if images else None),
             images=images,
-            created=record.created_at or datetime.utcnow(),
+            created=record.created_at or datetime.now(timezone.utc).replace(tzinfo=None),
         )
 
     @staticmethod
@@ -134,14 +134,20 @@ class ProductService:
     async def _save_images(self, product_id: str, images: list[UploadFile]) -> list[str]:
         self._validate_image_count(images)
         saved: list[str] = []
-        index = 0
-        for image in images:
-            if not (image.filename or "").strip():
-                continue
-            suffix = "" if index == 0 else f"-{index + 1}"
-            saved.append(await self.image_service.save_image(image, product_id, suffix))
-            index += 1
-        return saved
+        try:
+            for index, image in enumerate(images):
+                if not (image.filename or "").strip():
+                    continue
+                saved.append(await self.image_service.save_image(image, product_id, f"-{index}"))
+            return saved
+        except Exception:
+            for filename in saved:
+                self.image_service.delete_image(filename)
+            raise
+
+    def counts(self) -> dict[str, int]:
+        with SessionLocal() as db:
+            return {"products": db.query(Product).count(), "categories": db.query(Category).count()}
 
     def list_products(self) -> list[ProductSchema]:
         db = SessionLocal()
@@ -284,7 +290,7 @@ class ProductService:
             if existing is not None:
                 raise DuplicateProductError("Product already exists.")
 
-            product_id = str(uuid.uuid4())[:8]
+            product_id = uuid.uuid4().hex
             saved_images = await self._save_images(product_id, images)
 
             record = Product(
@@ -355,7 +361,7 @@ class ProductService:
             if duplicate is not None:
                 raise DuplicateProductError("Product already exists.")
 
-            existing_images = self._split_images(record.images)
+            existing_images = self._split_images(record.images) or ([record.image] if record.image else [])
             saved_images = await self._save_images(product_id, images)
             combined_images = existing_images + saved_images
 
@@ -406,16 +412,16 @@ class ProductService:
                 raise ProductNotFoundError("Product not found.")
 
             safe_filename = filename.strip()
-            existing_images = self._split_images(record.images)
+            existing_images = self._split_images(record.images) or ([record.image] if record.image else [])
             images = [image for image in existing_images if image != safe_filename]
             if len(images) == len(existing_images):
                 raise ValidationError("Image not found.")
 
-            self.image_service.delete_image(safe_filename)
             record.image = images[0] if images else None
             record.images = self._join_images(images)
             db.add(record)
             db.commit()
+            self.image_service.delete_image(safe_filename)
         except (ProductNotFoundError, ValidationError):
             db.rollback()
             raise
@@ -433,11 +439,11 @@ class ProductService:
             if record is None:
                 raise ProductNotFoundError("Product not found.")
 
-            for image in self._split_images(record.images):
-                self.image_service.delete_image(image)
-
+            images = self._split_images(record.images) or ([record.image] if record.image else [])
             db.delete(record)
             db.commit()
+            for image in images:
+                self.image_service.delete_image(image)
         except ProductNotFoundError:
             db.rollback()
             raise

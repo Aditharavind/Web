@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-import hashlib
 from passlib.context import CryptContext
 import os
-import secrets
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_SQLITE_PATH = BASE_DIR / "app.db"
-
-
-def _sha256(value: str) -> str:
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 # CryptContext for bcrypt password hashing
@@ -82,7 +77,7 @@ class Settings:
 
 @lru_cache
 def get_settings() -> Settings:
-    environment = os.getenv("ENVIRONMENT", "development").strip().lower()
+    environment = os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).strip().lower()
     is_production = environment == "production"
     debug = _as_bool(os.getenv("DEBUG"), default=not is_production) and not is_production
 
@@ -97,45 +92,41 @@ def get_settings() -> Settings:
     # prefer bcrypt hashed password via ADMIN_PASSWORD_HASH; in dev, allow ADMIN_PASSWORD and
     # derive bcrypt hash for runtime use.
     admin_password_hash = os.getenv("ADMIN_PASSWORD_HASH", "").strip()
-    if not admin_password_hash:
+    if not admin_password_hash and not is_production:
         admin_password_plain = os.getenv("ADMIN_PASSWORD", "admin123")
-        # derive bcrypt hash for runtime (do not write back to env)
         admin_password_hash = pwd_context.hash(admin_password_plain)
     secret_key = os.getenv("SECRET_KEY", "").strip()
     database_url = os.getenv("DATABASE_URL", "").strip()
 
     if is_production:
-        missing = [
-            name
-            for name, value in {
-                "DATABASE_URL": database_url,
-                "SECRET_KEY": secret_key,
-                "ADMIN_USERNAME": admin_username,
-                "ADMIN_PASSWORD_HASH": admin_password_hash,
-            }.items()
-            if not value
-        ]
+        required = {
+            "DATABASE_URL": database_url,
+            "SECRET_KEY": secret_key,
+            "ADMIN_USERNAME": os.getenv("ADMIN_USERNAME", "").strip(),
+            "ADMIN_PASSWORD_HASH": admin_password_hash,
+        }
+        missing = [name for name, value in required.items() if not value]
         if missing:
-            print(f"Missing required production environment variables: {', '.join(sorted(missing))}")
-        if not os.getenv("ADMIN_PASSWORD_HASH"):
-            print("ADMIN_PASSWORD_HASH should be set in production and use bcrypt.")
-        if admin_username == "admin":
-            try:
-                if pwd_context.verify("admin123", admin_password_hash):
-                    print("Warning: default admin credentials are in use in production.")
-            except Exception:
-                pass
+            raise ValueError("Missing production settings: " + ", ".join(missing))
+        if len(secret_key) < 32 or secret_key == "dev-secret-key-change-me":
+            raise ValueError("SECRET_KEY must be a strong random value of at least 32 characters.")
+        if not site_url.startswith("https://"):
+            raise ValueError("Production SITE_URL must use HTTPS.")
+        if not _as_bool(os.getenv("SECURE_COOKIES"), default=True):
+            raise ValueError("Production requires secure cookies.")
+        if not admin_password_hash.startswith(("$2a$", "$2b$", "$2y$")):
+            raise ValueError("ADMIN_PASSWORD_HASH must be a bcrypt hash.")
+        if pwd_context.verify("admin123", admin_password_hash):
+            raise ValueError("Default admin password is forbidden in production.")
 
-    if not secret_key:
-        secret_key = "dev-secret-key-change-me"
-    if not database_url:
-        database_url = f"sqlite:///{DEFAULT_SQLITE_PATH}"
+    secret_key = secret_key or "dev-secret-key-change-me"
+    database_url = database_url or f"sqlite:///{DEFAULT_SQLITE_PATH}"
 
     trusted_hosts = _parse_csv(
         os.getenv("TRUSTED_HOSTS"),
         ["localhost", "127.0.0.1", "testserver"],
     )
-    site_host = site_url.split("://", 1)[1]
+    site_host = urlsplit(site_url).hostname
     if site_host not in trusted_hosts:
         trusted_hosts.append(site_host)
 

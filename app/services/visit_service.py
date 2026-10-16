@@ -1,109 +1,72 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
-
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
-
 from app.core.exceptions import DataAccessError
 from app.database.db import SessionLocal
 from app.database.models import Visit as VisitRecord
 from app.models.schemas import Visit
 
-
 logger = logging.getLogger(__name__)
 
 
 class VisitService:
-    @staticmethod
-    def _to_visit(record: VisitRecord) -> Visit:
-        return Visit(ip=record.ip, time=record.visited_at)
-
     def log_visit(self, ip_address: str) -> None:
-        db = SessionLocal()
-        try:
-            db.add(VisitRecord(ip=ip_address.strip() or "unknown"))
-            db.commit()
-        except SQLAlchemyError:
-            db.rollback()
-            logger.exception("Failed to log visit for %s.", ip_address)
-        finally:
-            db.close()
+        with SessionLocal() as db:
+            try:
+                db.add(VisitRecord(ip=ip_address.strip() or "unknown"))
+                db.commit()
+            except SQLAlchemyError:
+                db.rollback()
+                logger.exception("Failed to record visit.")
 
-    def list_visits(self) -> list[Visit]:
-        db = SessionLocal()
-        try:
-            records = db.query(VisitRecord).order_by(VisitRecord.visited_at.asc()).all()
-            return [self._to_visit(record) for record in records]
-        except SQLAlchemyError as exc:
-            logger.exception("Failed to list visits.")
-            raise DataAccessError("Unable to load visitor data right now.") from exc
-        finally:
-            db.close()
+    def recent_visits(self, limit: int = 50) -> list[Visit]:
+        with SessionLocal() as db:
+            rows = db.query(VisitRecord).order_by(VisitRecord.visited_at.desc()).limit(limit).all()
+            return [Visit(ip=row.ip, time=row.visited_at) for row in reversed(rows)]
 
     def summary(self) -> dict[str, int]:
-        visits = self.list_visits()
-        today_key = datetime.now().strftime("%Y-%m-%d")
-        return {
-            "total": len(visits),
-            "today": sum(1 for visit in visits if visit.time.strftime("%Y-%m-%d") == today_key),
-            "unique_ips": len({visit.ip for visit in visits}),
-        }
+        today = datetime.now(timezone.utc).replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
+        with SessionLocal() as db:
+            return {
+                "total": db.query(VisitRecord).count(),
+                "today": db.query(VisitRecord).filter(VisitRecord.visited_at >= today).count(),
+                "unique_ips": db.query(func.count(func.distinct(VisitRecord.ip))).scalar(),
+            }
 
     def analytics(self, period: str) -> dict[str, object]:
-        visits = self.list_visits()
-        now = datetime.now()
-        today_key = now.strftime("%Y-%m-%d")
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
         config = {
-            "week": (now - timedelta(days=7), "Last 7 Days", "%Y-%m-%d", "%a %d"),
-            "month": (now - timedelta(days=30), "Last 30 Days", "%Y-%m-%d", "%b %d"),
-            "year": (now - timedelta(days=365), "Last 12 Months", "%Y-%m", "%b %Y"),
-            "all": (datetime(2000, 1, 1), "All Time", "%Y-%m", "%b %Y"),
+            "today": (today, "Today", "%Y-%m-%d %H", "YYYY-MM-DD HH24", "%I %p"),
+            "week": (now - timedelta(days=7), "Last 7 Days", "%Y-%m-%d", "YYYY-MM-DD", "%a %d"),
+            "month": (now - timedelta(days=30), "Last 30 Days", "%Y-%m-%d", "YYYY-MM-DD", "%b %d"),
+            "year": (now - timedelta(days=365), "Last 12 Months", "%Y-%m", "YYYY-MM", "%b %Y"),
+            "all": (datetime(2000, 1, 1), "All Time", "%Y-%m", "YYYY-MM", "%b %Y"),
         }
-        active_period = period if period in {"today", *config.keys()} else "week"
-
-        if active_period == "today":
-            label = "Today"
-            group_key = "%H"
-            display_format = "%I %p"
-            filtered = [
-                visit for visit in visits if visit.time.strftime("%Y-%m-%d") == today_key
-            ]
-        else:
-            cutoff, label, group_key, display_format = config[active_period]
-            filtered = [visit for visit in visits if visit.time >= cutoff]
-
-        grouped: dict[str, int] = {}
-        for visit in filtered:
-            key = visit.time.strftime(group_key)
-            grouped[key] = grouped.get(key, 0) + 1
-
-        max_count = max(grouped.values(), default=1)
-        chart = []
-        for key in sorted(grouped):
-            count = grouped[key]
-            chart.append(
-                {
-                    "key": key,
-                    "count": count,
-                    "height": max(4, round((count / max_count) * 100)),
-                    "label": datetime.strptime(key, group_key).strftime(display_format),
+        period = period if period in config else "week"
+        cutoff, label, sqlite_format, pg_format, display_format = config[period]
+        try:
+            with SessionLocal() as db:
+                query = db.query(VisitRecord).filter(VisitRecord.visited_at >= cutoff)
+                bucket = (func.strftime(sqlite_format, VisitRecord.visited_at)
+                          if db.bind.dialect.name == "sqlite"
+                          else func.to_char(VisitRecord.visited_at, pg_format))
+                grouped = query.with_entities(bucket, func.count()).group_by(bucket).order_by(bucket).all()
+                maximum = max((count for _, count in grouped), default=1)
+                recent = query.order_by(VisitRecord.visited_at.desc()).limit(50).all()
+                return {
+                    "period": period, "label": label, "total": query.count(),
+                    "filtered": [Visit(ip=row.ip, time=row.visited_at) for row in reversed(recent)],
+                    "today_count": query.filter(VisitRecord.visited_at >= today).count(),
+                    "unique_ips": query.with_entities(func.count(func.distinct(VisitRecord.ip))).scalar(),
+                    "all_time_total": db.query(VisitRecord).count(),
+                    "top_ips": query.with_entities(VisitRecord.ip, func.count()).group_by(VisitRecord.ip).order_by(func.count().desc()).limit(10).all(),
+                    "chart": [{"key": key, "count": count, "height": max(4, round(count / maximum * 100)),
+                               "label": datetime.strptime(key, sqlite_format).strftime(display_format)}
+                              for key, count in grouped],
                 }
-            )
-
-        ip_counts: dict[str, int] = {}
-        for visit in filtered:
-            ip_counts[visit.ip] = ip_counts.get(visit.ip, 0) + 1
-
-        return {
-            "period": active_period,
-            "label": label,
-            "filtered": filtered,
-            "chart": chart,
-            "today_count": sum(
-                1 for visit in filtered if visit.time.strftime("%Y-%m-%d") == today_key
-            ),
-            "unique_ips": len({visit.ip for visit in filtered}),
-            "all_time_total": len(visits),
-            "top_ips": sorted(ip_counts.items(), key=lambda item: item[1], reverse=True)[:10],
-        }
+        except SQLAlchemyError as exc:
+            raise DataAccessError("Unable to load visitor analytics.") from exc

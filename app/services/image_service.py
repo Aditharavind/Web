@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from uuid import uuid4
 from pathlib import Path
 
 from fastapi import UploadFile
@@ -42,7 +43,7 @@ class ImageService:
             raise ValidationError("One of the uploaded files is not a valid image.") from exc
 
         processed.thumbnail((self.image_max_dimension, self.image_max_dimension))
-        filename = f"{product_id}{suffix}.jpg"
+        filename = f"{product_id}{suffix}-{uuid4().hex}.jpg"
         processed.save(
             self.upload_dir / filename,
             format="JPEG",

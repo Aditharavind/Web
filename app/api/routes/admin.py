@@ -26,29 +26,8 @@ from app.utils.text import build_query_string, decode_query_text
 from app.core.rate_limiter import allow_request
 
 
-# Simple brute-force protection: track recent failed attempts per client for login
-_FAILED_LOGIN: dict[str, list[float]] = {}
-_LOCKOUT_SECONDS = 300
-_MAX_FAILED = 5
-
-
 def _client_key(request: Request) -> str:
     return request.client.host if request.client else "unknown"
-
-
-def _is_locked(request: Request) -> bool:
-    key = _client_key(request)
-    attempts = _FAILED_LOGIN.get(key, [])
-    now = __import__("time").time()
-    # clear old
-    attempts = [t for t in attempts if t + _LOCKOUT_SECONDS > now]
-    _FAILED_LOGIN[key] = attempts
-    return len(attempts) >= _MAX_FAILED
-
-
-def _record_failed(request: Request) -> None:
-    key = _client_key(request)
-    _FAILED_LOGIN.setdefault(key, []).append(__import__("time").time())
 
 
 router = APIRouter()
@@ -127,16 +106,11 @@ async def do_login(
     session_service: SessionService = Depends(get_session_service),
 ) -> RedirectResponse:
     validate_csrf(request, csrf_token, settings)
-    # Check lockout
-    if _is_locked(request):
-        return _redirect(f"{settings.admin_route}/login", error="Too many failed login attempts. Try again later.")
-    # simple per-IP rate limit for login: allow 10 per 60s
-    if not await allow_request(_client_key(request), 10, 60):
-        return _redirect(f"{settings.admin_route}/login", error="Too many requests. Slow down.")
+    if not await allow_request(f"login:{_client_key(request)}", 5, 300):
+        return _redirect(f"{settings.admin_route}/login", error="Too many login attempts. Try again in five minutes.")
     try:
         token = session_service.authenticate(username, password)
     except AuthenticationError:
-        _record_failed(request)
         return _redirect(f"{settings.admin_route}/login", error="Invalid credentials")
 
     response = _redirect(f"{settings.admin_route}/dashboard")
@@ -174,8 +148,8 @@ async def dashboard(
 ) -> Response:
     session_service.require_admin(request)
     summary = visit_service.summary()
-    visits = visit_service.list_visits()
-    products = product_service.list_products()
+    visits = visit_service.recent_visits(8)
+    counts = product_service.counts()
     return templates.TemplateResponse(
         request,
         "admin/dashboard.html",
@@ -184,10 +158,10 @@ async def dashboard(
             page_title="Dashboard — Admin",
             meta_robots="noindex,nofollow",
             admin_section="dashboard",
-            products=products,
+            product_count=counts["products"],
             visits=visits,
             visit_summary=summary,
-            category_count=len({product.category for product in products}),
+            category_count=counts["categories"],
         ),
     )
 
@@ -235,7 +209,7 @@ async def add_product(
     session_service.require_admin(request)
     validate_csrf(request, csrf_token, settings)
     # protect product creation from mass requests
-    if not await allow_request(_client_key(request), 20, 60):
+    if not await allow_request(f"products:{_client_key(request)}", 20, 60):
         return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
         await product_service.create_product(
@@ -303,7 +277,7 @@ async def update_product(
 ) -> RedirectResponse:
     session_service.require_admin(request)
     validate_csrf(request, csrf_token, settings)
-    if not await allow_request(_client_key(request), 20, 60):
+    if not await allow_request(f"products:{_client_key(request)}", 20, 60):
         return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
         await product_service.update_product(
@@ -356,7 +330,7 @@ async def delete_product(
 ) -> RedirectResponse:
     session_service.require_admin(request)
     validate_csrf(request, csrf_token, settings)
-    if not await allow_request(_client_key(request), 20, 60):
+    if not await allow_request(f"products:{_client_key(request)}", 20, 60):
         return _redirect(f"{settings.admin_route}/products", error="Too many requests. Try again later.")
     try:
         product_service.delete_product(product_id)

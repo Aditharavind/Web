@@ -12,7 +12,6 @@
     </div>
   </a>
   <div class="nav-right">
-    <button class="theme-toggle" type="button" data-theme-toggle title="Toggle theme"></button>
     <a href="{{ settings.admin_route }}/dashboard" class="btn sm">Dashboard</a>
     <form method="post" action="{{ settings.admin_route }}/logout">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

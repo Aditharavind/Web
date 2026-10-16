@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import secrets
 import time
 
@@ -24,13 +23,6 @@ class SessionService:
         if secrets.compare_digest(username, self.settings.admin_username) is False:
             raise AuthenticationError("Invalid credentials")
 
-        fallback_password = os.getenv("ADMIN_PASSWORD", "").strip()
-        if fallback_password and secrets.compare_digest(password, fallback_password):
-            expires_at = int(time.time()) + self.settings.session_max_age_seconds
-            raw_value = f"{self.settings.admin_username}:{expires_at}"
-            return sign_value(raw_value, self.settings.secret_key)
-
-        # verify bcrypt hash if plain fallback is not configured or does not match
         stored = self.settings.admin_password_hash
         try:
             if not pwd_context.verify(password, stored):

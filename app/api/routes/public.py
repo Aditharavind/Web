@@ -71,8 +71,7 @@ async def home(
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:
     _track_visit(request, visit_service)
-    products = product_service.list_products()
-    categories = product_service.get_categories()
+    counts = product_service.counts()
     return templates.TemplateResponse(
         request,
         "home.html",
@@ -90,8 +89,8 @@ async def home(
                     product_service.recent_products(6),
                     product_service,
                 ),
-                total_products=len(products),
-                total_categories=len(categories),
+                total_products=counts["products"],
+                total_categories=counts["categories"],
                 whatsapp_number=whatsapp_number(settings.contact_whatsapp),
                 whatsapp_quote_url=whatsapp_message_url(
                     settings.contact_whatsapp,
@@ -191,7 +190,7 @@ async def contact_submit(
     validate_csrf(request, csrf_token, settings)
     # basic rate limit per client to avoid spam
     key = request.client.host if request.client else "unknown"
-    if not await allow_request(key, 5, 60):
+    if not await allow_request(f"contact:{key}", 5, 60):
         return RedirectResponse("/contact?" + "error=Too+many+requests", status_code=303)
     try:
         ContactInquiry(
@@ -208,7 +207,7 @@ async def contact_submit(
             f"/contact?{build_query_string({'error': error_message})}",
             status_code=303,
         )
-    return RedirectResponse("/contact?sent=1", status_code=303)
+    return RedirectResponse("/contact?" + build_query_string({"error": "Online enquiries are not configured yet. Please contact us using email or WhatsApp."}), status_code=303)
 
 
 @router.get("/catalog", response_class=HTMLResponse)

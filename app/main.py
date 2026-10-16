@@ -36,7 +36,7 @@ class CustomStaticFiles(StaticFiles):
         response = await super().get_response(path, scope)
         if response.status_code == 200:
             if path.startswith("css/") or path.startswith("js/"):
-                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+                response.headers["Cache-Control"] = "public, max-age=0, must-revalidate"
             else:
                 response.headers["Cache-Control"] = "public, max-age=86400"
         return response
@@ -62,10 +62,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         if request.url.path.startswith(settings.admin_route):
             response.headers["Cache-Control"] = "no-store"
-        elif response.media_type == "text/html" and "Cache-Control" not in response.headers:
+        elif response.headers.get("content-type", "").startswith("text/html") and "Cache-Control" not in response.headers:
             response.headers["Cache-Control"] = "no-cache"
         # Preload critical CSS to improve first render / Lighthouse
-        if response.media_type == "text/html":
+        if response.headers.get("content-type", "").startswith("text/html"):
             response.headers.setdefault("Link", f'<{settings.site_url}/static/css/app.css>; rel=preload; as=style')
 
         csrf_token = get_or_create_csrf_token(request, settings)
@@ -94,11 +94,20 @@ def _error_payload(status_code: int, message: str) -> dict[str, object]:
 async def lifespan(_: FastAPI):
     logger.info("Starting application in %s mode.", settings.environment)
     ensure_database_schema()
+    from app.core.rate_limiter import get_redis_client
+    redis = get_redis_client()
+    if redis is not None:
+        await redis.ping()
     yield
+    if redis is not None:
+        await redis.aclose()
     logger.info("Application shutdown complete.")
 
 
-app = FastAPI(title=settings.app_title, debug=False, lifespan=lifespan)
+app = FastAPI(title=settings.app_title, debug=False, lifespan=lifespan,
+              docs_url=None if settings.is_production else "/docs",
+              redoc_url=None if settings.is_production else "/redoc",
+              openapi_url=None if settings.is_production else "/openapi.json")
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
@@ -174,6 +183,8 @@ async def app_error_handler(request: Request, exc: AppError) -> Response:
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response:
+    if 300 <= exc.status_code < 400 and exc.headers:
+        return Response(status_code=exc.status_code, headers=exc.headers)
     detail = (
         "Page not found."
         if exc.status_code == 404

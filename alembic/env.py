@@ -13,19 +13,20 @@ from alembic import context
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.database.db import Base
+from app.database import models  # register migration metadata
 from app.core.config import get_settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-fileConfig(config.config_file_name)
+fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 settings = get_settings()
 
 if os.getenv('DATABASE_URL'):
-    config.set_main_option('sqlalchemy.url', os.getenv('DATABASE_URL'))
+    config.set_main_option('sqlalchemy.url', os.getenv('DATABASE_URL').replace('%', '%%'))
 else:
-    config.set_main_option('sqlalchemy.url', settings.database_url)
+    config.set_main_option('sqlalchemy.url', settings.database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 
