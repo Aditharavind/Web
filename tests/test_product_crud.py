@@ -15,8 +15,8 @@ class Upload:
         self.filename = filename
         self.content = content
 
-    async def read(self):
-        return self.content
+    async def read(self, size=-1):
+        return self.content if size < 0 else self.content[:size]
 
 
 def image_upload(color="red"):
