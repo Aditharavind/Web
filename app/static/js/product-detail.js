@@ -3,7 +3,8 @@ window.addEventListener("DOMContentLoaded", () => {
   let images = [];
   if (imageData?.dataset.images) {
     try {
-      images = JSON.parse(imageData.dataset.images);
+      const parsed = JSON.parse(imageData.dataset.images);
+      images = Array.isArray(parsed) ? parsed.filter((src) => typeof src === "string" && src) : [];
     } catch {
       images = [];
     }
@@ -15,6 +16,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const lightboxThumbs = document.getElementById("lb-thumbs");
   const openTrigger = document.querySelector("[data-open-lightbox]");
   const thumbs = Array.from(document.querySelectorAll("[data-thumb-index]"));
+  if (!lightbox || !lightboxImage || !lightboxCounter || !lightboxThumbs) return;
   let index = 0;
 
   const render = () => {

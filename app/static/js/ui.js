@@ -34,9 +34,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("resize", () => {
-      if (window.innerWidth > 900) {
-        setOpenState(false);
-      }
+      setOpenState(window.innerWidth <= 900 && nav?.classList.contains("mobile-open"));
     });
   });
 

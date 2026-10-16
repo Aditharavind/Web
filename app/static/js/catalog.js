@@ -5,10 +5,14 @@ window.addEventListener("DOMContentLoaded", () => {
   if (!input || !form) return;
 
   let timeoutId;
-  input.addEventListener("input", () => {
+  input.addEventListener("input", (event) => {
     window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => form.submit(), 450);
+    if (event.isComposing) return;
+    timeoutId = window.setTimeout(() => form.requestSubmit(), 450);
   });
 
-  category?.addEventListener("change", () => form.submit());
+  category?.addEventListener("change", () => {
+    window.clearTimeout(timeoutId);
+    form.requestSubmit();
+  });
 });
