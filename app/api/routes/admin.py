@@ -342,6 +342,29 @@ async def delete_product_image(
     )
 
 
+@router.post(
+    f"{settings.admin_route}/products/primary-image/{{product_id}}/{{filename}}"
+)
+async def set_primary_image(
+    product_id: str,
+    filename: str,
+    request: Request,
+    csrf_token: str = Form(...),
+    session_service: SessionService = Depends(get_session_service),
+    product_service: ProductService = Depends(get_product_service),
+) -> RedirectResponse:
+    edit_path = f"{settings.admin_route}/products/edit/{product_id}"
+    if not await _allow_product_write(request, csrf_token, session_service):
+        return _redirect(edit_path, error="Too many requests. Try again later.")
+    try:
+        await run_in_threadpool(product_service.set_primary_image, product_id, filename)
+    except ProductNotFoundError:
+        return _redirect(f"{settings.admin_route}/products", error="Product not found.")
+    except ValidationError as exc:
+        return _redirect(edit_path, error=str(exc))
+    return _redirect(edit_path, msg="Primary image updated")
+
+
 @router.post(f"{settings.admin_route}/products/delete/{{product_id}}")
 async def delete_product(
     product_id: str,

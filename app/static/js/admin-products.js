@@ -73,4 +73,36 @@ window.addEventListener("DOMContentLoaded", () => {
       renderPreview();
     });
   });
+
+  document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) overlay.classList.remove("open");
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll(".modal-overlay.open").forEach((overlay) => overlay.classList.remove("open"));
+  });
+
+  const search = document.querySelector("[data-admin-search]");
+  const category = document.querySelector("[data-admin-category]");
+  if (search || category) {
+    const rows = Array.from(document.querySelectorAll("[data-admin-row]"));
+    const empty = document.querySelector("[data-admin-empty]");
+    const applyFilter = () => {
+      const term = (search ? search.value : "").trim().toLowerCase();
+      const wanted = category ? category.value : "";
+      let visible = 0;
+      rows.forEach((row) => {
+        const match =
+          (!term || (row.dataset.name || "").includes(term)) &&
+          (!wanted || row.dataset.category === wanted);
+        row.hidden = !match;
+        if (match) visible += 1;
+      });
+      if (empty) empty.hidden = visible > 0;
+    };
+    search?.addEventListener("input", applyFilter);
+    category?.addEventListener("change", applyFilter);
+  }
 });

@@ -27,7 +27,7 @@ async def login(client):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "action",
-    ["add", "edit/missing", "delete/missing", "delete-image/missing/image.jpg"],
+    ["add", "edit/missing", "delete/missing", "delete-image/missing/image.jpg", "primary-image/missing/image.jpg"],
 )
 async def test_all_product_actions_require_authentication(action):
     prefix = get_settings().admin_route
@@ -115,3 +115,51 @@ async def test_edit_feedback_category_and_logout():
         client.cookies.set(get_settings().session_cookie_name, copied_session)
         protected = await client.get(f"{prefix}/dashboard")
         assert protected.status_code == 303
+
+
+@pytest.mark.asyncio
+async def test_make_primary_image_reorders_gallery():
+    import io
+
+    from PIL import Image
+
+    class Upload:
+        filename = "photo.jpg"
+
+        def __init__(self, color):
+            buf = io.BytesIO()
+            Image.new("RGB", (40, 40), color).save(buf, "JPEG")
+            self.content = buf.getvalue()
+
+        async def read(self, size=-1):
+            return self.content if size < 0 else self.content[:size]
+
+    service = get_product_service()
+    product = await service.create_product(
+        ProductCreate(name="Gallery order", category="Tools"),
+        [Upload("red"), Upload("blue"), Upload("green")],
+    )
+    first, second, third = service.get_product_images(product)
+    prefix = get_settings().admin_route
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        token = await login(client)
+        response = await client.post(
+            f"{prefix}/products/primary-image/{product.id}/{third}",
+            data={"csrf_token": token},
+        )
+        assert response.status_code == 303
+        missing = await client.post(
+            f"{prefix}/products/primary-image/{product.id}/nope.jpg",
+            data={"csrf_token": token},
+        )
+        assert "error=" in missing.headers["location"]
+        bad_csrf = await client.post(
+            f"{prefix}/products/primary-image/{product.id}/{second}",
+            data={"csrf_token": "bad"},
+        )
+        assert bad_csrf.status_code == 403
+    updated = service.get_product(product.id)
+    assert service.get_product_images(updated) == [third, first, second]
+    assert updated.image == third

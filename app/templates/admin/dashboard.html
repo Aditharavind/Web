@@ -1,22 +1,32 @@
 {% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}admin-site{% endblock %}
 {% block content %}
 {% include "partials/admin_nav.html" %}
 <div class="admin-layout">
   {% include "partials/admin_sidebar.html" %}
   <div class="main-content">
-    <div class="page-title">Dashboard</div>
-    <div class="page-subtitle">Overview of catalog and visitor activity</div>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <div class="page-subtitle">Products and visitor activity at a glance</div>
+      </div>
+      <a href="{{ settings.admin_route }}/products" class="btn primary">{{ icon('plus', 18) }} Add product</a>
+    </div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num">{{ product_count }}</div><div class="stat-label">Products</div></div>
       <div class="stat-card"><div class="stat-num">{{ category_count }}</div><div class="stat-label">Categories</div></div>
-      <div class="stat-card"><div class="stat-num">{{ visit_summary.total }}</div><div class="stat-label">Total Visits</div></div>
-      <div class="stat-card"><div class="stat-num">{{ visit_summary.today }}</div><div class="stat-label">Today</div></div>
-      <div class="stat-card"><div class="stat-num">{{ visit_summary.unique_ips }}</div><div class="stat-label">Unique IPs</div></div>
+      <div class="stat-card"><div class="stat-num">{{ visit_summary.today }}</div><div class="stat-label">Visits today</div></div>
+      <div class="stat-card"><div class="stat-num">{{ visit_summary.total }}</div><div class="stat-label">Total visits</div></div>
+      <div class="stat-card"><div class="stat-num">{{ visit_summary.unique_ips }}</div><div class="stat-label">Unique visitors</div></div>
     </div>
-    <div class="subsection-title">Recent Visitors</div>
+    <div class="page-head">
+      <h2 class="subsection-title">Recent visitors</h2>
+      <a href="{{ settings.admin_route }}/visitors" class="text-link-admin">All visitor stats {{ icon('arrow', 16) }}</a>
+    </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>IP Address</th><th>Timestamp</th></tr></thead>
+        <thead><tr><th>IP address</th><th>Time (UTC)</th></tr></thead>
         <tbody>
           {% for visit in visits[-8:]|reverse %}
           <tr><td class="mono-cell">{{ visit.ip }}</td><td class="muted-cell">{{ visit.time.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>

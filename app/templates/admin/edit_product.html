@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}admin-site{% endblock %}
 {% block content %}
 {% include "partials/admin_nav.html" %}
 <div class="admin-layout">
@@ -7,18 +9,18 @@
     <div class="breadcrumb">
       <a href="{{ settings.admin_route }}/products">Products</a><span>/</span><span>Edit</span>
     </div>
-    <div class="page-title">Edit Product</div>
+    <h1 class="page-title">Edit product</h1>
     <div class="page-subtitle">{{ product.name }}</div>
     {% if message %}
-    <div class="alert success">✅ {{ message }}</div>
+    <div class="alert success" role="status">{{ icon('check', 20) }} <span>{{ message }}</span></div>
     {% endif %}
     {% if error %}
-    <div class="alert error">⚠️ {{ error }}</div>
+    <div class="alert error" role="alert">{{ icon('warning', 20) }} <span>{{ error }}</span></div>
     {% endif %}
     <div class="form-card form-card-wide">
       <form id="edit-product-form" method="post" action="{{ settings.admin_route }}/products/edit/{{ product.id }}" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <div class="form-group"><label class="form-label" for="edit-name">Product Name *</label><input id="edit-name" type="text" name="name" class="form-control" value="{{ product.name }}" required maxlength="255"></div>
+        <div class="form-group"><label class="form-label" for="edit-name">Product name *</label><input id="edit-name" type="text" name="name" class="form-control" value="{{ product.name }}" required maxlength="255"></div>
         <div class="form-group">
           <label class="form-label" for="edit-category">Category *</label>
           <select id="edit-category" name="category" class="form-control">
@@ -28,41 +30,46 @@
             {% endfor %}
           </select>
         </div>
-        <div class="form-group"><label class="form-label" for="edit-new-category">Or Create New Category</label><input id="edit-new-category" type="text" name="new_category" class="form-control" placeholder="e.g. safety ppe" maxlength="255"></div>
+        <div class="form-group"><label class="form-label" for="edit-new-category">Or create a new category</label><input id="edit-new-category" type="text" name="new_category" class="form-control" placeholder="e.g. safety ppe" maxlength="255"></div>
         <div class="form-group"><label class="form-label" for="edit-description">Description</label><textarea id="edit-description" name="description" class="form-control" maxlength="4000">{{ product.description }}</textarea></div>
         <div class="form-group"><label class="form-label" for="edit-specs">Specifications</label><textarea id="edit-specs" name="specs" class="form-control">{% for spec in product.specs %}{{ spec }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea></div>
-        <div class="form-group"><label class="form-label" for="edit-tags">Search Keywords (comma separated)</label><input id="edit-tags" type="text" name="tags" class="form-control" value="{{ product.tags }}" placeholder="snare tool, pipe handling, rig safety" maxlength="255"><p class="field-help">Use accurate terms customers may search. These also support the product page content and metadata.</p></div>
+        <div class="form-group"><label class="form-label" for="edit-tags">Search keywords (comma separated, not shown on the site)</label><input id="edit-tags" type="text" name="tags" class="form-control" value="{{ product.tags }}" placeholder="snare tool, pipe handling, rig safety" maxlength="255"><p class="field-help">Use accurate terms customers may search. These also support the product page content and metadata.</p></div>
         <label class="checkbox-row" for="edit-featured"><input id="edit-featured" type="checkbox" name="featured" value="true"{% if product.featured %} checked{% endif %}><span><strong>Feature on homepage</strong><small>Show this product in the homepage Featured Products section.</small></span></label>
         <div class="form-group">
-          <label class="form-label">Current Images ({{ product_images|length }}) — click ✕ to remove</label>
+          <label class="form-label">Current images ({{ product_images|length }}). The first image is shown on the website.</label>
           {% if product_images %}
           <div class="existing-imgs">
             {% for image in product_images %}
             <div class="existing-img-item">
               <img src="/uploads/{{ image }}" alt="" loading="lazy" decoding="async">
-              <button type="submit" form="delete-image-{{ loop.index }}" class="del-img-btn" data-confirm="Remove image?" title="Remove image" aria-label="Remove image {{ loop.index }}">✕</button>
-              {% if loop.first %}<span class="primary-label">PRIMARY</span>{% endif %}
+              <button type="submit" form="delete-image-{{ loop.index }}" class="del-img-btn" data-confirm="Remove this image?" title="Remove image" aria-label="Remove image {{ loop.index }}">{{ icon('close', 14) }}</button>
+              {% if loop.first %}<span class="primary-label">PRIMARY</span>{% else %}<button type="submit" form="primary-image-{{ loop.index }}" class="make-primary-btn">Make primary</button>{% endif %}
             </div>
             {% endfor %}
           </div>
           {% else %}
           <p class="muted-note">No images yet.</p>
           {% endif %}
-          <label class="form-label">Add More Images</label>
+          <label class="form-label">Add more images</label>
           <div class="upload-zone" data-upload-zone>
             <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp" aria-label="Upload product images" multiple data-upload-input data-preview-target="edit-prev">
-            <div class="upload-zone-icon">📷</div>
+            <div class="upload-zone-icon">{{ icon('image', 32) }}</div>
             <div class="upload-zone-text">Click or drag &amp; drop to add images</div>
             <div class="upload-zone-sub">Existing images are kept unless removed above</div>
           </div>
           <div class="image-preview-grid" id="edit-prev"></div>
         </div>
         <div class="table-actions">
-          <button type="submit" class="btn primary">Save Changes</button>
+          <button type="submit" class="btn primary">Save changes</button>
           <a href="{{ settings.admin_route }}/products" class="btn">Cancel</a>
         </div>
       </form>
       {% for image in product_images %}
+      {% if not loop.first %}
+      <form id="primary-image-{{ loop.index }}" method="post" action="{{ settings.admin_route }}/products/primary-image/{{ product.id }}/{{ image }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      </form>
+      {% endif %}
       <form id="delete-image-{{ loop.index }}" method="post" action="{{ settings.admin_route }}/products/delete-image/{{ product.id }}/{{ image }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       </form>

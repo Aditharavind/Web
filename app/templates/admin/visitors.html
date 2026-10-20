@@ -1,18 +1,19 @@
 {% extends "base.html" %}
+{% block body_class %}admin-site{% endblock %}
 {% block content %}
 {% include "partials/admin_nav.html" %}
 <div class="admin-layout">
   {% include "partials/admin_sidebar.html" %}
   <div class="main-content">
-    <div class="page-title">Visitor Analytics</div>
-    <div class="page-subtitle">Track who's viewing your product catalog</div>
+    <h1 class="page-title">Visitors</h1>
+    <div class="page-subtitle">Who is viewing the website</div>
 
     <div class="filter-bar">
       <span class="filter-label">Period:</span>
       <a href="{{ settings.admin_route }}/visitors?period=today" class="filter-pill{% if period == 'today' %} active{% endif %}">Today</a>
-      <a href="{{ settings.admin_route }}/visitors?period=week" class="filter-pill{% if period == 'week' %} active{% endif %}">This Week</a>
-      <a href="{{ settings.admin_route }}/visitors?period=month" class="filter-pill{% if period == 'month' %} active{% endif %}">This Month</a>
-      <a href="{{ settings.admin_route }}/visitors?period=year" class="filter-pill{% if period == 'year' %} active{% endif %}">This Year</a>
+      <a href="{{ settings.admin_route }}/visitors?period=week" class="filter-pill{% if period == 'week' %} active{% endif %}">Last 7 days</a>
+      <a href="{{ settings.admin_route }}/visitors?period=month" class="filter-pill{% if period == 'month' %} active{% endif %}">Last 30 days</a>
+      <a href="{{ settings.admin_route }}/visitors?period=year" class="filter-pill{% if period == 'year' %} active{% endif %}">Last 12 months</a>
       <a href="{{ settings.admin_route }}/visitors?period=all" class="filter-pill{% if period == 'all' %} active{% endif %}">All Time</a>
     </div>
 
@@ -48,7 +49,7 @@
         <div class="subsection-title">Top Visitors</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>IP Address</th><th>Visits</th></tr></thead>
+            <thead><tr><th>IP address</th><th>Visits</th></tr></thead>
             <tbody>
               {% for ip, count in analytics.top_ips %}
               <tr><td class="mono-cell">{{ ip }}</td><td><strong class="green-strong">{{ count }}</strong></td></tr>
@@ -63,7 +64,7 @@
         <div class="subsection-title">Recent 50 Visits</div>
         <div class="table-wrap table-scroll">
           <table>
-            <thead><tr><th>IP Address</th><th>Timestamp</th></tr></thead>
+            <thead><tr><th>IP address</th><th>Time (UTC)</th></tr></thead>
             <tbody>
               {% for visit in analytics.filtered[-50:]|reverse %}
               <tr><td class="mono-cell">{{ visit.ip }}</td><td class="muted-cell">{{ visit.time.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>

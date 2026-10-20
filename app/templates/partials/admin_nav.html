@@ -1,18 +1,17 @@
+{% from 'partials/icons.html' import icon %}
 <nav class="navbar admin-navbar" aria-label="Administration">
-  <a href="/" class="brand">
-    <div class="logo-wrap">
-      <img src="{{ url_for('static', path='nawa-symbol.png') }}" alt="" width="38" height="38" style="object-fit:contain">
-    </div>
+  <a href="{{ settings.admin_route }}/dashboard" class="brand">
+    <img class="admin-logo" src="{{ url_for('static', path='nawa-symbol.png') }}" alt="" width="40" height="40">
     <div class="brand-text">
       <span class="brand-name">NAWA Global</span>
       <span class="admin-badge">ADMIN</span>
     </div>
   </a>
   <div class="nav-right">
-    <a href="{{ settings.admin_route }}/dashboard" class="btn sm">Dashboard</a>
+    <a href="/" target="_blank" rel="noopener" class="btn sm">{{ icon('external', 16) }} View site</a>
     <form method="post" action="{{ settings.admin_route }}/logout">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit" class="btn sm danger">Sign Out</button>
+      <button type="submit" class="btn sm danger">{{ icon('logout', 16) }} Sign out</button>
     </form>
   </div>
 </nav>

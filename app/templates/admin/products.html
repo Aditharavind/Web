@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}admin-site{% endblock %}
 {% block content %}
 {% include "partials/admin_nav.html" %}
 <div class="admin-layout">
@@ -6,57 +8,59 @@
   <div class="main-content">
     <div class="page-head">
       <div>
-        <div class="page-title">Products</div>
-        <div class="page-subtitle">Manage your product catalog</div>
+        <h1 class="page-title">Products</h1>
+        <div class="page-subtitle">{{ product_rows|length }} product{% if product_rows|length != 1 %}s{% endif %} in the catalogue</div>
       </div>
-      <button class="btn primary" type="button" data-modal-open="#add-modal">+ Add Product</button>
+      <button class="btn primary" type="button" data-modal-open="#add-modal">{{ icon('plus', 18) }} Add product</button>
     </div>
     {% if message %}
-    <div class="alert success">✅ {{ message }}</div>
+    <div class="alert success" role="status">{{ icon('check', 20) }} <span>{{ message }}</span></div>
     {% endif %}
     {% if error %}
-    <div class="alert error">⚠️ {{ error }}</div>
+    <div class="alert error" role="alert">{{ icon('warning', 20) }} <span>{{ error }}</span></div>
+    {% endif %}
+    {% if product_rows %}
+    <div class="admin-toolbar">
+      <input type="search" class="form-control" placeholder="Search products" aria-label="Search products" data-admin-search>
+      <select class="form-control" aria-label="Filter by category" data-admin-category>
+        <option value="">All categories</option>
+        {% for category in categories %}<option value="{{ category|lower }}">{{ category }}</option>{% endfor %}
+      </select>
+    </div>
     {% endif %}
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Images</th><th>Name</th><th>Category</th><th>Homepage</th><th>Description</th><th>Media</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Image</th><th>Product</th><th>Category</th><th>Featured</th><th>Images</th><th class="actions-col">Actions</th></tr></thead>
         <tbody>
           {% for row in product_rows %}
           {% set product = row.product %}
           {% set images = row.images %}
-          <tr>
+          <tr data-admin-row data-name="{{ product.name|lower }} {{ product.tags|lower }}" data-category="{{ (product.category or '')|lower }}">
             <td>
               {% if images %}
-              <div class="thumbs-row">
-                {% for image in images[:3] %}
-                <img src="/uploads/{{ image }}" class="admin-thumb" alt="">
-                {% endfor %}
-                {% if images|length > 3 %}
-                <span class="admin-thumb-more">+{{ images|length - 3 }}</span>
-                {% endif %}
-              </div>
+              <img src="/uploads/{{ images[0] }}" class="admin-thumb" alt="" loading="lazy">
               {% else %}
-              <div class="admin-thumb admin-thumb-empty">📦</div>
+              <div class="admin-thumb admin-thumb-empty">{{ icon('image', 20) }}</div>
               {% endif %}
             </td>
-            <td><strong class="table-strong">{{ product.name }}</strong></td>
+            <td><strong class="table-strong">{{ product.name }}</strong><div class="muted-cell ellipsis-cell">{{ product.description[:80] }}</div></td>
             <td><span class="tag green">{{ product.category or "—" }}</span></td>
-            <td>{% if product.featured %}<span class="tag green">Featured</span>{% else %}<span class="muted-cell">Not featured</span>{% endif %}</td>
-            <td class="ellipsis-cell">{{ product.description[:70] }}</td>
-            <td class="media-cell">{{ images|length }} img{% if images|length != 1 %}s{% endif %}</td>
+            <td>{% if product.featured %}<span class="tag gold">{{ icon('star', 14) }} Featured</span>{% else %}<span class="muted-cell">—</span>{% endif %}</td>
+            <td class="media-cell">{{ images|length }}</td>
             <td>
               <div class="table-actions">
-                <a href="{{ settings.admin_route }}/products/edit/{{ product.id }}" class="btn sm">Edit</a>
+                <a href="{{ settings.admin_route }}/products/edit/{{ product.id }}" class="btn sm">{{ icon('edit', 16) }} Edit</a>
                 <form method="post" action="{{ settings.admin_route }}/products/delete/{{ product.id }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                  <button type="submit" class="btn sm danger" data-confirm="Delete this product?">Delete</button>
+                  <button type="submit" class="btn sm danger" data-confirm="Delete “{{ product.name }}” and its images? This cannot be undone.">{{ icon('trash', 16) }} Delete</button>
                 </form>
               </div>
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="7"><div class="empty-state empty-state-small"><div class="empty-state-icon">📦</div><h3>No products yet</h3><p>Add your first product above.</p></div></td></tr>
+          <tr><td colspan="6"><div class="empty-state empty-state-small"><div class="empty-state-icon">{{ icon('box', 36) }}</div><h3>No products yet</h3><p>Add your first product to show it on the website.</p></div></td></tr>
           {% endfor %}
+          <tr data-admin-empty hidden><td colspan="6" class="table-empty">No products match your search.</td></tr>
         </tbody>
       </table>
     </div>
@@ -65,11 +69,11 @@
 
 <div class="modal-overlay" id="add-modal">
   <div class="modal">
-    <button class="modal-close" type="button" data-modal-close="#add-modal" aria-label="Close add product form">✕</button>
-    <div class="modal-title">Add New Product</div>
+    <button class="modal-close" type="button" data-modal-close="#add-modal" aria-label="Close add product form">{{ icon('close', 18) }}</button>
+    <h2 class="modal-title">Add new product</h2>
     <form method="post" action="{{ settings.admin_route }}/products/add" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <div class="form-group"><label class="form-label" for="add-name">Product Name *</label><input id="add-name" type="text" name="name" class="form-control" required placeholder="e.g. Industrial Safety Gloves" maxlength="255"></div>
+      <div class="form-group"><label class="form-label" for="add-name">Product name *</label><input id="add-name" type="text" name="name" class="form-control" required placeholder="e.g. Industrial Safety Gloves" maxlength="255"></div>
       <div class="form-group">
         <label class="form-label" for="add-category">Category *</label>
         <select id="add-category" name="category" class="form-control" {% if not categories %}disabled{% endif %}>
@@ -79,22 +83,22 @@
           {% endfor %}
         </select>
       </div>
-      <div class="form-group"><label class="form-label" for="add-new-category">Or Create New Category</label><input id="add-new-category" type="text" name="new_category" class="form-control" placeholder="e.g. safety ppe" maxlength="255"></div>
+      <div class="form-group"><label class="form-label" for="add-new-category">Or create a new category</label><input id="add-new-category" type="text" name="new_category" class="form-control" placeholder="e.g. safety ppe" maxlength="255"></div>
       <div class="form-group"><label class="form-label" for="add-description">Description</label><textarea id="add-description" name="description" class="form-control" maxlength="4000"></textarea></div>
       <div class="form-group"><label class="form-label" for="add-specs">Specifications (Label: Value, one per line)</label><textarea id="add-specs" name="specs" class="form-control" rows="4" placeholder="Material: Nitrile&#10;Sizes: S, M, L, XL"></textarea></div>
-      <div class="form-group"><label class="form-label" for="add-tags">Search Keywords (comma separated)</label><input id="add-tags" type="text" name="tags" class="form-control" placeholder="snare tool, pipe handling, rig safety" maxlength="255"><p class="field-help">Use accurate terms customers may search. These also support the product page content and metadata.</p></div>
+      <div class="form-group"><label class="form-label" for="add-tags">Search keywords (comma separated, not shown on the site)</label><input id="add-tags" type="text" name="tags" class="form-control" placeholder="snare tool, pipe handling, rig safety" maxlength="255"><p class="field-help">Use accurate terms customers may search. These also support the product page content and metadata.</p></div>
       <label class="checkbox-row" for="add-featured"><input id="add-featured" type="checkbox" name="featured" value="true"><span><strong>Feature on homepage</strong><small>Show this product in the homepage Featured Products section.</small></span></label>
       <div class="form-group">
-        <label class="form-label">Product Images — up to {{ settings.max_upload_files }}, first = primary</label>
+        <label class="form-label">Product images — up to {{ settings.max_upload_files }}, first = primary</label>
         <div class="upload-zone" data-upload-zone>
           <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp" aria-label="Upload product images" multiple data-upload-input data-preview-target="add-prev">
-          <div class="upload-zone-icon">📷</div>
+          <div class="upload-zone-icon">{{ icon('image', 32) }}</div>
           <div class="upload-zone-text">Click or drag &amp; drop images here</div>
           <div class="upload-zone-sub">PNG, JPG, WEBP · up to {{ settings.max_upload_files }} images · {{ (settings.max_upload_size_bytes / 1048576)|round(1) }} MB per file · 20 megapixels maximum</div>
         </div>
         <div class="image-preview-grid" id="add-prev"></div>
       </div>
-      <button type="submit" class="btn primary btn-block">Add Product</button>
+      <button type="submit" class="btn primary btn-block">Add product</button>
     </form>
   </div>
 </div>

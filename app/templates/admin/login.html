@@ -1,31 +1,22 @@
 {% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}admin-site{% endblock %}
 {% block content %}
 <div class="login-wrap">
   <div class="login-box">
     <div class="login-head">
-      <div class="brand">
-        <div class="logo-wrap">
-          <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true">
-            <path d="M2 20 L10 6 L15 14 L20 6 L28 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M10 20 L15 12 L20 20" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-        </div>
-        <div>
-          <div class="brand-name">NAWA Global</div>
-          <div class="login-subtitle">Admin Portal</div>
-        </div>
-      </div>
+      <img class="login-logo" src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="400" height="208">
+      <div class="login-subtitle">Admin sign in</div>
     </div>
     {% if error %}
-    <div class="alert error">⚠️ {{ error }}</div>
+    <div class="alert error" role="alert">{{ icon('warning', 20) }} <span>{{ error }}</span></div>
     {% endif %}
     <form method="post" action="{{ settings.admin_route }}/login">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <div class="form-group"><label class="form-label" for="login-username">Username</label><input id="login-username" type="text" name="username" class="form-control" autocomplete="username" required></div>
+      <div class="form-group"><label class="form-label" for="login-username">Username</label><input id="login-username" type="text" name="username" class="form-control" autocomplete="username" required autofocus></div>
       <div class="form-group"><label class="form-label" for="login-password">Password</label><input id="login-password" type="password" name="password" class="form-control" autocomplete="current-password" required></div>
-      <button type="submit" class="btn primary btn-block btn-large">Sign In →</button>
+      <button type="submit" class="btn primary btn-block btn-large">Sign in</button>
     </form>
-    <p class="form-note">Use the administrator credentials configured in your environment.</p>
   </div>
 </div>
 {% endblock %}
