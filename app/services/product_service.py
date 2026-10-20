@@ -84,6 +84,7 @@ class ProductService:
             description=description,
             specs=specs,
             tags=tags,
+            featured=bool(record.is_featured),
             image=record.image or (images[0] if images else None),
             images=images,
             created=record.created_at
@@ -192,15 +193,19 @@ class ProductService:
         finally:
             db.close()
 
-    def recent_products(self, limit: int) -> list[ProductSchema]:
+    def featured_products(self, limit: int) -> list[ProductSchema]:
         db = SessionLocal()
         try:
             records = (
-                db.query(Product).order_by(Product.created_at.desc()).limit(limit).all()
+                db.query(Product)
+                .filter(Product.is_featured.is_(True))
+                .order_by(Product.created_at.desc())
+                .limit(limit)
+                .all()
             )
             return [self._to_product(record) for record in records]
         except SQLAlchemyError as exc:
-            logger.exception("Failed to load recent products.")
+            logger.exception("Failed to load featured products.")
             raise DataAccessError("Unable to load products right now.") from exc
         finally:
             db.close()
@@ -316,6 +321,7 @@ class ProductService:
                 description=payload.description,
                 specs=self._join_specs(payload.specs),
                 tags=payload.tags,
+                is_featured=payload.featured,
                 image=saved_images[0] if saved_images else None,
                 images=self._join_images(saved_images),
             )
@@ -397,6 +403,7 @@ class ProductService:
             record.description = payload.description
             record.specs = self._join_specs(payload.specs)
             record.tags = payload.tags
+            record.is_featured = payload.featured
             record.image = combined_images[0] if combined_images else None
             record.images = self._join_images(combined_images)
 

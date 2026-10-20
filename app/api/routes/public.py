@@ -82,8 +82,8 @@ def home(
         ),
         canonical_url=_canonical_url("/"),
         active_nav="home",
-        recent_product_cards=_build_product_cards(
-            product_service.recent_products(6), product_service
+        featured_product_cards=_build_product_cards(
+            product_service.featured_products(6), product_service
         ),
     )
 
@@ -207,6 +207,11 @@ def product_detail(
             if product.description
             else f"View specifications and inquiry options for {product.name} from NAWA Global."
         ),
+        page_keywords=", ".join(
+            item
+            for item in (product.name, product.category, product.tags, "NAWA Global")
+            if item
+        ),
         canonical_url=canonical,
         active_nav="catalog",
         product=product,
@@ -242,6 +247,7 @@ def product_detail(
                 "name": product.name,
                 "description": product.description or product.name,
                 "category": product.category,
+                "keywords": product.tags,
                 "image": image_urls,
                 "url": canonical,
             },

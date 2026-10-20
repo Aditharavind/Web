@@ -53,4 +53,29 @@ window.addEventListener("DOMContentLoaded", () => {
       element.style.height = `${height}%`;
     }
   });
+
+  document.querySelectorAll("[data-card-gallery]").forEach((gallery) => {
+    const image = gallery.querySelector("[data-card-image]");
+    const counter = gallery.querySelector("[data-card-counter]");
+    if (!image || !counter) return;
+
+    let images = [];
+    try {
+      const parsed = JSON.parse(image.dataset.images || "[]");
+      images = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch {
+      return;
+    }
+    if (images.length < 2) return;
+
+    let index = 0;
+    gallery.querySelectorAll("[data-card-step]").forEach((button) => {
+      button.addEventListener("click", () => {
+        index = (index + Number(button.dataset.cardStep) + images.length) % images.length;
+        image.src = `/uploads/${images[index]}`;
+        image.alt = `Product image ${index + 1}`;
+        counter.textContent = `${index + 1} / ${images.length}`;
+      });
+    });
+  });
 });

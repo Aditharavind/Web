@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -9,6 +10,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
 )
 from sqlalchemy.orm import relationship
 
@@ -46,6 +48,9 @@ class Product(Base):
     tags = Column(String)
     image = Column(String)
     images = Column(Text)
+    is_featured = Column(
+        Boolean, nullable=False, default=False, server_default=false(), index=True
+    )
     created_at = Column(
         DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )

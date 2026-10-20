@@ -19,6 +19,18 @@ window.addEventListener("DOMContentLoaded", () => {
   if (!lightbox || !lightboxImage || !lightboxCounter || !lightboxThumbs) return;
   let index = 0;
 
+  const renderMain = () => {
+    if (!images.length || !mainImage) return;
+    mainImage.src = images[index];
+    mainImage.alt = `Product image ${index + 1}`;
+    document.querySelector("[data-gallery-counter]")?.replaceChildren(
+      `${index + 1} / ${images.length}`,
+    );
+    thumbs.forEach((thumb, thumbIndex) => {
+      thumb.classList.toggle("active", thumbIndex === index);
+    });
+  };
+
   const render = () => {
     if (!images.length) return;
     lightboxImage.src = images[index];
@@ -64,12 +76,15 @@ window.addEventListener("DOMContentLoaded", () => {
     thumb.addEventListener("click", () => {
       const thumbIndex = Number(thumb.getAttribute("data-thumb-index"));
       index = thumbIndex;
-      thumbs.forEach((item) => item.classList.remove("active"));
-      thumb.classList.add("active");
-      if (mainImage) {
-        mainImage.src = images[index];
-        mainImage.alt = `Product image ${thumbIndex + 1}`;
-      }
+      renderMain();
+    });
+  });
+
+  document.querySelectorAll("[data-gallery-step]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      index = (index + Number(button.dataset.galleryStep) + images.length) % images.length;
+      renderMain();
     });
   });
 

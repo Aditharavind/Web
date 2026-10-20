@@ -211,6 +211,7 @@ async def add_product(
     description: str = Form(""),
     specs: str = Form(""),
     tags: str = Form(""),
+    featured: bool = Form(False),
     images: list[UploadFile] = File(default=[]),
     session_service: SessionService = Depends(get_session_service),
     product_service: ProductService = Depends(get_product_service),
@@ -228,6 +229,7 @@ async def add_product(
                 description=description,
                 specs=_split_specs(specs),
                 tags=tags,
+                featured=featured,
             ),
             images,
         )
@@ -280,6 +282,7 @@ async def update_product(
     description: str = Form(""),
     specs: str = Form(""),
     tags: str = Form(""),
+    featured: bool = Form(False),
     images: list[UploadFile] = File(default=[]),
     session_service: SessionService = Depends(get_session_service),
     product_service: ProductService = Depends(get_product_service),
@@ -296,6 +299,7 @@ async def update_product(
                 description=description,
                 specs=_split_specs(specs),
                 tags=tags,
+                featured=featured,
             ),
             images,
         )

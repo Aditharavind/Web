@@ -15,6 +15,7 @@ class ProductBase(BaseModel):
     description: str = Field(default="", max_length=MAX_DESCRIPTION_LENGTH)
     specs: list[str] = Field(default_factory=list, max_length=50)
     tags: str = Field(default="", max_length=MAX_TEXT_LENGTH)
+    featured: bool = False
 
     @field_validator("name", "category", mode="before")
     @classmethod

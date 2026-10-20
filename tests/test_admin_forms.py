@@ -61,7 +61,7 @@ async def test_admin_add_edit_images_and_delete():
         assert len(forms.delete_targets) == 1
         assert all(target in forms.ids for target in forms.delete_targets)
 
-        updated = await client.post(f"{prefix}/products/edit/{product.id}", data={"csrf_token": token, "name": "Updated valve", "new_category": "Mechanical", "description": "Revised description", "specs": "Size: 2 inch\nMaterial: Steel", "tags": "valve, steel"}, files=[("images", ("blue.jpg", jpeg("blue"), "image/jpeg"))])
+        updated = await client.post(f"{prefix}/products/edit/{product.id}", data={"csrf_token": token, "name": "Updated valve", "new_category": "Mechanical", "description": "Revised description", "specs": "Size: 2 inch\nMaterial: Steel", "tags": "valve, steel", "featured": "true"}, files=[("images", ("blue.jpg", jpeg("blue"), "image/jpeg"))])
         assert updated.status_code == 303
         assert "error=" not in updated.headers["location"]
         fresh = service.get_product(product.id)
@@ -69,6 +69,7 @@ async def test_admin_add_edit_images_and_delete():
         assert fresh.category == "Mechanical"
         assert fresh.description == "Revised description"
         assert fresh.specs == ["Size: 2 inch", "Material: Steel"]
+        assert fresh.featured is True
         assert len(fresh.images) == 2
         assert (service.image_service.upload_dir / original).read_bytes() == original_bytes
         detail = await client.get(f"/product/{product.id}")

@@ -21,7 +21,7 @@ def test_generated_revision_and_schema_round_trip(tmp_path, monkeypatch):
     get_settings.cache_clear()
     try:
         revision = command.revision(config, message="temporary regression revision")
-        assert revision.down_revision == "0003_admin_sessions"
+        assert revision.down_revision == "0004_featured_products"
         assert (
             ScriptDirectory.from_config(config).get_current_head() == revision.revision
         )
@@ -39,6 +39,9 @@ def test_generated_revision_and_schema_round_trip(tmp_path, monkeypatch):
                 "SELECT name FROM products WHERE id='keep'"
             ).fetchone() == ("Keep product",)
             assert db.execute("SELECT COUNT(*) FROM admin_sessions").fetchone()[0] == 0
+            assert db.execute(
+                "SELECT is_featured FROM products WHERE id='keep'"
+            ).fetchone() == (0,)
         command.check(config)
         command.downgrade(config, "base")
         command.upgrade(config, "head")

@@ -23,6 +23,11 @@
             {% else %}
               <div class="detail-img-placeholder">{{ icon('layers', 48) }}</div>
             {% endif %}
+            {% if product_images|length > 1 %}
+              <button class="detail-gallery-nav previous" type="button" data-gallery-step="-1" aria-label="Previous product image">‹</button>
+              <button class="detail-gallery-nav next" type="button" data-gallery-step="1" aria-label="Next product image">›</button>
+              <span class="detail-gallery-count" data-gallery-counter>1 / {{ product_images|length }}</span>
+            {% endif %}
           </div>
           {% if product_images|length > 1 %}
             <div class="detail-thumbs">

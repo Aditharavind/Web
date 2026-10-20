@@ -63,6 +63,54 @@ async def test_template_rendering_home():
 
 
 @pytest.mark.asyncio
+async def test_public_product_galleries_have_visible_navigation():
+    service = get_product_service()
+    product = await service.create_product(
+        ProductCreate(name="Gallery product", category="Tools", featured=True),
+        [image_upload(), image_upload("blue")],
+    )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        home = await client.get("/")
+        detail = await client.get(f"/product/{product.id}")
+
+    assert home.status_code == 200
+    assert home.text.index("Featured products.") < home.text.index("OUR CAPABILITIES")
+    assert 'data-card-step="-1"' in home.text
+    assert 'data-card-step="1"' in home.text
+    assert "View all products" in home.text
+    assert detail.status_code == 200
+    assert 'data-gallery-step="-1"' in detail.text
+    assert 'data-gallery-step="1"' in detail.text
+
+
+@pytest.mark.asyncio
+async def test_featured_products_and_keywords():
+    service = get_product_service()
+    hidden = await service.create_product(
+        ProductCreate(name="Standard item", category="Tools", tags="maintenance"), []
+    )
+    featured = await service.create_product(
+        ProductCreate(
+            name="Rig handling tool",
+            category="Tools",
+            tags="pipe control, rig safety",
+            featured=True,
+        ),
+        [],
+    )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        home = await client.get("/")
+        search = await client.get("/catalog?q=pipe+control")
+        detail = await client.get(f"/product/{featured.id}")
+
+    assert featured.name in home.text
+    assert hidden.name not in home.text
+    assert featured.name in search.text
+    assert 'name="keywords"' in detail.text
+    assert "pipe control" in detail.text
+
+
+@pytest.mark.asyncio
 async def test_edit_respects_total_gallery_limit(monkeypatch):
     service = get_product_service()
     monkeypatch.setattr(service, "max_upload_files", 1)

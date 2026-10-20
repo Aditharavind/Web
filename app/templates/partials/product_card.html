@@ -2,17 +2,26 @@
 {% set product = card.product %}
 {% set images = card.images %}
 <article class="product-card">
-  <a class="card-media" href="/product/{{ product.id }}">
+  <div class="card-media" data-card-gallery>
     {% if images %}
-    <img src="/uploads/{{ images[0] }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+    <a class="card-media-link" href="/product/{{ product.id }}" aria-label="View {{ product.name }} details">
+      <img src="/uploads/{{ images[0] }}"
+           alt="{{ product.name }}"
+           loading="lazy"
+           decoding="async"
+           data-card-image
+           data-images='{{ images | tojson }}'>
+    </a>
     {% else %}
-    <div class="card-media-placeholder">{{ icon('layers',40) }}</div>
+    <a class="card-media-link" href="/product/{{ product.id }}" aria-label="View {{ product.name }} details"><span class="card-media-placeholder">{{ icon('layers',40) }}</span></a>
     {% endif %}
     <span class="card-category-badge">{{ product.category or 'General' }}</span>
     {% if images|length > 1 %}
-    <span class="card-img-count">1 / {{ images|length }}</span>
+    <button class="card-gallery-nav previous" type="button" data-card-step="-1" aria-label="Previous image">‹</button>
+    <button class="card-gallery-nav next" type="button" data-card-step="1" aria-label="Next image">›</button>
+    <span class="card-img-count" data-card-counter>1 / {{ images|length }}</span>
     {% endif %}
-  </a>
+  </div>
   <div class="card-body">
     <h3 class="card-title">{{ product.name }}</h3>
     <div class="card-desc">{{ product.description or 'Contact our team for product details and availability.' }}</div>
