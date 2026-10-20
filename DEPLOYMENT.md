@@ -131,6 +131,3 @@ with the migration role before starting production, and grant the application ro
 access to the new table. Existing cookies require a new login after this release.
 In development, the normal schema initialization creates missing tables; do not
 run migrations blindly against an existing unversioned local SQLite database.
-
-Local verification results and remaining host checks are in
-[docs/final-verification.md](docs/final-verification.md).

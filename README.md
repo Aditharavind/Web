@@ -27,13 +27,13 @@ Environment files are not loaded automatically. A process manager must supply th
 
 Contact enquiries use direct email and WhatsApp links. No contact form is exposed.
 
-## Corporate content and design
+## Content and design
 
-The redesigned public website uses locally served Inter and Manrope fonts and local
-SVG icons. Key editorial content is in `app/core/content.py`; reusable interface
-styles are in `app/static/css/corporate.css`. See `docs/content-review.md` for the proposed
-mission, vision, values and the identity/contact details requiring confirmation.
-Design screenshots are review artifacts and are not included in the application source.
+The public site uses locally served Inter and Manrope fonts and local SVG icons.
+Editable wording is in `app/core/content.py` (company intro, mission, vision,
+supply categories, reasons) and in `app/templates/`. Public styles are in
+`app/static/css/corporate.css`; shared controls and the admin panel are in
+`app/static/css/app.css`. Visitors contact the company by WhatsApp or email only.
 
 ## Project structure
 
@@ -49,7 +49,6 @@ Design screenshots are review artifacts and are not included in the application 
 | `app/utils/` | Pagination and text/URL helpers |
 | `alembic/` | Versioned database migrations |
 | `tests/` | Isolated automated checks |
-| `docs/` | Content review notes |
 | `uploads/` | Runtime product images; contents excluded from Git |
 
 `requirements.txt` declares direct runtime dependencies; `requirements.lock` pins
@@ -58,26 +57,14 @@ CI checks Python 3.11 and 3.12, installs the locked dependencies, checks migrati
 and runs Python and JavaScript tests. Optional
 Sentry monitoring is configured in the application through `SENTRY_DSN`.
 
-The stylesheets have separate responsibilities: `app.css` contains shared controls,
-product views and admin layouts; `corporate.css` contains public website styling;
-`fonts.css` defines the locally served fonts. Obsolete pre-redesign selectors have
-been removed, while shared rules needed by the admin panel are retained.
-
-## Files kept outside Git and deployment
-
-Keep the full repository for development: tests, documentation, migration history,
-font licences and package initializers all have a purpose. Tests and documentation
-are not served by the website; removing them does not reduce request processing.
+## Files kept outside Git
 
 `uploads/.gitkeep` preserves the empty runtime directory in a fresh checkout.
 Product images belong in the persistent upload directory and must be backed up
-with the database. Do not delete them during cleanup. Virtual environments,
+with the database; do not delete them during cleanup. Virtual environments,
 Python caches, local databases and secrets are excluded from Git.
 
-The admin currently supports image previews and automatic resizing/orientation,
-but does not include an interactive crop editor. Launch checks, live service
-verification and database-backed session revocation are documented in DEPLOYMENT.md.
-
-The dependency review and its verification limits are recorded in
-[docs/dependency-review.md](docs/dependency-review.md). HTTPX is test-only;
-the documented server uses Uvicorn directly and does not require Gunicorn.
+The admin supports image previews, automatic resizing and orientation correction,
+and choosing the primary image, but has no interactive crop editor. Remaining launch
+checks are listed in DEPLOYMENT.md. Stay on Python 3.11/3.12 (Passlib 1.7.4).
+HTTPX is test-only; the documented server uses Uvicorn directly.
