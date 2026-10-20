@@ -91,5 +91,5 @@
   {% include "partials/footer.html" %}
 {% endblock %}
 {% block scripts %}
-  <script defer src="{{ url_for('static', path='js/catalog.js') }}"></script>
+  <script defer src="{{ url_for('static', path='js/catalog.js') }}?v={{ static_asset_version }}"></script>
 {% endblock %}

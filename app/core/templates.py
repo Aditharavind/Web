@@ -15,6 +15,18 @@ settings = get_settings()
 templates = Jinja2Templates(directory=str(settings.templates_dir))
 
 
+def _static_asset_version() -> str:
+    timestamps = (
+        path.stat().st_mtime_ns
+        for path in settings.static_dir.rglob("*")
+        if path.is_file()
+    )
+    return str(max(timestamps, default=0))
+
+
+STATIC_ASSET_VERSION = _static_asset_version()
+
+
 def template_context(request: Request | None = None, **extra: object) -> dict[str, Any]:
     context: dict[str, Any] = {
         "settings": settings,
@@ -28,6 +40,7 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
         "process": content.PROCESS,
         "current_year": datetime.now().year,
         "site_url": settings.site_url,
+        "static_asset_version": STATIC_ASSET_VERSION,
         "primary_phone_display": "+971 50 546 4847"
         if settings.contact_whatsapp == "+971505464847"
         else settings.contact_whatsapp,

@@ -100,5 +100,5 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script defer src="{{ url_for('static', path='js/admin-products.js') }}"></script>
+<script defer src="{{ url_for('static', path='js/admin-products.js') }}?v={{ static_asset_version }}"></script>
 {% endblock %}
