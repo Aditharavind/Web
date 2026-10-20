@@ -51,3 +51,13 @@ def test_specification_boundary_and_independent_defaults():
     third = ProductCreate(name="Seal", category="Oilfield")
     second.specs.append("Size: 10 mm")
     assert third.specs == []
+
+
+def test_search_keywords_allow_long_lists_but_stay_bounded():
+    from app.models.schemas import MAX_TAGS_LENGTH
+
+    long_keywords = ", ".join(f"keyword {n}" for n in range(150))
+    assert 255 < len(long_keywords) <= MAX_TAGS_LENGTH
+    assert ProductCreate(name="Valve", category="Tools", tags=long_keywords).tags == long_keywords
+    with pytest.raises(ValidationError):
+        ProductCreate(name="Valve", category="Tools", tags="x" * (MAX_TAGS_LENGTH + 1))

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 MAX_TEXT_LENGTH = 255
 MAX_DESCRIPTION_LENGTH = 4000
+MAX_TAGS_LENGTH = 2000
 
 
 class ProductBase(BaseModel):
@@ -14,7 +15,7 @@ class ProductBase(BaseModel):
     category: str = Field(min_length=1, max_length=MAX_TEXT_LENGTH)
     description: str = Field(default="", max_length=MAX_DESCRIPTION_LENGTH)
     specs: list[str] = Field(default_factory=list, max_length=50)
-    tags: str = Field(default="", max_length=MAX_TEXT_LENGTH)
+    tags: str = Field(default="", max_length=MAX_TAGS_LENGTH)
     featured: bool = False
 
     @field_validator("name", "category", mode="before")
