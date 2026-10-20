@@ -39,8 +39,8 @@ async def test_burst_rate_limit():
 async def test_contact_uses_direct_channels_only():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         page = await client.get("/contact")
-        assert 'href="https://wa.me/971505464847"' in page.text
-        assert 'href="mailto:info@nawaglobalgtd.com"' in page.text
+        assert 'href="https://wa.me/971505464847?text=' in page.text
+        assert 'href="mailto:info@nawaglobalgtd.com?subject=' in page.text
         assert '<form' not in page.text
         response = await client.post("/contact", data={"message": "Hello"})
         assert response.status_code == 405
@@ -66,12 +66,28 @@ def test_plaintext_password_cannot_override_hash(monkeypatch):
 @pytest.mark.asyncio
 async def test_pages_and_local_assets_resolve():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
-        for path in ["/", "/about", "/services", "/contact", "/catalog", "/robots.txt", "/sitemap.xml"]:
+        for path in ["/", "/about", "/contact", "/catalog", "/robots.txt", "/sitemap.xml"]:
             response = await client.get(path)
             assert response.status_code == 200, path
             for url in re.findall(r'(?:src|href)="([^\"]+/static/[^\"]+)"', response.text):
                 asset = await client.get(url)
                 assert asset.status_code == 200, url
+
+
+@pytest.mark.asyncio
+async def test_old_services_page_redirects_to_home_supply_section():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        response = await client.get("/services")
+    assert response.status_code == 301
+    assert response.headers["location"] == "/#supply"
+
+
+@pytest.mark.asyncio
+async def test_robots_does_not_advertise_admin_path():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        robots = (await client.get("/robots.txt")).text
+    assert "admin" not in robots.lower()
+    assert "Sitemap:" in robots
 
 
 @pytest.mark.asyncio

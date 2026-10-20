@@ -27,7 +27,7 @@ def build_csp(settings: Settings, nonce: str) -> str:
         "frame-ancestors": ["'none'"],
         "form-action": ["'self'"],
         "img-src": ["'self'", "data:", f"https://{site_host}"],
-        "style-src": ["'self'", "'unsafe-inline'"],
+        "style-src": ["'self'"],
         "font-src": ["'self'"],
         "script-src": ["'self'", f"'nonce-{nonce}'"],
         "connect-src": ["'self'"],

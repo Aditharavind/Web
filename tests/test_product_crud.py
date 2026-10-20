@@ -74,7 +74,7 @@ async def test_public_product_galleries_have_visible_navigation():
         detail = await client.get(f"/product/{product.id}")
 
     assert home.status_code == 200
-    assert home.text.index("Available products.") < home.text.index("OUR CAPABILITIES")
+    assert home.text.index("Featured products") < home.text.index("What we supply")
     assert 'data-card-step="-1"' in home.text
     assert 'data-card-step="1"' in home.text
     assert "View all products" in home.text
@@ -108,6 +108,8 @@ async def test_featured_products_and_keywords():
     assert home.text.count('class="card-featured-badge"') == 1
     assert featured.name in search.text
     assert 'name="keywords"' in detail.text
+    # Search keywords are for search only and must not be shown to visitors.
+    assert "rig safety</span>" not in detail.text
     assert "pipe control" in detail.text
 
 

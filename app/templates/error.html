@@ -1,10 +1,20 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="login-wrap">
-  <div class="login-box">
-    <div class="page-title">{{ error_title }}</div>
-    <div class="page-subtitle">{{ error_message }}</div>
-    <a href="/" class="btn primary">Return Home</a>
-  </div>
-</div>
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}public-site{% endblock %}
+{% block page_layout %}
+  {% include "partials/public_nav.html" %}
+  <main id="main-content">
+    <section class="editorial-section error-section">
+      <div class="shell error-box">
+        <span class="eyebrow">ERROR</span>
+        <h1>{{ error_title }}</h1>
+        <p class="lead">{{ error_message }}</p>
+        <div class="actions">
+          <a href="/" class="action primary">Back to home {{ icon('arrow', 18) }}</a>
+          <a href="/catalog" class="action outline">Browse products</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  {% include "partials/footer.html" %}
 {% endblock %}

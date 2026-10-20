@@ -5,46 +5,43 @@
   <main id="main-content">
     <header class="editorial-hero">
       <div class="shell">
-        <span class="eyebrow">CONTACT & ENQUIRIES</span>
-        <h1>
-          Let’s start with
-          <br>
-          <span>what you need.</span>
-        </h1>
-        <p class="lead">Send a part reference, a product list or a sourcing requirement. Contact our team by email, phone or WhatsApp.</p>
+        <span class="eyebrow">CONTACT</span>
+        <h1>Tell us what you need. <span>We will take it from there.</span></h1>
+        <p class="lead">Message us on WhatsApp or email a part number, a photo or a full list.</p>
       </div>
     </header>
     <section class="editorial-section">
       <div class="shell contact-layout">
         <div>
-          <span class="eyebrow">SPEAK WITH NAWA GLOBAL</span>
-          <h2>A direct conversation.</h2>
           <p class="registered-name">{{ settings.company_name }}</p>
           <div class="primary-contact-panel">
-            <span class="primary-contact-label">PRIMARY CONTACT</span>
+            <span class="primary-contact-label">WHATSAPP &amp; PHONE</span>
             <a href="tel:{{ settings.contact_whatsapp }}" class="primary-phone">{{ icon('phone', 26) }} {{ primary_phone_display }}</a>
             <div class="primary-contact-actions">
-              <a class="action primary" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp primary {{ icon('arrow', 18) }}</a>
-              <a class="action contact-call" href="tel:{{ settings.contact_whatsapp }}">Call primary {{ icon('phone', 16) }}</a>
+              <a class="action whatsapp" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">{{ icon('whatsapp', 20) }} Chat on WhatsApp</a>
+              <a class="action outline" href="tel:{{ settings.contact_whatsapp }}">{{ icon('phone', 18) }} Call now</a>
             </div>
           </div>
-          <div class="secondary-contact-panel">
-            <small>SECONDARY CONTACT</small>
-            <a href="tel:{{ settings.contact_secondary }}">{{ secondary_phone_display }}</a>
-            <a href="{{ secondary_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="text-link">WhatsApp {{ icon('arrow', 16) }}</a>
-          </div>
           <div class="contact-details">
-            <a href="mailto:{{ settings.contact_email }}">{{ icon('mail', 24) }}<span><small>EMAIL ENQUIRIES</small>{{ settings.contact_email }}</span>{{ icon('arrow', 18) }}</a>
-            <div>{{ icon('pin', 24) }}<span><small>LOCATION</small>{{ settings.contact_address }}</span></div>
+            <a href="{{ contact_email_url }}">{{ icon('mail', 24) }}<span><small>EMAIL</small>{{ settings.contact_email }}</span>{{ icon('arrow', 18) }}</a>
+            <a href="tel:{{ settings.contact_secondary }}">{{ icon('phone', 24) }}<span><small>SECOND NUMBER</small>{{ secondary_phone_display }}</span>{{ icon('arrow', 18) }}</a>
+            <a href="https://www.google.com/maps/search/?api=1&amp;query={{ settings.contact_address | urlencode }}" target="_blank" rel="noopener noreferrer">{{ icon('pin', 24) }}<span><small>LOCATION</small>{{ settings.contact_address }}</span>{{ icon('external', 18) }}</a>
           </div>
         </div>
         <aside class="rfq-panel">
-          <span class="eyebrow">A MORE USEFUL RFQ</span>
-          <h2>Help us understand<br>the requirement.</h2>
-          <p>Include these details where available:</p>
-          <ol><li>Product description, make and part number</li><li>Specification, drawing or reference photograph</li><li>Required quantity and unit of measure</li><li>Delivery location and requested date</li><li>Any applicable standards or documentation</li></ol>
-          <p class="rfq-note">For mixed requirements, attach your item list to an email.</p>
-          <a href="mailto:{{ settings.contact_email }}?subject=Product%20enquiry%20%E2%80%94%20NAWA%20Global" class="text-link">Prepare an email enquiry {{ icon('arrow', 18) }}</a>
+          <span class="eyebrow">FOR A FASTER QUOTE</span>
+          <h2>Include these details</h2>
+          <ol>
+            <li>Product name, make and part number</li>
+            <li>Quantity and unit</li>
+            <li>Specification, drawing or photo</li>
+            <li>Delivery location and date</li>
+            <li>Any standards or certificates needed</li>
+          </ol>
+          <div class="actions">
+            <a class="action whatsapp" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">{{ icon('whatsapp', 20) }} Send on WhatsApp</a>
+            <a class="action outline" href="{{ contact_email_url }}">{{ icon('mail', 18) }} Send by email</a>
+          </div>
         </aside>
       </div>
     </section>

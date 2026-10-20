@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from app.core import content
 from app.core.config import get_settings
 from app.core.security import get_or_create_csrf_token
-from app.utils.text import build_query_string, whatsapp_number
+from app.utils.text import build_query_string, mailto_url, whatsapp_message_url, whatsapp_number
 
 settings = get_settings()
 templates = Jinja2Templates(directory=str(settings.templates_dir))
@@ -34,10 +34,7 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
         "mission": content.MISSION,
         "vision": content.VISION,
         "capabilities": content.CAPABILITIES,
-        "values": content.VALUES,
         "reasons": content.REASONS,
-        "sectors": content.SECTORS,
-        "process": content.PROCESS,
         "current_year": datetime.now().year,
         "site_url": settings.site_url,
         "static_asset_version": STATIC_ASSET_VERSION,
@@ -48,7 +45,15 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
         if settings.contact_secondary == "+971506612605"
         else settings.contact_secondary,
         "secondary_whatsapp_url": f"https://wa.me/{whatsapp_number(settings.contact_secondary)}",
-        "contact_whatsapp_url": f"https://wa.me/{whatsapp_number(settings.contact_whatsapp)}",
+        "contact_whatsapp_url": whatsapp_message_url(
+            settings.contact_whatsapp,
+            "Hello NAWA Global, I would like to enquire about your products.",
+        ),
+        "contact_email_url": mailto_url(
+            settings.contact_email,
+            subject="Product enquiry - NAWA Global",
+            body="Hello NAWA Global,\n\nI would like to enquire about:\n\nProduct / part number:\nQuantity:\nDelivery location:\n",
+        ),
         "page_description": (
             "NAWA Global General Trading supports oilfield and industrial procurement with "
             "components, MRO essentials, lubricants, safety products and sourcing coordination."

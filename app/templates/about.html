@@ -5,53 +5,44 @@
   <main id="main-content">
     <header class="editorial-hero">
       <div class="shell">
-        <span class="eyebrow">ABOUT NAWA GLOBAL</span>
-        <h1>
-          A practical partner.
-          <br>
-          <span>A clearer path to supply.</span>
-        </h1>
-        <p class="lead">An Abu Dhabi-based general trading business focused on oilfield products, industrial essentials and requirement-led sourcing.</p>
+        <span class="eyebrow">ABOUT US</span>
+        <h1>A practical partner for <span>industrial supply.</span></h1>
+        <p class="lead">NAWA Global is a general trading company in Abu Dhabi, supplying oilfield products, industrial essentials and sourcing support.</p>
       </div>
     </header>
     <section class="editorial-section">
       <div class="shell intro-layout">
         <div>
           <span class="eyebrow">WHO WE ARE</span>
-          <h2>
-            Industry needs more
-            <br>
-            than a product list.
-          </h2>
+          <h2>More than a product list</h2>
         </div>
         <div>
-          <p class="body-large">It needs the right specification, a clear offer and a shared understanding of what comes next.</p>
-          <p>NAWA Global General Trading brings together oilfield components, mechanical and MRO supplies, lubricants, instrumentation and workplace protection products. We support customers with product enquiries and procurement coordination, from the initial requirement through the agreed order arrangements.</p>
-          <p>Our role is to make the sourcing conversation practical: clarify part references and quantities, communicate available options and keep attention on the details that matter to the customer.</p>
+          <p class="body-large">Good procurement needs the right specification, a clear offer and one person who follows it through.</p>
+          <p>We bring together oilfield components, mechanical and MRO supplies, lubricants, instrumentation and safety products. We help customers from the first enquiry to the agreed order: confirming part references and quantities, presenting the available options and keeping the details straight.</p>
+          <p>Based in {{ settings.contact_address }}.</p>
+          <div class="actions about-actions">
+            <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp">{{ icon('whatsapp', 20) }} Chat on WhatsApp</a>
+            <a href="/catalog" class="text-link">See our products {{ icon('arrow', 18) }}</a>
+          </div>
         </div>
       </div>
     </section>
     <section class="editorial-section soft-section">
       <div class="shell purpose-grid">
-        <article class="purpose-card"><span class="eyebrow">01 / OUR MISSION</span>
-          <h2>
-            Clarity in every
-            <br>
-            procurement step.
-          </h2>
-          <p>{{ mission }}</p>
-        </article><article class="purpose-card"><span class="eyebrow">02 / OUR VISION</span>
-          <h2>
-            Relationships built
-            <br>
-            for the long term.
-          </h2>
-          <p>{{ vision }}</p>
-        </article>
+        <article class="purpose-card"><span class="eyebrow">OUR MISSION</span><p>{{ mission }}</p></article>
+        <article class="purpose-card"><span class="eyebrow">OUR VISION</span><p>{{ vision }}</p></article>
       </div>
     </section>
-    <section class="editorial-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">OUR CORE VALUES</span><h2>The principles behind our work.</h2></div><p>These principles guide how we approach requirements, communicate with customers and develop supplier relationships.</p></div><div class="capability-grid">{% for item in values %}<article class="value-card"><span class="line-icon">{{ icon(item.icon,28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>{% endfor %}</div></div></section>
-    <section class="editorial-section soft-section"><div class="shell"><div class="section-intro"><div><span class="eyebrow">WHY CHOOSE NAWA GLOBAL</span><h2>Useful support at the details.</h2></div></div><div class="reason-grid">{% for item in reasons %}<article class="reason-card"><span class="line-icon">{{ icon(item.icon,28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>{% endfor %}</div></div></section>
+    <section class="editorial-section">
+      <div class="shell">
+        <div class="section-intro"><div><span class="eyebrow">WHY NAWA GLOBAL</span><h2>How we work</h2></div></div>
+        <div class="reason-grid">
+          {% for item in reasons %}
+          <article class="reason-card"><span class="line-icon">{{ icon(item.icon, 28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
     {% include "partials/quote_cta.html" %}
   </main>
   {% include "partials/footer.html" %}

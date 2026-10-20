@@ -15,7 +15,6 @@
     {% else %}
     <a class="card-media-link" href="/product/{{ product.id }}" aria-label="View {{ product.name }} details"><span class="card-media-placeholder">{{ icon('layers',40) }}</span></a>
     {% endif %}
-    <span class="card-category-badge">{{ product.category or 'General' }}</span>
     {% if product.featured %}<span class="card-featured-badge">Featured</span>{% endif %}
     {% if images|length > 1 %}
     <button class="card-gallery-nav previous" type="button" data-card-step="-1" aria-label="Previous image">‹</button>
@@ -24,12 +23,13 @@
     {% endif %}
   </div>
   <div class="card-body">
-    <h3 class="card-title">{{ product.name }}</h3>
-    <div class="card-desc">{{ product.description or 'Contact our team for product details and availability.' }}</div>
+    <span class="card-category">{{ product.category or 'General' }}</span>
+    <h3 class="card-title"><a href="/product/{{ product.id }}">{{ product.name }}</a></h3>
+    <p class="card-desc">{{ product.description or 'Contact our team for details and availability.' }}</p>
     <div class="card-footer">
-      <a href="/product/{{ product.id }}" class="btn sm primary card-btn-fill">View Details</a>
-      <a href="{{ card.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn sm outline-green">WhatsApp</a>
-      <a href="{{ card.email_url }}" class="btn sm outline-gold">Email</a>
+      <a href="{{ card.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp compact">{{ icon('whatsapp', 18) }} WhatsApp</a>
+      <a href="{{ card.email_url }}" class="action outline compact" aria-label="Email about {{ product.name }}">{{ icon('mail', 18) }} Email</a>
     </div>
+    <a href="/product/{{ product.id }}" class="text-link card-details">View details {{ icon('arrow', 16) }}</a>
   </div>
 </article>

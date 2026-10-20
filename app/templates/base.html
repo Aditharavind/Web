@@ -19,22 +19,19 @@
     <meta property="og:description" content="{{ page_description }}">
     <meta property="og:type" content="{{ og_type }}">
     <meta property="og:url" content="{{ canonical_url or request.url }}">
-    {% if page_image %}
-      <meta property="og:image" content="{{ page_image }}">
-    {% endif %}
-    <meta name="twitter:card" content="{{ twitter_card }}">
+    {% set share_image = page_image or (site_url ~ '/static/nawa-logo.png') %}
+    <meta property="og:image" content="{{ share_image }}">
+    <meta name="twitter:card" content="{{ twitter_card if page_image else 'summary' }}">
     <meta name="twitter:title" content="{{ page_title }}">
     <meta name="twitter:description" content="{{ page_description }}">
-    {% if page_image %}
-      <meta name="twitter:image" content="{{ page_image }}">
-    {% endif %}
+    <meta name="twitter:image" content="{{ share_image }}">
     <link rel="preload"
           href="{{ url_for('static', path='fonts/inter-latin-400-normal.woff2') }}"
           as="font"
           type="font/woff2"
           crossorigin>
     <link rel="preload"
-          href="{{ url_for('static', path='fonts/manrope-latin-600-normal.woff2') }}"
+          href="{{ url_for('static', path='fonts/manrope-latin-700-normal.woff2') }}"
           as="font"
           type="font/woff2"
           crossorigin>
@@ -46,21 +43,27 @@
     <script nonce="{{ csp_nonce }}" type="application/ld+json">
     {{ {
       "@context": "https://schema.org",
-      "@type": schema_type or "WebSite",
-      "name": settings.company_name,
-      "url": site_url,
-      "description": page_description,
-      "publisher": {
-        "@type": "Organization",
-        "name": settings.company_name,
-        "url": site_url,
-        "telephone": settings.contact_whatsapp,
-        "email": settings.contact_email,
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": settings.contact_address
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": settings.company_name,
+          "url": site_url,
+          "logo": site_url ~ '/static/nawa-logo.png',
+          "email": settings.contact_email,
+          "telephone": settings.contact_whatsapp,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Mussafah, Abu Dhabi",
+            "addressCountry": "AE"
+          }
+        },
+        {
+          "@type": schema_type or "WebSite",
+          "name": settings.company_name,
+          "url": canonical_url or site_url,
+          "description": page_description
         }
-      }
+      ]
     } | tojson }}
     </script>
     {% for item in structured_data %}

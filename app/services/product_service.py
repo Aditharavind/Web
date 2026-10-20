@@ -220,14 +220,22 @@ class ProductService:
         finally:
             db.close()
 
-    def search_catalog(self, page: int, query: str, category: str) -> PaginatedCatalog:
+    def search_catalog(
+        self, page: int, query: str, category: str | list[str] = ""
+    ) -> PaginatedCatalog:
         db = SessionLocal()
         try:
             normalized_page = max(1, page)
             raw_query = query.strip()
-            raw_category = category.strip()
+            raw_categories = list(
+                dict.fromkeys(
+                    item.strip()
+                    for item in ([category] if isinstance(category, str) else category)
+                    if item and item.strip()
+                )
+            )
             normalized_query = raw_query.casefold()
-            normalized_category = raw_category.casefold()
+            normalized_categories = [item.casefold() for item in raw_categories]
 
             db_query = db.query(Product)
 
@@ -240,9 +248,9 @@ class ProductService:
                     | Product.category.ilike(like)
                 )
 
-            if normalized_category:
+            if normalized_categories:
                 db_query = db_query.filter(
-                    func.lower(Product.category) == normalized_category
+                    func.lower(Product.category).in_(normalized_categories)
                 )
 
             total = db_query.count()
@@ -265,7 +273,8 @@ class ProductService:
                 total_pages=total_pages,
                 page=current_page,
                 query=raw_query,
-                category=raw_category,
+                category=", ".join(raw_categories),
+                categories=raw_categories,
             )
         except SQLAlchemyError as exc:
             logger.exception("Failed to search catalog.")
@@ -463,6 +472,35 @@ class ProductService:
                 "Failed to delete image %s for product %s.", filename, product_id
             )
             raise DataAccessError("Unable to delete the image right now.") from exc
+        finally:
+            db.close()
+
+    def set_primary_image(self, product_id: str, filename: str) -> None:
+        db = SessionLocal()
+        try:
+            record = db.query(Product).filter(Product.id == product_id).first()
+            if record is None:
+                raise ProductNotFoundError("Product not found.")
+
+            safe_filename = filename.strip()
+            images = self._split_images(record.images) or (
+                [record.image] if record.image else []
+            )
+            if safe_filename not in images:
+                raise ValidationError("Image not found.")
+
+            images = [safe_filename] + [item for item in images if item != safe_filename]
+            record.image = images[0]
+            record.images = self._join_images(images)
+            db.add(record)
+            db.commit()
+        except (ProductNotFoundError, ValidationError):
+            db.rollback()
+            raise
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.exception("Failed to set primary image for product %s.", product_id)
+            raise DataAccessError("Unable to update the image right now.") from exc
         finally:
             db.close()
 

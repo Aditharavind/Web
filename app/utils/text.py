@@ -25,10 +25,12 @@ def mailto_url(email: str, subject: str = "", body: str = "") -> str:
     return f"mailto:{email}?{urlencode(query, quote_via=quote)}"
 
 
-def build_query_string(params: dict[str, str | int | None]) -> str:
-    filtered = {
-        key: str(value)
-        for key, value in params.items()
-        if value is not None and str(value) != ""
-    }
-    return urlencode(filtered, quote_via=quote)
+def build_query_string(params: dict[str, str | int | list[str] | None]) -> str:
+    """Encode query parameters; list values become repeated keys."""
+    pairs: list[tuple[str, str]] = []
+    for key, value in params.items():
+        values = value if isinstance(value, (list, tuple)) else [value]
+        pairs.extend(
+            (key, str(item)) for item in values if item is not None and str(item) != ""
+        )
+    return urlencode(pairs, quote_via=quote)

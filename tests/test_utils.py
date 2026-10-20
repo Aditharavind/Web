@@ -40,3 +40,8 @@ def test_large_pagination_is_bounded_and_has_one_active_page():
     assert [item["value"] for item in numbered if item["active"]] == [5000]
     assert len(pages) <= 9
     assert build_pagination(1, 1) == []
+
+
+def test_query_string_repeats_list_values_and_skips_empty():
+    assert build_query_string({"q": "", "cat": ["A B", "C&D"], "page": 2}) == "cat=A%20B&cat=C%26D&page=2"
+    assert build_query_string({"cat": [], "q": None}) == ""

@@ -49,13 +49,13 @@ async def test_product_metadata_and_sitemap_use_configured_urls(monkeypatch):
         missing = await client.get("/product/not-a-product")
     scripts = re.findall(r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', detail.text, re.S)
     data = [json.loads(script) for script in scripts]
-    record = next(item for item in data if item["@type"] == "Product")
+    record = next(item for item in data if item.get("@type") == "Product")
     assert record["name"] == "Valve & coupling"
     assert "brand" not in record
     assert record["url"] == f"https://nawaglobalgtd.com/product/{product.id}"
     root = ElementTree.fromstring(sitemap.text)
     urls = [node.text for node in root.findall("{*}url/{*}loc")]
-    assert len(urls) == 6
+    assert len(urls) == 5
     assert record["url"] in urls
     assert all(url.startswith("https://nawaglobalgtd.com/") for url in urls)
     assert missing.status_code == 404
@@ -74,3 +74,43 @@ async def test_product_displays_plain_and_structured_specs_safely():
     assert "Material" in page.text and "Steel" in page.text
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page.text
     assert "<script>alert(1)</script>" not in page.text
+
+
+@pytest.mark.asyncio
+async def test_catalog_uses_dropdown_when_many_categories():
+    service = get_product_service()
+    for index in range(8):
+        await service.create_product(
+            ProductCreate(name=f"Item {index}", category=f"Category {index}"), []
+        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        page = await client.get("/catalog")
+    assert 'class="chip-row"' not in page.text
+    assert page.text.count('type="checkbox" name="cat" value="Category ') == 8
+    assert "<select" not in page.text
+
+
+@pytest.mark.asyncio
+async def test_catalog_uses_chips_for_few_categories():
+    service = get_product_service()
+    await service.create_product(ProductCreate(name="One", category="Only"), [])
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        page = await client.get("/catalog")
+    assert 'class="chip-row"' in page.text
+    assert "<select" not in page.text
+
+
+@pytest.mark.asyncio
+async def test_catalog_filters_by_multiple_categories():
+    service = get_product_service()
+    for name, category in [("Alpha item", "Valves"), ("Beta item", "Safety"), ("Gamma item", "Tools")]:
+        await service.create_product(ProductCreate(name=name, category=category), [])
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        both = await client.get("/catalog", params=[("cat", "Valves"), ("cat", "safety")])
+        one = await client.get("/catalog", params={"cat": "Tools"})
+        too_many = await client.get("/catalog", params=[("cat", f"c{i}") for i in range(21)])
+    assert "Alpha item" in both.text and "Beta item" in both.text
+    assert "Gamma item" not in both.text
+    assert "Gamma item" in one.text and "Alpha item" not in one.text
+    assert 'checked data-catalog-category' in both.text
+    assert too_many.status_code == 422

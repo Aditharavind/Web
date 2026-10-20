@@ -1,6 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
   const input = document.querySelector("[data-catalog-search]");
-  const category = document.querySelector("[data-catalog-category]");
+  const categories = Array.from(document.querySelectorAll("[data-catalog-category]"));
   const form = document.getElementById("catalog-form");
   if (!input || !form) return;
 
@@ -11,8 +11,20 @@ window.addEventListener("DOMContentLoaded", () => {
     timeoutId = window.setTimeout(() => form.requestSubmit(), 450);
   });
 
-  category?.addEventListener("change", () => {
-    window.clearTimeout(timeoutId);
-    form.requestSubmit();
+  categories.forEach((category) => {
+    category.addEventListener("change", () => {
+      window.clearTimeout(timeoutId);
+      form.requestSubmit();
+    });
   });
+
+  const dropdown = document.querySelector?.(".filter-dropdown");
+  if (dropdown && document.addEventListener) {
+    document.addEventListener("click", (event) => {
+      if (dropdown.open && !dropdown.contains(event.target)) dropdown.open = false;
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") dropdown.open = false;
+    });
+  }
 });

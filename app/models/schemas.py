@@ -81,3 +81,4 @@ class PaginatedCatalog(BaseModel):
     page: int
     query: str
     category: str
+    categories: list[str] = Field(default_factory=list)

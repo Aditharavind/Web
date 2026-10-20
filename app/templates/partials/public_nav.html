@@ -1,16 +1,16 @@
 {% from 'partials/icons.html' import icon %}
 <nav class="navbar" aria-label="Primary">
-  <a href="/" class="brand official-brand" aria-label="NAWA Global home"><img class="official-logo" src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="1536" height="1024"><span class="brand-sub">Oilfield &amp; Industrial Supply</span></a>
+  <a href="/" class="brand official-brand" aria-label="NAWA Global home"><img class="official-logo" src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="400" height="208"></a>
   <button class="nav-menu-toggle"
           type="button"
           data-nav-toggle
           aria-expanded="false"
-          aria-controls="public-nav-links">Menu</button>
+          aria-controls="public-nav-links"
+          aria-label="Toggle menu">{{ icon('menu', 22) }}</button>
   <div class="nav-links" id="public-nav-links">
-    {% for path, label, key in [('/', 'Home', 'home'),('/about', 'About us', 'about'),('/services', 'Products & sourcing', 'services'),('/catalog', 'Catalogue', 'catalog'),('/contact', 'Contact', 'contact')] %}<a href="{{ path }}"
+    {% for path, label, key in [('/', 'Home', 'home'),('/catalog', 'Products', 'catalog'),('/about', 'About', 'about'),('/contact', 'Contact', 'contact')] %}<a href="{{ path }}"
    class="nav-link{% if active_nav == key %} active{% endif %}"
    {% if active_nav == key %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
   </div>
-  <div class="nav-right"><a href="/contact"
-   class="action primary compact">Send an enquiry {{ icon('arrow', 17) }}</a></div>
+  <div class="nav-right"><a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp compact" aria-label="Chat with us on WhatsApp">{{ icon('whatsapp', 18) }}<span>WhatsApp us</span></a></div>
 </nav>

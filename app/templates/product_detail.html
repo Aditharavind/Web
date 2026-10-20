@@ -4,10 +4,10 @@
 {% block page_layout %}
   {% include "partials/public_nav.html" %}
   <main id="main-content">
-    <section class="section product-detail-section">
+    <section class="editorial-section product-detail-section"><div class="shell">
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="/">Home</a><span>/</span>
-        <a href="/catalog">Catalog</a><span>/</span>
+        <a href="/catalog">Products</a><span>/</span>
         <a href="/catalog?{{ build_query_string({'cat': product.category}) }}">{{ product.category or "Products" }}</a><span>/</span>
         <span>{{ product.name }}</span>
       </nav>
@@ -45,13 +45,6 @@
         <section>
           <div class="detail-eyebrow">{{ product.category or "Product" }}</div>
           <h1 class="detail-title">{{ product.name }}</h1>
-          {% if product.tags %}
-            <div class="tags-row">
-              {% for tag in product.tags.split(",") if tag.strip() %}
-                <span class="tag green">{{ tag.strip() }}</span>
-              {% endfor %}
-            </div>
-          {% endif %}
           <p class="detail-desc">{{ product.description or "Product details will be shared on request." }}</p>
           {% if product.specs %}
             <div class="specs-box">
@@ -76,17 +69,14 @@
             </div>
           {% endif %}
           <div class="detail-actions">
-            <a href="{{ whatsapp_url }}"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="wa-btn">Get Quote on WhatsApp</a>
-            <a href="{{ email_url }}" class="btn outline-gold">Email About This Product</a>
-            <a href="/catalog" class="btn">← All Products</a>
+            <a href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp">{{ icon('whatsapp', 20) }} Get a quote on WhatsApp</a>
+            <a href="{{ email_url }}" class="action outline">{{ icon('mail', 18) }} Email about this product</a>
           </div>
-          <p class="detail-contact"><a href="tel:{{ settings.contact_whatsapp }}">{{ settings.contact_whatsapp }}</a> | <a href="{{ email_url }}">{{ settings.contact_email }}</a></p>
+          <p class="detail-contact">Prefer to call? <a href="tel:{{ settings.contact_whatsapp }}">{{ primary_phone_display }}</a></p>
+          <a href="/catalog" class="text-link detail-back">{{ icon('arrow', 16) }} Back to all products</a>
         </section>
       </article>
-    </section>
+    </div></section>
     <div class="lightbox" id="lightbox">
       <button class="lightbox-close" type="button" data-lightbox-close aria-label="Close image viewer">✕</button>
       <img class="lightbox-img" id="lb-img" src="" alt="">

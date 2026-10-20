@@ -2,30 +2,23 @@
 <footer class="corporate-footer">
   <div class="shell footer-layout">
     <div class="footer-identity">
-      <a href="/"
-         class="footer-wordmark"><img class="footer-logo" src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="1536" height="1024" loading="lazy"></a><span class="footer-trading">{{ settings.company_name }}</span>
-      <p>
-        Oilfield and industrial supply.
-        <br>
-        Practical sourcing. Clear communication.
-      </p>
+      <a href="/" class="footer-wordmark" aria-label="NAWA Global home"><img class="footer-logo" src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="400" height="208" loading="lazy"></a>
+      <span class="footer-trading">{{ settings.company_name }}</span>
+      <p>Oilfield and industrial supply from Abu Dhabi.</p>
       <div class="footer-location">{{ icon('pin', 18) }} {{ settings.contact_address }}</div>
     </div>
     <div>
       <h2>Explore</h2>
-      <a href="/about">About NAWA Global</a><a href="/services">Products & sourcing</a><a href="/catalog">Product catalogue</a><a href="/contact">Contact & enquiries</a>
+      <a href="/">Home</a><a href="/catalog">Products</a><a href="/#supply">What we supply</a><a href="/about">About us</a><a href="/contact">Contact</a>
     </div>
     <div>
-      <h2>Supply scope</h2>
-      <a href="/services#oilfield">Oilfield components</a><a href="/services#mro">Mechanical & MRO</a><a href="/services#lubricants">Lubricants & chemicals</a><a href="/services#safety">Safety & workwear</a>
-    </div>
-    <div>
-      <h2>Start a conversation</h2>
-      <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a><a href="tel:{{ settings.contact_whatsapp }}">{{ primary_phone_display }} · Primary</a><a href="{{ contact_whatsapp_url }}"
-   target="_blank"
-   rel="noopener noreferrer"
-   class="text-link">WhatsApp {{ icon('arrow', 16) }}</a><span class="footer-domain">nawaglobalgtd.com</span>
+      <h2>Contact us</h2>
+      <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp: {{ primary_phone_display }}</a>
+      <a href="tel:{{ settings.contact_whatsapp }}">Call: {{ primary_phone_display }}</a>
+      <a href="tel:{{ settings.contact_secondary }}">Call: {{ secondary_phone_display }}</a>
+      <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a>
     </div>
   </div>
-  <div class="shell legal-line"><span>© {{ current_year }} {{ settings.company_name }}. All rights reserved.</span><span>Based in Abu Dhabi, United Arab Emirates.</span></div>
+  <div class="shell legal-line"><span>© {{ current_year }} {{ settings.company_name }}. All rights reserved.</span><a href="{{ settings.contact_website_url }}">{{ settings.contact_website }}</a></div>
 </footer>
+<a class="wa-float" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with NAWA Global on WhatsApp">{{ icon('whatsapp', 28) }}<span>WhatsApp</span></a>

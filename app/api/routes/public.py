@@ -1,10 +1,12 @@
 """Public website routes and search-engine discovery endpoints."""
 from __future__ import annotations
 
+from typing import Annotated
 from xml.sax.saxutils import escape
 
+from pydantic import StringConstraints
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse, PlainTextResponse, Response
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.background import BackgroundTask
 
 from app.core.config import get_settings
@@ -21,7 +23,7 @@ router = APIRouter()
 settings = get_settings()
 
 
-def _canonical_url(path: str, **params: str | int | None) -> str:
+def _canonical_url(path: str, **params: str | int | list[str] | None) -> str:
     url = f"{settings.site_url}{path}"
     query = build_query_string(params)
     return f"{url}?{query}" if query else url
@@ -75,10 +77,10 @@ def home(
     return _render_page(
         request,
         "home.html",
-        page_title="NAWA Global | Oilfield & Industrial Supply | Abu Dhabi",
+        page_title="NAWA Global | Oilfield & Industrial Supplies in Abu Dhabi, UAE",
         page_description=(
-            "NAWA Global General Trading supplies oilfield equipment, industrial "
-            "consumables, lubricants, PPE, and custom sourcing support in Abu Dhabi and across the UAE."
+            "Oilfield parts, valves, MRO supplies, lubricants and safety equipment from "
+            "Abu Dhabi. Browse products and get a quote on WhatsApp or email."
         ),
         canonical_url=_canonical_url("/"),
         active_nav="home",
@@ -97,33 +99,19 @@ def about(
     return _render_page(
         request,
         "about.html",
-        page_title="About Us — NAWA Global General Trading",
+        page_title="About NAWA Global | General Trading, Abu Dhabi",
         page_description=(
-            "Learn about NAWA Global General Trading, our industrial sourcing capabilities, "
-            "mission, vision, values and approach to oilfield and industrial procurement."
+            "NAWA Global is an Abu Dhabi general trading company supplying oilfield products, "
+            "industrial essentials and sourcing support."
         ),
         canonical_url=_canonical_url("/about"),
         active_nav="about",
     )
 
 
-@router.get("/services", response_class=HTMLResponse)
-def services_page(
-    request: Request,
-    visit_service: VisitService = Depends(get_visit_service),
-) -> Response:
-    _track_visit(request, visit_service)
-    return _render_page(
-        request,
-        "services.html",
-        page_title="Products & Sourcing | NAWA Global",
-        page_description=(
-            "Explore NAWA Global's oilfield spare parts, industrial supplies, lubricants, "
-            "safety PPE, and custom procurement services."
-        ),
-        canonical_url=_canonical_url("/services"),
-        active_nav="services",
-    )
+@router.get("/services", include_in_schema=False)
+def services_page() -> RedirectResponse:
+    return RedirectResponse("/#supply", status_code=301)
 
 
 @router.get("/contact", response_class=HTMLResponse)
@@ -135,9 +123,10 @@ def contact(
     return _render_page(
         request,
         "contact.html",
-        page_title="Contact Us — NAWA Global General Trading",
+        page_title="Contact NAWA Global | WhatsApp, Phone & Email",
         page_description=(
-            "Contact NAWA Global for industrial supply inquiries, quotes, and WhatsApp support."
+            "Contact NAWA Global in Abu Dhabi on WhatsApp, phone or email for product "
+            "enquiries and quotes."
         ),
         canonical_url=_canonical_url("/contact"),
         active_nav="contact",
@@ -150,7 +139,10 @@ def catalog(
     request: Request,
     page: int = 1,
     q: str = Query(default="", max_length=MAX_TEXT_LENGTH),
-    cat: str = Query(default="", max_length=MAX_TEXT_LENGTH),
+    cat: Annotated[
+        list[Annotated[str, StringConstraints(max_length=MAX_TEXT_LENGTH)]],
+        Query(max_length=20),
+    ] = [],
     product_service: ProductService = Depends(get_product_service),
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:
@@ -160,15 +152,15 @@ def catalog(
     return _render_page(
         request,
         "catalog.html",
-        page_title="Product Catalogue | NAWA Global",
+        page_title="Products | NAWA Global",
         page_description=(
-            "Browse NAWA Global's catalog of oilfield equipment, industrial products, "
-            "lubricants, and PPE."
+            "Browse oilfield equipment, industrial products, lubricants and safety "
+            "equipment from NAWA Global. Enquire on WhatsApp or email."
         ),
         canonical_url=_canonical_url(
             "/catalog",
             q=result.query or None,
-            cat=result.category or None,
+            cat=result.categories or None,
             page=result.page if result.page > 1 else None,
         ),
         active_nav="catalog",
@@ -237,7 +229,7 @@ def product_detail(
                 "@type": "BreadcrumbList",
                 "itemListElement": [
                     {"@type": "ListItem", "position": 1, "name": "Home", "item": _canonical_url("/")},
-                    {"@type": "ListItem", "position": 2, "name": "Catalog", "item": _canonical_url("/catalog")},
+                    {"@type": "ListItem", "position": 2, "name": "Products", "item": _canonical_url("/catalog")},
                     {"@type": "ListItem", "position": 3, "name": product.name, "item": canonical},
                 ],
             },
@@ -261,7 +253,6 @@ def robots_txt() -> PlainTextResponse:
         "\n".join([
             "User-agent: *",
             "Allow: /",
-            f"Disallow: {settings.admin_route}",
             f"Sitemap: {_canonical_url('/sitemap.xml')}",
         ]),
         media_type="text/plain; charset=utf-8",
@@ -274,7 +265,7 @@ def sitemap(
 ) -> Response:
     urls = [
         _canonical_url(path)
-        for path in ("/", "/about", "/services", "/catalog", "/contact")
+        for path in ("/", "/catalog", "/about", "/contact")
     ]
     urls.extend(
         _canonical_url(f"/product/{product_id}")

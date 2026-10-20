@@ -27,6 +27,8 @@ test('upload previews preserve selection order and release old URLs', () => {
       querySelectorAll: (selector) => selector === '[data-upload-zone]' ? [zone] : [],
       getElementById: () => grid,
       createElement: element,
+      querySelector: () => null,
+      addEventListener() {},
     },
     URL: { createObjectURL: (file) => `blob:${file}`, revokeObjectURL: (url) => revoked.push(url) },
   });
@@ -52,7 +54,8 @@ test('catalogue search waits for composition and cancels pending category search
   runInNewContext(source('catalog.js'), {
     window,
     document: {
-      querySelector: selector => selector === '[data-catalog-search]' ? input : category,
+      querySelector: () => input,
+      querySelectorAll: () => [category],
       getElementById: () => ({requestSubmit: () => submitted++}),
     },
   });

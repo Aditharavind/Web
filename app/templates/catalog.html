@@ -4,89 +4,93 @@
 {% block page_layout %}
   {% include "partials/public_nav.html" %}
   <main id="main-content">
-    <section class="page-hero page-hero-compact">
-      <div class="page-hero-inner">
-        <div class="page-hero-eyebrow">Product Catalog</div>
-        <h1 class="page-hero-title page-hero-title-small">{{ catalog.category or "All Products" }}</h1>
+    <header class="editorial-hero editorial-hero-compact">
+      <div class="shell">
+        <span class="eyebrow">PRODUCTS</span>
+        <h1>{% if catalog.categories|length == 1 %}{{ catalog.category }}{% else %}Our products{% endif %}</h1>
+        <p class="lead">Browse the range, then message us on WhatsApp or email for availability and a quote.</p>
       </div>
-    </section>
-    <section class="section section-tight-top" aria-labelledby="catalog-heading">
-      <div class="section-header-row">
-        <div>
-          <span class="section-label">Catalog</span>
-          <h2 class="recent-title" id="catalog-heading">{{ catalog.category or "All Products" }}</h2>
-        </div>
-        <span class="section-count">{{ catalog.total }} product{% if catalog.total != 1 %}s{% endif %}</span>
-      </div>
-      <form method="get" action="/catalog" id="catalog-form">
-        <div class="catalog-controls">
+    </header>
+    <section class="editorial-section catalog-section" aria-label="Product catalogue">
+      <div class="shell">
+        {% set selected = catalog.categories | map('lower') | list %}
+        <form method="get" action="/catalog" id="catalog-form" class="catalog-form" role="search">
           <div class="search-box">
+            {{ icon('search', 20) }}
             <input aria-label="Search products"
-                   type="text"
+                   type="search"
                    name="q"
                    value="{{ catalog.query }}"
-                   placeholder="Search products…"
+                   placeholder="Search products"
                    data-catalog-search
                    autocomplete="off">
           </div>
-          <select aria-label="Product category"
-                  name="cat"
-                  class="filter-select"
-                  data-catalog-category>
-            <option value="">All Categories</option>
+          {% if categories|length > 6 %}
+          <details class="filter-dropdown"{% if selected %} open{% endif %}>
+            <summary>Categories{% if selected %} <span class="filter-count">{{ selected|length }}</span>{% endif %}</summary>
+            <div class="filter-panel">
+              {% for category in categories %}
+              <label class="check-option"><input type="checkbox" name="cat" value="{{ category }}"{% if category|lower in selected %} checked{% endif %} data-catalog-category><span>{{ category }}</span></label>
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
+          <button type="submit" class="action primary compact">Search</button>
+          {% if catalog.query or selected %}<a href="/catalog" class="action outline compact">Clear</a>{% endif %}
+          {% if categories and categories|length <= 6 %}
+          <div class="chip-row" role="group" aria-label="Product categories">
+            <a href="/catalog{% if catalog.query %}?{{ build_query_string({'q': catalog.query}) }}{% endif %}" class="chip{% if not selected %} active{% endif %}">All</a>
             {% for category in categories %}
-              <option value="{{ category }}"
-                      {% if catalog.category == category %} selected{% endif %}>{{ category }}</option>
+            <label class="chip{% if category|lower in selected %} active{% endif %}"><input type="checkbox" name="cat" value="{{ category }}"{% if category|lower in selected %} checked{% endif %} data-catalog-category><span>{{ category }}</span></label>
             {% endfor %}
-          </select>
-          <input type="hidden" name="page" value="1">
-          <button type="submit" class="btn primary sm">Search</button>
-          <span class="results-info">
-            {% if catalog.total %}
-              Showing {{ result_start }}–{{ result_end }} of {{ catalog.total }} product{% if catalog.total != 1 %}s{% endif %}
+          </div>
+          {% endif %}
+        </form>
+        <p class="results-info" aria-live="polite">
+          {% if catalog.total %}Showing {{ result_start }}–{{ result_end }} of {{ catalog.total }} product{% if catalog.total != 1 %}s{% endif %}{% else %}No products found{% endif %}
+        </p>
+        {% if catalog.items %}
+          <div class="product-grid">
+            {% for card in product_cards %}{% include "partials/product_card.html" %}{% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <span class="line-icon">{{ icon('search', 36) }}</span>
+            {% if catalog.query or selected %}
+              <h3>No matching products</h3>
+              <p>Try another search, or message us the part number you need.</p>
             {% else %}
-              No products found
+              <h3>Products are being added</h3>
+              <p>Tell us what you need and we will source it for you.</p>
             {% endif %}
-          </span>
-          {% if catalog.query or catalog.category %}
-            <a href="/catalog" class="btn sm">Clear</a>
-          {% endif %}
-        </div>
-      </form>
-      {% if catalog.items %}
-        <div class="product-grid">
-          {% for card in product_cards %}
-            {% include "partials/product_card.html" %}
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-state"><div class="line-icon">{{ icon('search', 32) }}</div>{% if catalog.query or catalog.category %}<h3>No matching products</h3><p>Try another search, or send us the part reference you need.</p>{% else %}<h3>Your requirement comes first.</h3><p>The online catalogue is being prepared. Explore our supply capabilities or send your product list directly to our team.</p>{% endif %}<a href="/contact" class="action primary">Discuss your requirement {{ icon('arrow', 18) }}</a></div>
-      {% endif %}
-      {% if pagination %}
-        <div class="pagination">
-          {% if catalog.page > 1 %}
-            <a class="page-btn"
-               href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.category, 'page': catalog.page - 1}) }}">‹</a>
-          {% else %}
-            <span class="page-btn disabled">‹</span>
-          {% endif %}
-          {% for item in pagination %}
-            {% if item.kind == "ellipsis" %}
-              <span class="page-ellipsis">…</span>
+            <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp">{{ icon('whatsapp', 20) }} Ask on WhatsApp</a>
+          </div>
+        {% endif %}
+        {% if pagination %}
+          <nav class="pagination" aria-label="Pagination">
+            {% if catalog.page > 1 %}
+              <a class="page-btn" aria-label="Previous page" href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.categories, 'page': catalog.page - 1}) }}">‹</a>
             {% else %}
-              <a class="page-btn{% if item.active %} active{% endif %}"
-                 href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.category, 'page': item.value}) }}">{{ item.value }}</a>
+              <span class="page-btn disabled">‹</span>
             {% endif %}
-          {% endfor %}
-          {% if catalog.page < catalog.total_pages %}
-            <a class="page-btn"
-               href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.category, 'page': catalog.page + 1}) }}">›</a>
-          {% else %}
-            <span class="page-btn disabled">›</span>
-          {% endif %}
-        </div>
-      {% endif %}
+            {% for item in pagination %}
+              {% if item.kind == "ellipsis" %}
+                <span class="page-ellipsis">…</span>
+              {% else %}
+                <a class="page-btn{% if item.active %} active{% endif %}"{% if item.active %} aria-current="page"{% endif %}
+                   href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.categories, 'page': item.value}) }}">{{ item.value }}</a>
+              {% endif %}
+            {% endfor %}
+            {% if catalog.page < catalog.total_pages %}
+              <a class="page-btn" aria-label="Next page" href="/catalog?{{ build_query_string({'q': catalog.query, 'cat': catalog.categories, 'page': catalog.page + 1}) }}">›</a>
+            {% else %}
+              <span class="page-btn disabled">›</span>
+            {% endif %}
+          </nav>
+        {% endif %}
+      </div>
     </section>
+    {% include "partials/quote_cta.html" %}
   </main>
   {% include "partials/footer.html" %}
 {% endblock %}
