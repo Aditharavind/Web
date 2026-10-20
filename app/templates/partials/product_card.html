@@ -16,6 +16,7 @@
     <a class="card-media-link" href="/product/{{ product.id }}" aria-label="View {{ product.name }} details"><span class="card-media-placeholder">{{ icon('layers',40) }}</span></a>
     {% endif %}
     <span class="card-category-badge">{{ product.category or 'General' }}</span>
+    {% if product.featured %}<span class="card-featured-badge">Featured</span>{% endif %}
     {% if images|length > 1 %}
     <button class="card-gallery-nav previous" type="button" data-card-step="-1" aria-label="Previous image">‹</button>
     <button class="card-gallery-nav next" type="button" data-card-step="1" aria-label="Next image">›</button>

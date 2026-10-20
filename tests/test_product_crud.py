@@ -74,7 +74,7 @@ async def test_public_product_galleries_have_visible_navigation():
         detail = await client.get(f"/product/{product.id}")
 
     assert home.status_code == 200
-    assert home.text.index("Featured products.") < home.text.index("OUR CAPABILITIES")
+    assert home.text.index("Available products.") < home.text.index("OUR CAPABILITIES")
     assert 'data-card-step="-1"' in home.text
     assert 'data-card-step="1"' in home.text
     assert "View all products" in home.text
@@ -86,7 +86,7 @@ async def test_public_product_galleries_have_visible_navigation():
 @pytest.mark.asyncio
 async def test_featured_products_and_keywords():
     service = get_product_service()
-    hidden = await service.create_product(
+    standard = await service.create_product(
         ProductCreate(name="Standard item", category="Tools", tags="maintenance"), []
     )
     featured = await service.create_product(
@@ -104,7 +104,8 @@ async def test_featured_products_and_keywords():
         detail = await client.get(f"/product/{featured.id}")
 
     assert featured.name in home.text
-    assert hidden.name not in home.text
+    assert standard.name in home.text
+    assert home.text.count('class="card-featured-badge"') == 1
     assert featured.name in search.text
     assert 'name="keywords"' in detail.text
     assert "pipe control" in detail.text

@@ -82,8 +82,8 @@ def home(
         ),
         canonical_url=_canonical_url("/"),
         active_nav="home",
-        featured_product_cards=_build_product_cards(
-            product_service.featured_products(6), product_service
+        homepage_product_cards=_build_product_cards(
+            product_service.homepage_products(6), product_service
         ),
     )
 

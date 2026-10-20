@@ -193,19 +193,18 @@ class ProductService:
         finally:
             db.close()
 
-    def featured_products(self, limit: int) -> list[ProductSchema]:
+    def homepage_products(self, limit: int) -> list[ProductSchema]:
         db = SessionLocal()
         try:
             records = (
                 db.query(Product)
-                .filter(Product.is_featured.is_(True))
-                .order_by(Product.created_at.desc())
+                .order_by(Product.is_featured.desc(), Product.created_at.desc())
                 .limit(limit)
                 .all()
             )
             return [self._to_product(record) for record in records]
         except SQLAlchemyError as exc:
-            logger.exception("Failed to load featured products.")
+            logger.exception("Failed to load homepage products.")
             raise DataAccessError("Unable to load products right now.") from exc
         finally:
             db.close()

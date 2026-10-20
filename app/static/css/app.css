@@ -455,6 +455,20 @@ a {
   border-radius: 4px;
   font-weight: 700;
 }
+.card-featured-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(162, 119, 49, 0.94);
+  color: #fff;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
 .card-body {
   padding: 1.4rem;
   flex: 1;
