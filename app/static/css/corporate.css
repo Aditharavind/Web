@@ -1009,6 +1009,7 @@ h3,
   overflow-wrap: anywhere;
 }
 .public-site .detail-desc {
+  white-space: pre-line;
   font-size: 17px;
   line-height: 1.75;
   margin-bottom: 28px;
