@@ -68,33 +68,25 @@ test('catalogue search waits for composition and cancels pending category search
   assert.equal(submitted, 1);
 });
 
-test('quote builder prepares WhatsApp and email links from the entered details', () => {
-  const field = (value) => ({ value });
-  const fields = { product: field('2" gate valve'), qty: field('20 pcs'), place: field('Ruwais') };
-  const whatsapp = { href: 'default-wa' };
-  const mail = { href: 'default-mail' };
-  const form = Object.assign(element(), {
-    dataset: { rfqPhone: '+971 50 546 4847', rfqEmail: 'info@example.com' },
-    querySelector: (selector) => ({
-      '[data-rfq-whatsapp]': whatsapp,
-      '[data-rfq-mail]': mail,
-      '[data-rfq-product]': fields.product,
-      '[data-rfq-qty]': fields.qty,
-      '[data-rfq-place]': fields.place,
-    })[selector],
-  });
-  const events = {};
-  runInNewContext(source('quote.js'), {
-    encodeURIComponent,
-    window: { addEventListener: (name, callback) => { events[name] = callback; } },
-    document: { querySelectorAll: () => [form] },
-  });
-  events.DOMContentLoaded();
-  form.events.input();
-  assert.match(whatsapp.href, /^https:\/\/wa\.me\/971505464847\?text=/);
-  assert.match(decodeURIComponent(whatsapp.href), /Quantity: 20 pcs/);
-  assert.match(mail.href, /^mailto:info@example\.com\?subject=/);
-  fields.product.value = fields.qty.value = fields.place.value = '';
-  form.events.input();
-  assert.equal(whatsapp.href, 'default-wa');
+test('quote list merges repeated items and builds one message for WhatsApp and email', () => {
+  const window = { addEventListener() {} };
+  runInNewContext(source('quote.js'), { window });
+  const { mergeItem, buildMessage, sanitize } = window.NawaQuote;
+
+  const items = [];
+  mergeItem(items, { name: 'Gate valve', spec: '2 in', qty: 5 });
+  mergeItem(items, { name: 'gate VALVE', spec: '2 in', qty: 3 });
+  mergeItem(items, { name: 'Gate valve', spec: '4 in', qty: 1 });
+  mergeItem(items, { name: '   ', qty: 9 });
+  assert.equal(items.length, 2);
+  assert.equal(items[0].qty, 8);
+
+  const message = buildMessage(items, 'Ruwais');
+  assert.match(message, /1\. Gate valve \(2 in\) - Qty: 8/);
+  assert.match(message, /2\. Gate valve \(4 in\) - Qty: 1/);
+  assert.match(message, /Delivery location: Ruwais/);
+
+  assert.equal(sanitize({ name: 'Seal', qty: -4 }).qty, 1);
+  assert.equal(sanitize({ name: 'Seal', qty: 1e9 }).qty, 99999);
+  assert.equal(sanitize('not an item'), null);
 });

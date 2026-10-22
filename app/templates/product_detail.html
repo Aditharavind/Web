@@ -66,6 +66,7 @@
             </div>
           {% endif %}
           <div class="detail-actions">
+            <button type="button" class="action primary" data-quote-add data-name="{{ product.name }}" hidden>{{ icon('plus', 18) }} Add to quote list</button>
             <a href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp">{{ icon('whatsapp', 20) }} Get a quote on WhatsApp</a>
             <a href="{{ email_url }}" class="action outline">{{ icon('mail', 18) }} Email about this product</a>
           </div>

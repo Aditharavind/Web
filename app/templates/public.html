@@ -8,4 +8,6 @@
     {% block content %}{% endblock %}
   </main>
   {% include "partials/footer.html" %}
+  {% block quote_drawer %}{% include "partials/quote_drawer.html" %}{% endblock %}
+  <script defer src="{{ url_for('static', path='js/quote.js') }}?v={{ static_asset_version }}"></script>
 {% endblock %}

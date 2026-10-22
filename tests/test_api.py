@@ -41,7 +41,9 @@ async def test_contact_uses_direct_channels_only():
         page = await client.get("/contact")
         assert 'href="https://wa.me/971505464847?text=' in page.text
         assert 'href="mailto:info@nawaglobalgtd.com?subject=' in page.text
-        assert '<form' not in page.text
+        # The quote list form is filled in the browser; nothing is submitted to the server.
+        assert 'method="post"' not in page.text.lower()
+        assert 'action=' not in page.text.split('<form', 1)[-1].split('>', 1)[0]
         response = await client.post("/contact", data={"message": "Hello"})
         assert response.status_code == 405
 

@@ -27,8 +27,9 @@
     <h3 class="card-title"><a href="/product/{{ product.id }}">{{ product.name }}</a></h3>
     <p class="card-desc">{{ product.description or 'Contact our team for details and availability.' }}</p>
     <div class="card-footer">
-      <a href="{{ card.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp compact">{{ icon('whatsapp', 18) }} WhatsApp</a>
-      <a href="{{ card.email_url }}" class="action outline compact" aria-label="Email about {{ product.name }}">{{ icon('mail', 18) }} Email</a>
+      <button type="button" class="action primary compact" data-quote-add data-name="{{ product.name }}" hidden>{{ icon('plus', 18) }} Add to quote</button>
+      <a href="{{ card.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp compact icon-only" aria-label="WhatsApp about {{ product.name }}">{{ icon('whatsapp', 18) }}</a>
+      <a href="{{ card.email_url }}" class="action outline compact icon-only" aria-label="Email about {{ product.name }}">{{ icon('mail', 18) }}</a>
     </div>
     <a href="/product/{{ product.id }}" class="text-link card-details">View details {{ icon('arrow', 16) }}</a>
   </div>

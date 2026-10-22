@@ -4,8 +4,8 @@
     <section class="hero">
       <div class="shell hero-grid">
         <div>
-          <span class="eyebrow on-dark">Abu Dhabi · Oilfield &amp; industrial supply</span>
-          <h1>Industrial supply, <em>sourced to spec.</em></h1>
+          <span class="eyebrow on-dark">Industrial supplier · Abu Dhabi</span>
+          <h1>Tell us the part. <em>We find it and quote it.</em></h1>
           <p class="lead">{{ company_intro }}</p>
           <div class="actions">
             <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp">{{ icon('whatsapp', 20) }} Chat on WhatsApp</a>
@@ -15,19 +15,7 @@
             {% for item in capabilities if item.slug != 'sourcing' %}<span>{{ item.name }}</span>{% endfor %}
           </div>
         </div>
-        <form class="rfq" data-rfq data-rfq-phone="{{ settings.contact_whatsapp }}" data-rfq-email="{{ settings.contact_email }}" aria-labelledby="rfq-title">
-          <div class="rfq-head"><h2 id="rfq-title">Request a quote</h2><span class="tag-label">RFQ · 01</span></div>
-          <label class="rfq-field"><span class="tag-label">Product / part number</span><input type="text" data-rfq-product maxlength="120" placeholder="e.g. 2&quot; gate valve, API 6D" autocomplete="off"></label>
-          <div class="rfq-row">
-            <label class="rfq-field"><span class="tag-label">Quantity</span><input type="text" data-rfq-qty maxlength="40" placeholder="e.g. 20 pcs" autocomplete="off"></label>
-            <label class="rfq-field"><span class="tag-label">Delivery location</span><input type="text" data-rfq-place maxlength="80" placeholder="e.g. Ruwais" autocomplete="off"></label>
-          </div>
-          <div class="rfq-actions">
-            <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp" data-rfq-whatsapp>{{ icon('whatsapp', 20) }} Send on WhatsApp</a>
-            <a href="{{ contact_email_url }}" class="action outline" data-rfq-mail>{{ icon('mail', 18) }} Send by email</a>
-          </div>
-          <p class="rfq-note">Opens your WhatsApp or email app with the message ready to send.</p>
-        </form>
+        {% with uid = 'hero' %}{% include "partials/quote_builder.html" %}{% endwith %}
       </div>
     </section>
 
@@ -94,6 +82,4 @@
     </section>
     {% include "partials/quote_cta.html" %}
 {% endblock %}
-{% block scripts %}
-  <script defer src="{{ url_for('static', path='js/quote.js') }}?v={{ static_asset_version }}"></script>
-{% endblock %}
+{% block quote_drawer %}{% endblock %}
