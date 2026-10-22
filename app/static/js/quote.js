@@ -302,6 +302,27 @@
       return { close, handleKey };
     };
 
+    // The link already holds the message when clicked, so the list can be cleared a moment later.
+    // Undo restores it in case the visitor did not actually send the message.
+    const afterSend = (form) => {
+      const typed = typedItem(form);
+      if (!items.length && !typed) return;
+      const sent = items.map((item) => ({ ...item }));
+      if (typed) mergeItem(sent, typed);
+      window.setTimeout(() => {
+        items = [];
+        forms.forEach((other) => {
+          const input = other.querySelector("[data-rfq-name]");
+          if (input) input.value = "";
+        });
+        commit();
+        showToast("Quote sent. Your list was cleared.", "Undo", () => {
+          items = sent;
+          commit();
+        });
+      }, 500);
+    };
+
     forms.forEach((form) => {
       const suggestions = setupSuggestions(form);
       form.addEventListener("keydown", (event) => {
@@ -337,6 +358,11 @@
         if (event.target.matches("[data-rfq-spec-edit], [data-rfq-qty-edit]")) render();
       });
       form.addEventListener("click", (event) => {
+        const send = event.target.closest("[data-rfq-whatsapp], [data-rfq-mail]");
+        if (send) {
+          afterSend(form);
+          return;
+        }
         const button = event.target.closest("[data-rfq-action]");
         if (button) {
           const index = Number(button.dataset.index);
@@ -373,23 +399,23 @@
       drawer.querySelector("[data-rfq-name]")?.focus();
     };
 
-    const showToast = (message) => {
+    const showToast = (message, actionLabel = "View list", onAction = openQuote) => {
       let toast = document.querySelector(".quote-toast");
       if (!toast) {
         toast = element("div", "quote-toast");
         toast.setAttribute("role", "status");
         document.body.append(toast);
       }
-      const view = element("button", "", "View list");
-      view.type = "button";
-      view.addEventListener("click", () => {
+      const action = element("button", "", actionLabel);
+      action.type = "button";
+      action.addEventListener("click", () => {
         toast.classList.remove("show");
-        openQuote();
+        onAction();
       });
-      toast.replaceChildren(element("span", "", message), view);
+      toast.replaceChildren(element("span", "", message), action);
       toast.classList.add("show");
       window.clearTimeout(toastTimer);
-      toastTimer = window.setTimeout(() => toast.classList.remove("show"), 4000);
+      toastTimer = window.setTimeout(() => toast.classList.remove("show"), 8000);
     };
 
     document.querySelectorAll("[data-quote-add]").forEach((button) => {
