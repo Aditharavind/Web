@@ -82,8 +82,7 @@ test('quote list merges repeated items and builds one message for WhatsApp and e
   assert.equal(items[0].qty, 8);
 
   const message = buildMessage(items, 'Ruwais');
-  assert.match(message, /1\. Gate valve \(2 in\) - Qty: 8/);
-  assert.match(message, /2\. Gate valve \(4 in\) - Qty: 1/);
+  assert.match(message, /1\. \*Gate valve\*\n   Spec: 2 in\n   Qty: 8\n\n2\. \*Gate valve\*\n   Spec: 4 in\n   Qty: 1/);
   assert.match(message, /Delivery location: Ruwais/);
 
   assert.equal(sanitize({ name: 'Seal', qty: -4 }).qty, 1);

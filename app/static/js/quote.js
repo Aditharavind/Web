@@ -31,12 +31,12 @@
   const buildMessage = (items, place) => {
     const lines = ["Hello NAWA Global, I would like a quote for:", ""];
     items.forEach((item, index) => {
-      lines.push(
-        `${index + 1}. ${item.name}${item.spec ? ` (${item.spec})` : ""} - Qty: ${item.qty}`,
-      );
+      lines.push(`${index + 1}. *${item.name}*`);
+      if (item.spec) lines.push(`   Spec: ${item.spec}`);
+      lines.push(`   Qty: ${item.qty}`, "");
     });
-    if (place) lines.push("", `Delivery location: ${place}`);
-    return lines.join("\n");
+    if (place) lines.push(`Delivery location: ${place}`);
+    return lines.join("\n").trimEnd();
   };
 
   if (typeof window !== "undefined") window.NawaQuote = { sanitize, mergeItem, buildMessage };
@@ -119,7 +119,7 @@
       spec.type = "text";
       spec.maxLength = 120;
       spec.value = item.spec;
-      spec.placeholder = "Size, grade, make… (optional)";
+      spec.placeholder = "Spec: size, grade, make (optional)";
       spec.setAttribute("aria-label", `Specification for ${item.name}`);
       spec.dataset.rfqSpecEdit = "";
       spec.dataset.index = String(index);
