@@ -20,9 +20,19 @@ from app.core.templates import template_context, templates
 from app.models.schemas import Product, ProductCreate, ProductUpdate
 from app.services.auth import SessionService
 from app.services.dependencies import (
+    get_import_service,
     get_product_service,
     get_session_service,
     get_visit_service,
+)
+from app.services.import_service import (
+    MAX_WORKBOOK_BYTES,
+    MAX_ZIP_BYTES,
+    TEMPLATE_FILENAME,
+    XLSX_MEDIA_TYPE,
+    ImportFileError,
+    ProductImportService,
+    build_template,
 )
 from app.services.product_service import ProductService
 from app.services.visit_service import VisitService
@@ -383,6 +393,58 @@ async def delete_product(
     except ProductNotFoundError as exc:
         return _redirect(f"{settings.admin_route}/products", error=str(exc))
     return _redirect(f"{settings.admin_route}/products", msg="Product deleted")
+
+
+@router.get(f"{settings.admin_route}/products/import-template.xlsx")
+def download_import_template(
+    request: Request,
+    session_service: SessionService = Depends(get_session_service),
+    product_service: ProductService = Depends(get_product_service),
+) -> Response:
+    session_service.require_admin(request)
+    return Response(
+        build_template(product_service.get_categories()),
+        media_type=XLSX_MEDIA_TYPE,
+        headers={
+            "Content-Disposition": f'attachment; filename="{TEMPLATE_FILENAME}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.post(f"{settings.admin_route}/products/import")
+async def import_products(
+    request: Request,
+    csrf_token: str = Form(...),
+    workbook: UploadFile = File(...),
+    images_zip: UploadFile | None = File(None),
+    update_existing: bool = Form(False),
+    session_service: SessionService = Depends(get_session_service),
+    import_service: ProductImportService = Depends(get_import_service),
+) -> Response:
+    await run_in_threadpool(session_service.require_admin, request)
+    validate_csrf(request, csrf_token, settings)
+    products_path = f"{settings.admin_route}/products"
+    if not await allow_request(f"import:{_client_key(request)}", 6, 600):
+        return _redirect(products_path, error="Too many imports. Try again in a few minutes.")
+    try:
+        workbook_bytes = await workbook.read(MAX_WORKBOOK_BYTES + 1)
+        zip_bytes = (
+            await images_zip.read(MAX_ZIP_BYTES + 1)
+            if images_zip is not None and (images_zip.filename or "").strip()
+            else None
+        )
+        report = await import_service.import_products(workbook_bytes, zip_bytes, update_existing)
+    except ImportFileError as exc:
+        return _redirect(products_path, error=str(exc))
+    return _render_admin(
+        request,
+        "admin/import_result.html",
+        page_title="Import result — Admin",
+        admin_section="products",
+        report=report,
+        update_existing=update_existing,
+    )
 
 
 @router.get(f"{settings.admin_route}/visitors", response_class=HTMLResponse)

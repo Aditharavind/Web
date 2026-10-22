@@ -282,6 +282,23 @@ class ProductService:
         finally:
             db.close()
 
+    def find_product_id(self, name: str, category: str) -> str | None:
+        """Id of the product with this name and category (case-insensitive), if any."""
+        try:
+            with SessionLocal() as db:
+                row = (
+                    db.query(Product.id)
+                    .filter(
+                        func.lower(Product.name) == self._normalize_text(name),
+                        func.lower(Product.category) == self._normalize_text(category),
+                    )
+                    .first()
+                )
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to look up product.")
+            raise DataAccessError("Unable to look up the product right now.") from exc
+        return row[0] if row else None
+
     def suggest_products(self, query: str, limit: int = 8) -> list[dict[str, str]]:
         """Short name/category matches for the quote list's type-ahead."""
         term = query.strip()

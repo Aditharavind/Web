@@ -1199,3 +1199,25 @@ td {
 }
 tail {
 }
+.tag.red {
+  display: inline-flex;
+  align-items: center;
+  background: #fde8e6;
+  border-color: #f1b8b3;
+  color: #8f1f17;
+}
+.page-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.import-steps {
+  margin: 0 0 1.2rem;
+  padding-left: 1.2rem;
+  color: var(--text2, #455a4f);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.import-steps li {
+  margin-bottom: 0.5rem;
+}

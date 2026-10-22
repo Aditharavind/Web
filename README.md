@@ -25,6 +25,11 @@ Run `node --test tests/js/*.test.cjs` for JavaScript checks (Node 22; no npm ins
 See [DEPLOYMENT.md](DEPLOYMENT.md). Configuration names are in `.env.example`.
 Environment files are not loaded automatically. A process manager must supply them.
 
+Products can be added one at a time or in bulk: **Admin → Products → Import from Excel**
+gives a downloadable template (with instructions and an example). Clients fill it in, put the
+product pictures in one ZIP, and list the file names in the Images column, so one product can
+have several images. See `app/services/import_service.py` for the limits.
+
 Contact enquiries use direct email and WhatsApp links. No contact form is exposed.
 
 ## Content and design

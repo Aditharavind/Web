@@ -11,7 +11,10 @@
         <h1 class="page-title">Products</h1>
         <div class="page-subtitle">{{ product_rows|length }} product{% if product_rows|length != 1 %}s{% endif %} in the catalogue</div>
       </div>
-      <button class="btn primary" type="button" data-modal-open="#add-modal">{{ icon('plus', 18) }} Add product</button>
+      <div class="page-head-actions">
+        <button class="btn" type="button" data-modal-open="#import-modal">{{ icon('box', 18) }} Import from Excel</button>
+        <button class="btn primary" type="button" data-modal-open="#add-modal">{{ icon('plus', 18) }} Add product</button>
+      </div>
     </div>
     {% if message %}
     <div class="alert success" role="status">{{ icon('check', 20) }} <span>{{ message }}</span></div>
@@ -99,6 +102,25 @@
         <div class="image-preview-grid" id="add-prev"></div>
       </div>
       <button type="submit" class="btn primary btn-block">Add product</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <button class="modal-close" type="button" data-modal-close="#import-modal" aria-label="Close import form">{{ icon('close', 18) }}</button>
+    <h2 class="modal-title">Import products from Excel</h2>
+    <ol class="import-steps">
+      <li><a href="{{ settings.admin_route }}/products/import-template.xlsx" class="text-link-admin" download>Download the Excel template</a> and send it to your client or fill it in yourself. It has an Instructions sheet and an Example sheet.</li>
+      <li>Put all product pictures in one <strong>ZIP</strong> file. Write the picture file names in the <strong>Images</strong> column, separated by commas. The first one is the main image, so one product can have several.</li>
+      <li>Upload the filled Excel file (and the ZIP) below. Up to 200 products at a time.</li>
+    </ol>
+    <form method="post" action="{{ settings.admin_route }}/products/import" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group"><label class="form-label" for="import-workbook">Filled Excel file (.xlsx) *</label><input id="import-workbook" type="file" name="workbook" class="form-control" accept=".xlsx" required></div>
+      <div class="form-group"><label class="form-label" for="import-zip">Images ZIP (optional)</label><input id="import-zip" type="file" name="images_zip" class="form-control" accept=".zip"><p class="field-help">JPG, PNG or WEBP files. Up to 40 MB, {{ (settings.max_upload_size_bytes / 1048576)|round(1) }} MB per image.</p></div>
+      <label class="checkbox-row" for="import-update"><input id="import-update" type="checkbox" name="update_existing" value="true"><span><strong>Update products that already exist</strong><small>Matched by name and category. Otherwise they are skipped. New images are added to the existing ones.</small></span></label>
+      <button type="submit" class="btn primary btn-block">Import products</button>
     </form>
   </div>
 </div>

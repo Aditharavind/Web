@@ -95,8 +95,10 @@ WantedBy=multi-user.target
 Nginx must terminate TLS with a valid certificate and forward Host, X-Forwarded-Proto
 and a validated client address. For a single direct-facing Nginx proxy, overwrite
 X-Forwarded-For with `$remote_addr`; do not trust arbitrary incoming forwarding headers.
-Set `client_max_body_size 45m` to bound multipart bodies (10 images, 4 MiB each plus
-form overhead). Adjust this proxy limit if upload settings change. Individual images
+Set `client_max_body_size 50m` and `proxy_read_timeout 120s` to bound multipart bodies:
+10 images of 4 MiB each for a single product, or the Excel product import (a workbook of up
+to 5 MB plus an images ZIP of up to 40 MB, 200 products per upload). Adjust these proxy
+limits if upload settings change. Individual images
 are limited to 20 megapixels and are re-encoded as JPEG. Redirect HTTP to HTTPS. Proxy static files through the app initially;
 unversioned CSS/JS revalidate on requests, avoiding stale year-long browser caches.
 

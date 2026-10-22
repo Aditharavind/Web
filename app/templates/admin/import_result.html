@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}admin-site{% endblock %}
+{% block content %}
+{% include "partials/admin_nav.html" %}
+<div class="admin-layout">
+  {% include "partials/admin_sidebar.html" %}
+  <div class="main-content">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Import result</h1>
+        <div class="page-subtitle">{{ report.rows|length }} row{% if report.rows|length != 1 %}s{% endif %} read from your Excel file</div>
+      </div>
+      <a href="{{ settings.admin_route }}/products" class="btn primary">Back to products</a>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">{{ report.count('added') }}</div><div class="stat-label">Added</div></div>
+      <div class="stat-card"><div class="stat-num">{{ report.count('updated') }}</div><div class="stat-label">Updated</div></div>
+      <div class="stat-card"><div class="stat-num">{{ report.count('skipped') }}</div><div class="stat-label">Skipped (already exist)</div></div>
+      <div class="stat-card"><div class="stat-num">{{ report.count('error') }}</div><div class="stat-label">Not imported (errors)</div></div>
+    </div>
+    {% if report.count('error') %}
+    <div class="alert error" role="alert">{{ icon('warning', 20) }} <span>Rows with errors were not imported. Fix them in your Excel file and import again. Rows that worked are already saved and will be skipped next time.</span></div>
+    {% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Excel row</th><th>Product</th><th>Result</th><th>Notes</th></tr></thead>
+        <tbody>
+          {% for row in report.rows %}
+          <tr>
+            <td class="mono-cell">{{ row.row }}</td>
+            <td><strong class="table-strong">{{ row.name }}</strong></td>
+            <td>
+              {% if row.status == 'added' %}<span class="tag green">Added</span>
+              {% elif row.status == 'updated' %}<span class="tag green">Updated</span>
+              {% elif row.status == 'skipped' %}<span class="tag gold">Skipped</span>
+              {% else %}<span class="tag red">Error</span>{% endif %}
+            </td>
+            <td>{% for note in row.notes %}<div>{{ note }}</div>{% else %}<span class="muted-cell">—</span>{% endfor %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
