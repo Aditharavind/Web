@@ -1,12 +1,9 @@
-{% extends "base.html" %}
+{% extends "public.html" %}
 {% from 'partials/icons.html' import icon %}
-{% block body_class %}public-site{% endblock %}
-{% block page_layout %}
-  {% include "partials/public_nav.html" %}
-  <main id="main-content">
-    <section class="editorial-section error-section">
+{% block content %}
+    <section class="section">
       <div class="shell error-box">
-        <span class="eyebrow">ERROR</span>
+        <span class="eyebrow">Error</span>
         <h1>{{ error_title }}</h1>
         <p class="lead">{{ error_message }}</p>
         <div class="actions">
@@ -15,6 +12,4 @@
         </div>
       </div>
     </section>
-  </main>
-  {% include "partials/footer.html" %}
 {% endblock %}

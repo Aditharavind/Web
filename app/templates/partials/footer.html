@@ -1,24 +1,24 @@
 {% from 'partials/icons.html' import icon %}
-<footer class="corporate-footer">
+<footer class="footer">
   <div class="shell footer-layout">
     <div class="footer-identity">
-      <a href="/" class="footer-wordmark" aria-label="NAWA Global home"><img class="footer-logo" src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="400" height="208" loading="lazy"></a>
-      <span class="footer-trading">{{ settings.company_name }}</span>
+      <a href="/" class="footer-mark" aria-label="NAWA Global home"><img src="{{ url_for('static', path='nawa-symbol.png') }}" alt="" width="192" height="192" loading="lazy">NAWA GLOBAL</a>
+      <p class="footer-company">{{ settings.company_name }}</p>
       <p>Oilfield and industrial supply from Abu Dhabi.</p>
       <div class="footer-location">{{ icon('pin', 18) }} {{ settings.contact_address }}</div>
     </div>
-    <div>
+    <div class="footer-col">
       <h2>Explore</h2>
       <a href="/">Home</a><a href="/catalog">Products</a><a href="/#supply">What we supply</a><a href="/about">About us</a><a href="/contact">Contact</a>
     </div>
-    <div>
-      <h2>Contact us</h2>
-      <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp: {{ primary_phone_display }}</a>
-      <a href="tel:{{ settings.contact_whatsapp }}">Call: {{ primary_phone_display }}</a>
-      <a href="tel:{{ settings.contact_secondary }}">Call: {{ secondary_phone_display }}</a>
+    <div class="footer-col">
+      <h2>Contact</h2>
+      <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp {{ primary_phone_display }}</a>
+      <a href="tel:{{ settings.contact_whatsapp }}">Call {{ primary_phone_display }}</a>
+      <a href="tel:{{ settings.contact_secondary }}">Call {{ secondary_phone_display }}</a>
       <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a>
     </div>
   </div>
   <div class="shell legal-line"><span>© {{ current_year }} {{ settings.company_name }}. All rights reserved.</span><a href="{{ settings.contact_website_url }}">{{ settings.contact_website }}</a></div>
 </footer>
-<a class="wa-float" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with NAWA Global on WhatsApp">{{ icon('whatsapp', 28) }}<span>WhatsApp</span></a>
+<a class="wa-float" href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with NAWA Global on WhatsApp">{{ icon('whatsapp', 26) }}<span>WhatsApp</span></a>

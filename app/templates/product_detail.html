@@ -1,10 +1,7 @@
-{% extends "base.html" %}
+{% extends "public.html" %}
 {% from 'partials/icons.html' import icon %}
-{% block body_class %}public-site{% endblock %}
-{% block page_layout %}
-  {% include "partials/public_nav.html" %}
-  <main id="main-content">
-    <section class="editorial-section product-detail-section"><div class="shell">
+{% block content %}
+    <section class="section"><div class="shell">
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="/">Home</a><span>/</span>
         <a href="/catalog">Products</a><span>/</span>
@@ -90,8 +87,6 @@
     <div id="product-images-data"
          data-images='{{ product_image_urls | tojson }}'
          hidden></div>
-  </main>
-  {% include "partials/footer.html" %}
 {% endblock %}
 {% block scripts %}
   <script defer src="{{ url_for('static', path='js/product-detail.js') }}?v={{ static_asset_version }}"></script>

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block body_class %}public-site{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='css/site.css') }}?v={{ static_asset_version }}">{% endblock %}
+{% block page_layout %}
+  {% include "partials/public_nav.html" %}
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "partials/footer.html" %}
+{% endblock %}

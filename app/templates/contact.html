@@ -1,16 +1,14 @@
-{% extends "base.html" %}{% from 'partials/icons.html' import icon %}
-{% block body_class %}public-site{% endblock %}
-{% block page_layout %}
-  {% include "partials/public_nav.html" %}
-  <main id="main-content">
-    <header class="editorial-hero">
+{% extends "public.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block content %}
+    <header class="page-hero">
       <div class="shell">
-        <span class="eyebrow">CONTACT</span>
-        <h1>Tell us what you need. <span>We will take it from there.</span></h1>
+        <span class="eyebrow on-dark">Contact</span>
+        <h1>Tell us what you need. <em>We will take it from there.</em></h1>
         <p class="lead">Message us on WhatsApp or email a part number, a photo or a full list.</p>
       </div>
     </header>
-    <section class="editorial-section">
+    <section class="section">
       <div class="shell contact-layout">
         <div>
           <p class="registered-name">{{ settings.company_name }}</p>
@@ -29,8 +27,8 @@
           </div>
         </div>
         <aside class="rfq-panel">
-          <span class="eyebrow">FOR A FASTER QUOTE</span>
-          <h2>Include these details</h2>
+          <span class="eyebrow">For a faster quote</span>
+          <h2>Include these details.</h2>
           <ol>
             <li>Product name, make and part number</li>
             <li>Quantity and unit</li>
@@ -45,6 +43,4 @@
         </aside>
       </div>
     </section>
-  </main>
-  {% include "partials/footer.html" %}
 {% endblock %}

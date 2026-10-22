@@ -1,19 +1,17 @@
-{% extends "base.html" %}{% from 'partials/icons.html' import icon %}
-{% block body_class %}public-site{% endblock %}
-{% block page_layout %}
-  {% include "partials/public_nav.html" %}
-  <main id="main-content">
-    <header class="editorial-hero">
+{% extends "public.html" %}
+{% from 'partials/icons.html' import icon %}
+{% block content %}
+    <header class="page-hero">
       <div class="shell">
-        <span class="eyebrow">ABOUT US</span>
-        <h1>A practical partner for <span>industrial supply.</span></h1>
+        <span class="eyebrow on-dark">About us</span>
+        <h1>A practical partner for <em>industrial supply.</em></h1>
         <p class="lead">NAWA Global is a general trading company in Abu Dhabi, supplying oilfield products, industrial essentials and sourcing support.</p>
       </div>
     </header>
-    <section class="editorial-section">
+    <section class="section">
       <div class="shell intro-layout">
         <div>
-          <span class="eyebrow">WHO WE ARE</span>
+          <span class="eyebrow">Who we are</span>
           <h2>More than a product list</h2>
         </div>
         <div>
@@ -27,23 +25,21 @@
         </div>
       </div>
     </section>
-    <section class="editorial-section soft-section">
+    <section class="section alt">
       <div class="shell purpose-grid">
-        <article class="purpose-card"><span class="eyebrow">OUR MISSION</span><p>{{ mission }}</p></article>
-        <article class="purpose-card"><span class="eyebrow">OUR VISION</span><p>{{ vision }}</p></article>
+        <article class="purpose-card"><span class="eyebrow">Our mission</span><p>{{ mission }}</p></article>
+        <article class="purpose-card"><span class="eyebrow">Our vision</span><p>{{ vision }}</p></article>
       </div>
     </section>
-    <section class="editorial-section">
+    <section class="section">
       <div class="shell">
-        <div class="section-intro"><div><span class="eyebrow">WHY NAWA GLOBAL</span><h2>How we work</h2></div></div>
+        <div class="section-head"><div><span class="eyebrow">Why NAWA Global</span><h2>How we work.</h2></div></div>
         <div class="reason-grid">
           {% for item in reasons %}
-          <article class="reason-card"><span class="line-icon">{{ icon(item.icon, 28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>
+          <article class="reason">{{ icon(item.icon, 30) }}<h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>
           {% endfor %}
         </div>
       </div>
     </section>
     {% include "partials/quote_cta.html" %}
-  </main>
-  {% include "partials/footer.html" %}
 {% endblock %}

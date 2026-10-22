@@ -32,8 +32,10 @@ Contact enquiries use direct email and WhatsApp links. No contact form is expose
 The public site uses locally served Inter and Manrope fonts and local SVG icons.
 Editable wording is in `app/core/content.py` (company intro, mission, vision,
 supply categories, reasons) and in `app/templates/`. Public styles are in
-`app/static/css/corporate.css`; shared controls and the admin panel are in
-`app/static/css/app.css`. Visitors contact the company by WhatsApp or email only.
+`app/static/css/site.css` (all public pages extend `templates/public.html`); the
+admin panel styles are in `app/static/css/app.css`. The home page quote builder
+(`static/js/quote.js`) prepares a WhatsApp or email message in the visitor's own
+app. Visitors contact the company by WhatsApp or email only.
 
 ## Project structure
 

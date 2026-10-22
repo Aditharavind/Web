@@ -1,34 +1,47 @@
-{% extends "base.html" %}
+{% extends "public.html" %}
 {% from 'partials/icons.html' import icon %}
-{% block body_class %}public-site{% endblock %}
-{% block page_layout %}
-  {% include "partials/public_nav.html" %}
-  <main id="main-content">
-    <section class="landing-hero">
-      <div class="shell hero-layout">
-        <div class="hero-message">
-          <span class="eyebrow">ABU DHABI · OILFIELD &amp; INDUSTRIAL SUPPLY</span>
-          <h1>Industrial supplies, <span>sourced to your specification.</span></h1>
+{% block content %}
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <span class="eyebrow on-dark">Abu Dhabi · Oilfield &amp; industrial supply</span>
+          <h1>Industrial supply, <em>sourced to spec.</em></h1>
           <p class="lead">{{ company_intro }}</p>
           <div class="actions">
             <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp">{{ icon('whatsapp', 20) }} Chat on WhatsApp</a>
             <a href="/catalog" class="action outline-light">Browse products {{ icon('arrow', 18) }}</a>
           </div>
-          <ul class="hero-points">
-            <li>{{ icon('check', 18) }} Valves, MRO, lubricants &amp; safety</li>
-            <li>{{ icon('check', 18) }} Clear offers before you order</li>
-            <li>{{ icon('check', 18) }} Direct on WhatsApp &amp; email</li>
-          </ul>
+          <div class="hero-lines" aria-label="Supply lines">
+            {% for item in capabilities if item.slug != 'sourcing' %}<span>{{ item.name }}</span>{% endfor %}
+          </div>
         </div>
-        {% include "partials/industrial_art.html" %}
+        <form class="rfq" data-rfq data-rfq-phone="{{ settings.contact_whatsapp }}" data-rfq-email="{{ settings.contact_email }}" aria-labelledby="rfq-title">
+          <div class="rfq-head"><h2 id="rfq-title">Request a quote</h2><span class="tag-label">RFQ · 01</span></div>
+          <label class="rfq-field"><span class="tag-label">Product / part number</span><input type="text" data-rfq-product maxlength="120" placeholder="e.g. 2&quot; gate valve, API 6D" autocomplete="off"></label>
+          <div class="rfq-row">
+            <label class="rfq-field"><span class="tag-label">Quantity</span><input type="text" data-rfq-qty maxlength="40" placeholder="e.g. 20 pcs" autocomplete="off"></label>
+            <label class="rfq-field"><span class="tag-label">Delivery location</span><input type="text" data-rfq-place maxlength="80" placeholder="e.g. Ruwais" autocomplete="off"></label>
+          </div>
+          <div class="rfq-actions">
+            <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp" data-rfq-whatsapp>{{ icon('whatsapp', 20) }} Send on WhatsApp</a>
+            <a href="{{ contact_email_url }}" class="action outline" data-rfq-mail>{{ icon('mail', 18) }} Send by email</a>
+          </div>
+          <p class="rfq-note">Opens your WhatsApp or email app with the message ready to send.</p>
+        </form>
       </div>
     </section>
 
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        {% for pass in range(2) %}{% for item in capabilities if item.slug != 'sourcing' %}{% for word in item.examples.split(' · ') %}<span>{{ word }}</span>{% endfor %}{% endfor %}{% endfor %}
+      </div>
+    </div>
+
     {% if homepage_product_cards %}
-    <section class="editorial-section">
+    <section class="section">
       <div class="shell">
-        <div class="section-intro">
-          <div><span class="eyebrow">PRODUCTS</span><h2>Featured products</h2></div>
+        <div class="section-head">
+          <div><span class="eyebrow">Products</span><h2>Featured products.</h2></div>
           <a href="/catalog" class="text-link">View all products {{ icon('arrow', 18) }}</a>
         </div>
         <div class="product-grid">{% for card in homepage_product_cards %}{% include "partials/product_card.html" %}{% endfor %}</div>
@@ -36,38 +49,51 @@
     </section>
     {% endif %}
 
-    <section class="editorial-section soft-section" id="supply">
+    <section class="section alt" id="supply">
       <div class="shell">
-        <div class="section-intro">
-          <div><span class="eyebrow">WHAT WE SUPPLY</span><h2>Everything for the job, from one supplier</h2></div>
-          <p>Not listed? Send us what you need and we will source it.</p>
+        <div class="section-head">
+          <div><span class="eyebrow">What we supply</span><h2>Everything for the job, from one supplier.</h2></div>
+          <p>Not listed? Send us a part number, photo or list and we will source it.</p>
         </div>
-        <div class="capability-grid">
+        <div class="line-list">
           {% for item in capabilities %}
-          <a href="{% if item.slug == 'sourcing' %}{{ contact_whatsapp_url }}{% else %}/catalog{% endif %}" class="capability-card"{% if item.slug == 'sourcing' %} target="_blank" rel="noopener noreferrer"{% endif %}>
-            <span class="line-icon">{{ icon(item.icon, 32) }}</span>
-            <h3>{{ item.name }}</h3>
-            <p>{{ item.text }}</p>
-            <span class="product-examples">{{ item.examples }}</span>
+          <a href="{% if item.slug == 'sourcing' %}{{ contact_whatsapp_url }}{% else %}/catalog{% endif %}" class="line-row"{% if item.slug == 'sourcing' %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            <span class="line-num">0{{ loop.index }}</span>
+            <span class="line-title">{{ icon(item.icon, 28) }}<h3>{{ item.name }}</h3></span>
+            <span class="line-text"><p>{{ item.text }}</p><small>{{ item.examples }}</small></span>
+            <span class="line-go">{{ icon('arrow', 20) }}</span>
           </a>
           {% endfor %}
         </div>
       </div>
     </section>
 
-    <section class="editorial-section">
+    <section class="section dark">
       <div class="shell">
-        <div class="section-intro">
-          <div><span class="eyebrow">WHY NAWA GLOBAL</span><h2>Procurement without the back-and-forth</h2></div>
+        <div class="section-head">
+          <div><span class="eyebrow on-dark">How it works</span><h2>From enquiry to <em>delivered.</em></h2></div>
+          <p>One person follows your request from the first message to the agreed order.</p>
         </div>
+        <ol class="steps">
+          <li class="step"><span class="step-num">01</span><h3>Send the specification</h3><p>Part number, drawing, photo or a full list, with quantity and delivery location. WhatsApp or email.</p></li>
+          <li class="step"><span class="step-num">02</span><h3>Get a clear offer</h3><p>Make, availability and delivery terms confirmed before you order. Alternatives only with your approval.</p></li>
+          <li class="step"><span class="step-num">03</span><h3>We follow it through</h3><p>We keep the details straight from the agreed order until it reaches you.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="section-head"><div><span class="eyebrow">Why NAWA Global</span><h2>Procurement without the back-and-forth.</h2></div></div>
         <div class="reason-grid">
           {% for item in reasons %}
-          <article class="reason-card"><span class="line-icon">{{ icon(item.icon, 28) }}</span><h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>
+          <article class="reason">{{ icon(item.icon, 30) }}<h3>{{ item.name }}</h3><p>{{ item.text }}</p></article>
           {% endfor %}
         </div>
       </div>
     </section>
     {% include "partials/quote_cta.html" %}
-  </main>
-  {% include "partials/footer.html" %}
+{% endblock %}
+{% block scripts %}
+  <script defer src="{{ url_for('static', path='js/quote.js') }}?v={{ static_asset_version }}"></script>
 {% endblock %}

@@ -67,3 +67,34 @@ test('catalogue search waits for composition and cancels pending category search
   assert.equal(timer, undefined);
   assert.equal(submitted, 1);
 });
+
+test('quote builder prepares WhatsApp and email links from the entered details', () => {
+  const field = (value) => ({ value });
+  const fields = { product: field('2" gate valve'), qty: field('20 pcs'), place: field('Ruwais') };
+  const whatsapp = { href: 'default-wa' };
+  const mail = { href: 'default-mail' };
+  const form = Object.assign(element(), {
+    dataset: { rfqPhone: '+971 50 546 4847', rfqEmail: 'info@example.com' },
+    querySelector: (selector) => ({
+      '[data-rfq-whatsapp]': whatsapp,
+      '[data-rfq-mail]': mail,
+      '[data-rfq-product]': fields.product,
+      '[data-rfq-qty]': fields.qty,
+      '[data-rfq-place]': fields.place,
+    })[selector],
+  });
+  const events = {};
+  runInNewContext(source('quote.js'), {
+    encodeURIComponent,
+    window: { addEventListener: (name, callback) => { events[name] = callback; } },
+    document: { querySelectorAll: () => [form] },
+  });
+  events.DOMContentLoaded();
+  form.events.input();
+  assert.match(whatsapp.href, /^https:\/\/wa\.me\/971505464847\?text=/);
+  assert.match(decodeURIComponent(whatsapp.href), /Quantity: 20 pcs/);
+  assert.match(mail.href, /^mailto:info@example\.com\?subject=/);
+  fields.product.value = fields.qty.value = fields.place.value = '';
+  form.events.input();
+  assert.equal(whatsapp.href, 'default-wa');
+});

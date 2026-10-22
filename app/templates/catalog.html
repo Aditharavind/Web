@@ -1,17 +1,14 @@
-{% extends "base.html" %}
+{% extends "public.html" %}
 {% from 'partials/icons.html' import icon %}
-{% block body_class %}public-site{% endblock %}
-{% block page_layout %}
-  {% include "partials/public_nav.html" %}
-  <main id="main-content">
-    <header class="editorial-hero editorial-hero-compact">
+{% block content %}
+    <header class="page-hero">
       <div class="shell">
-        <span class="eyebrow">PRODUCTS</span>
+        <span class="eyebrow on-dark">Products</span>
         <h1>{% if catalog.categories|length == 1 %}{{ catalog.category }}{% else %}Our products{% endif %}</h1>
         <p class="lead">Browse the range, then message us on WhatsApp or email for availability and a quote.</p>
       </div>
     </header>
-    <section class="editorial-section catalog-section" aria-label="Product catalogue">
+    <section class="section" aria-label="Product catalogue">
       <div class="shell">
         {% set selected = catalog.categories | map('lower') | list %}
         <form method="get" action="/catalog" id="catalog-form" class="catalog-form" role="search">
@@ -35,7 +32,7 @@
             </div>
           </details>
           {% endif %}
-          <button type="submit" class="action primary compact">Search</button>
+          <button type="submit" class="action primary">Search</button>
           {% if catalog.query or selected %}<a href="/catalog" class="action outline compact">Clear</a>{% endif %}
           {% if categories and categories|length <= 6 %}
           <div class="chip-row" role="group" aria-label="Product categories">
@@ -91,8 +88,6 @@
       </div>
     </section>
     {% include "partials/quote_cta.html" %}
-  </main>
-  {% include "partials/footer.html" %}
 {% endblock %}
 {% block scripts %}
   <script defer src="{{ url_for('static', path='js/catalog.js') }}?v={{ static_asset_version }}"></script>
