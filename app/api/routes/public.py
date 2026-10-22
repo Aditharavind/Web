@@ -5,12 +5,20 @@ from typing import Annotated
 from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+    Response,
+)
 from pydantic import StringConstraints
 from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import get_settings
 from app.core.exceptions import ProductNotFoundError
+from app.core.rate_limiter import allow_request
 from app.core.templates import template_context, templates
 from app.models.schemas import MAX_TEXT_LENGTH, Product
 from app.services.dependencies import get_product_service, get_visit_service
@@ -172,6 +180,19 @@ def catalog(
         product_cards=_build_product_cards(result.items, product_service),
         schema_type="CollectionPage",
     )
+
+
+@router.get("/api/suggest", include_in_schema=False)
+async def suggest(
+    request: Request,
+    q: str = Query(default="", max_length=80),
+    product_service: ProductService = Depends(get_product_service),
+) -> JSONResponse:
+    client = request.client.host if request.client else "unknown"
+    if not await allow_request(f"suggest:{client}", 90, 60):
+        return JSONResponse({"items": []}, status_code=429, headers={"Cache-Control": "no-store"})
+    items = await run_in_threadpool(product_service.suggest_products, q)
+    return JSONResponse({"items": items}, headers={"Cache-Control": "no-store"})
 
 
 @router.get("/product/{product_id}", response_class=HTMLResponse)

@@ -6,7 +6,7 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi import UploadFile
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
 
@@ -281,6 +281,35 @@ class ProductService:
             raise DataAccessError("Unable to search the catalog right now.") from exc
         finally:
             db.close()
+
+    def suggest_products(self, query: str, limit: int = 8) -> list[dict[str, str]]:
+        """Short name/category matches for the quote list's type-ahead."""
+        term = query.strip()
+        if len(term) < 2:
+            return []
+        escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{escaped}%"
+        try:
+            with SessionLocal() as db:
+                rows = (
+                    db.query(Product.name, Product.category)
+                    .filter(
+                        Product.name.ilike(like, escape="\\")
+                        | Product.tags.ilike(like, escape="\\")
+                        | Product.category.ilike(like, escape="\\")
+                    )
+                    .order_by(
+                        case((Product.name.ilike(like, escape="\\"), 0), else_=1),
+                        Product.is_featured.desc(),
+                        Product.name.asc(),
+                    )
+                    .limit(limit)
+                    .all()
+                )
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to suggest products.")
+            raise DataAccessError("Unable to search the catalog right now.") from exc
+        return [{"name": name, "category": category or ""} for name, category in rows]
 
     def get_product_images(self, product: ProductSchema) -> list[str]:
         images = self._split_images(product.images)

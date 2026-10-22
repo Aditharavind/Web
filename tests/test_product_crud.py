@@ -124,3 +124,26 @@ async def test_edit_respects_total_gallery_limit(monkeypatch):
     assert service.get_product(product.id).images == original
     assert all((service.image_service.upload_dir / name).exists() for name in original)
     service.delete_product(product.id)
+
+
+@pytest.mark.asyncio
+async def test_quote_suggestions_match_name_and_category_and_escape_wildcards():
+    service = get_product_service()
+    await service.create_product(
+        ProductCreate(name="Gate valve 2in", category="Valves", tags="api 6d"), []
+    )
+    await service.create_product(
+        ProductCreate(name="Safety gloves", category="PPE", tags=""), []
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        by_name = await client.get("/api/suggest", params={"q": "gate"})
+        by_tag = await client.get("/api/suggest", params={"q": "api 6"})
+        wildcard = await client.get("/api/suggest", params={"q": "%%"})
+        short = await client.get("/api/suggest", params={"q": "g"})
+    assert by_name.json()["items"] == [{"name": "Gate valve 2in", "category": "Valves"}]
+    assert [item["name"] for item in by_tag.json()["items"]] == ["Gate valve 2in"]
+    assert wildcard.json()["items"] == []
+    assert short.json()["items"] == []
+    assert by_name.headers["cache-control"] == "no-store"

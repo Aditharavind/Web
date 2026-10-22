@@ -187,7 +187,7 @@ def get_settings() -> Settings:
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         trusted_hosts=trusted_hosts,
         database_url=database_url,
-        products_per_page=max(1, int(os.getenv("PRODUCTS_PER_PAGE", "9"))),
+        products_per_page=max(1, int(os.getenv("PRODUCTS_PER_PAGE", "12"))),
         company_name=os.getenv(
             "COMPANY_NAME", "Nawa Global General Trading LLC SPC"
         ).strip(),

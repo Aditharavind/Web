@@ -2,18 +2,25 @@
 {% from 'partials/icons.html' import icon %}
 <form class="rfq" data-rfq data-rfq-phone="{{ settings.contact_whatsapp }}" data-rfq-email="{{ settings.contact_email }}" aria-labelledby="{{ uid }}-title" novalidate>
   <div class="rfq-head"><h2 id="{{ uid }}-title">Request a quote</h2><span class="tag-label" data-rfq-count>Empty list</span></div>
-  <p class="rfq-help">Add one item or many, then send the whole list on WhatsApp or email.</p>
-  <label class="rfq-field"><span class="tag-label">Item or part number</span><input type="text" data-rfq-name maxlength="120" placeholder="e.g. Gate valve" autocomplete="off"></label>
-  <div class="rfq-row">
-    <label class="rfq-field"><span class="tag-label">Spec (optional)</span><input type="text" data-rfq-spec maxlength="120" placeholder="e.g. 2 in, API 6D" autocomplete="off"></label>
-    <label class="rfq-field"><span class="tag-label">Qty</span><input type="number" data-rfq-qty min="1" max="99999" value="1" inputmode="numeric"></label>
+  <div class="rfq-add">
+    <div class="rfq-combo">
+      <label class="visually-hidden" for="{{ uid }}-name">Item or part number</label>
+      <input type="text" id="{{ uid }}-name" data-rfq-name maxlength="120" placeholder="Search or type any item" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="{{ uid }}-options" aria-autocomplete="list">
+      <ul class="rfq-options" id="{{ uid }}-options" role="listbox" data-rfq-options hidden></ul>
+    </div>
+    <button type="submit" class="action primary">{{ icon('plus', 18) }} Add</button>
   </div>
-  <button type="submit" class="action primary rfq-add">{{ icon('plus', 18) }} Add to list</button>
-  <ul class="rfq-items" data-rfq-items aria-label="Items in your quote list"></ul>
-  <label class="rfq-field rfq-place"><span class="tag-label">Delivery location</span><input type="text" data-rfq-place maxlength="80" placeholder="e.g. Ruwais" autocomplete="off"></label>
-  <div class="rfq-actions">
-    <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp" data-rfq-whatsapp>{{ icon('whatsapp', 20) }} Send list on WhatsApp</a>
-    <a href="{{ contact_email_url }}" class="action outline" data-rfq-mail>{{ icon('mail', 18) }} Send list by email</a>
+  <p class="rfq-help">Pick a suggestion or type anything. Items not in our catalogue are welcome too.</p>
+  <div class="rfq-body">
+    <p class="rfq-empty" data-rfq-empty>Your list is empty. Add items above, or press <strong>Add to quote</strong> on any product.</p>
+    <ul class="rfq-items" data-rfq-items aria-label="Items in your quote list"></ul>
   </div>
-  <button type="button" class="rfq-clear" data-rfq-clear hidden>Clear list</button>
+  <div class="rfq-foot">
+    <label class="rfq-field rfq-place"><span class="tag-label">Delivery location</span><input type="text" data-rfq-place maxlength="80" placeholder="e.g. Ruwais" autocomplete="off"></label>
+    <div class="rfq-actions">
+      <a href="{{ contact_whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="action whatsapp" data-rfq-whatsapp>{{ icon('whatsapp', 20) }} Send list on WhatsApp</a>
+      <a href="{{ contact_email_url }}" class="action outline" data-rfq-mail>{{ icon('mail', 18) }} Send list by email</a>
+    </div>
+    <button type="button" class="rfq-clear" data-rfq-clear hidden>Clear list</button>
+  </div>
 </form>

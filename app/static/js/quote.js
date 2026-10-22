@@ -2,6 +2,7 @@
   const STORAGE_KEY = "nawa-quote";
   const MAX_ITEMS = 30;
   const MAX_QTY = 99999;
+  const SUGGEST_URL = "/api/suggest";
 
   const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
   const clampQty = (value) => Math.min(MAX_QTY, Math.max(1, Math.floor(Number(value)) || 1));
@@ -67,12 +68,7 @@
       }
     };
 
-    const pending = (form) =>
-      sanitize({
-        name: form.querySelector("[data-rfq-name]")?.value,
-        spec: form.querySelector("[data-rfq-spec]")?.value,
-        qty: form.querySelector("[data-rfq-qty]")?.value,
-      });
+    const typedItem = (form) => sanitize({ name: form.querySelector("[data-rfq-name]")?.value, qty: 1 });
 
     // Send links include the list plus whatever is typed but not yet added.
     const updateLinks = (form) => {
@@ -84,7 +80,7 @@
         form.dataset.defaultMail = mail.href;
       }
       const all = items.map((item) => ({ ...item }));
-      const typed = pending(form);
+      const typed = typedItem(form);
       if (typed) mergeItem(all, typed);
       if (!all.length) {
         whatsapp.href = form.dataset.defaultWhatsapp;
@@ -98,55 +94,62 @@
       mail.href = `mailto:${form.dataset.rfqEmail || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`${body}\n`)}`;
     };
 
-    const controlButton = (item, index, label, symbol, action) => {
-      const control = document.createElement("button");
-      control.type = "button";
-      control.textContent = symbol;
-      control.setAttribute("aria-label", `${label} ${item.name}`);
-      control.dataset.rfqAction = action;
-      control.dataset.index = String(index);
-      return control;
+    const element = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
     };
 
-    const renderItems = (form) => {
-      const list = form.querySelector("[data-rfq-items]");
-      if (!list) return;
-      list.replaceChildren(
-        ...items.map((item, index) => {
-          const row = document.createElement("li");
-          row.className = "rfq-item";
-          const text = document.createElement("div");
-          text.className = "rfq-item-text";
-          const name = document.createElement("strong");
-          name.textContent = item.name;
-          text.append(name);
-          if (item.spec) {
-            const spec = document.createElement("small");
-            spec.textContent = item.spec;
-            text.append(spec);
-          }
-          const qty = document.createElement("div");
-          qty.className = "rfq-qty";
-          const value = document.createElement("span");
-          value.textContent = String(item.qty);
-          qty.append(
-            controlButton(item, index, "Decrease quantity of", "−", "dec"),
-            value,
-            controlButton(item, index, "Increase quantity of", "+", "inc"),
-          );
-          const remove = controlButton(item, index, "Remove", "✕", "remove");
-          remove.className = "rfq-remove";
-          row.append(text, qty, remove);
-          return row;
-        }),
+    const control = (item, index, label, symbol, action, className) => {
+      const button = element("button", className, symbol);
+      button.type = "button";
+      button.setAttribute("aria-label", `${label} ${item.name}`);
+      button.dataset.rfqAction = action;
+      button.dataset.index = String(index);
+      return button;
+    };
+
+    const renderItem = (item, index) => {
+      const row = element("li", "rfq-item");
+      const name = element("strong", "rfq-item-name", item.name);
+      const remove = control(item, index, "Remove", "✕", "remove", "rfq-remove");
+
+      const spec = element("input", "rfq-spec");
+      spec.type = "text";
+      spec.maxLength = 120;
+      spec.value = item.spec;
+      spec.placeholder = "Size, grade, make… (optional)";
+      spec.setAttribute("aria-label", `Specification for ${item.name}`);
+      spec.dataset.rfqSpecEdit = "";
+      spec.dataset.index = String(index);
+
+      const qty = element("div", "rfq-qty");
+      const amount = element("input", "rfq-qty-input");
+      amount.type = "number";
+      amount.min = "1";
+      amount.max = String(MAX_QTY);
+      amount.inputMode = "numeric";
+      amount.value = String(item.qty);
+      amount.setAttribute("aria-label", `Quantity of ${item.name}`);
+      amount.dataset.rfqQtyEdit = "";
+      amount.dataset.index = String(index);
+      qty.append(
+        control(item, index, "Decrease quantity of", "−", "dec"),
+        amount,
+        control(item, index, "Increase quantity of", "+", "inc"),
       );
+      row.append(name, remove, spec, qty);
+      return row;
     };
 
     const render = () => {
       const count = items.length;
       const total = items.reduce((sum, item) => sum + item.qty, 0);
       forms.forEach((form) => {
-        renderItems(form);
+        form.querySelector("[data-rfq-items]")?.replaceChildren(...items.map(renderItem));
+        const empty = form.querySelector("[data-rfq-empty]");
+        if (empty) empty.hidden = count > 0;
         const label = form.querySelector("[data-rfq-count]");
         if (label) {
           label.textContent = count
@@ -170,37 +173,177 @@
       render();
     };
 
-    forms.forEach((form) => {
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const name = form.querySelector("[data-rfq-name]");
-        const entry = pending(form);
-        if (!entry) {
-          name?.focus();
+    const addNamed = (form, name) => {
+      const entry = sanitize({ name, qty: 1 });
+      if (!entry) return false;
+      mergeItem(items, entry);
+      const input = form.querySelector("[data-rfq-name]");
+      if (input) input.value = "";
+      commit();
+      input?.focus();
+      return true;
+    };
+
+    // Type-ahead: catalogue matches are only a shortcut; any typed text can still be added.
+    const setupSuggestions = (form) => {
+      const input = form.querySelector("[data-rfq-name]");
+      const list = form.querySelector("[data-rfq-options]");
+      if (!input || !list) return { close() {}, handleKey: () => false };
+      let matches = [];
+      let active = -1;
+      let timer;
+      let controller;
+
+      const close = () => {
+        list.hidden = true;
+        list.replaceChildren();
+        input.setAttribute("aria-expanded", "false");
+        input.removeAttribute("aria-activedescendant");
+        matches = [];
+        active = -1;
+      };
+
+      const highlight = (index) => {
+        active = index;
+        Array.from(list.children).forEach((option, position) => {
+          const selected = position === index;
+          option.classList.toggle("active", selected);
+          option.setAttribute("aria-selected", String(selected));
+          if (selected) input.setAttribute("aria-activedescendant", option.id);
+        });
+      };
+
+      const show = (typed) => {
+        const options = matches.map((match) => ({ name: match.name, detail: match.category }));
+        options.push({ name: typed, detail: "Not listed? Add it as typed", custom: true });
+        list.replaceChildren(
+          ...options.map((option, index) => {
+            const row = element("li", `rfq-option${option.custom ? " custom" : ""}`);
+            row.id = `${list.id}-${index}`;
+            row.setAttribute("role", "option");
+            row.dataset.name = option.name;
+            const label = element("span", "rfq-option-name", option.custom ? `Add “${option.name}”` : option.name);
+            row.append(label);
+            if (option.detail) row.append(element("small", "", option.detail));
+            return row;
+          }),
+        );
+        list.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+        active = -1;
+      };
+
+      const fetchMatches = async (term) => {
+        controller?.abort();
+        controller = new AbortController();
+        try {
+          const response = await fetch(`${SUGGEST_URL}?q=${encodeURIComponent(term)}`, {
+            signal: controller.signal,
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) throw new Error("suggest failed");
+          const data = await response.json();
+          matches = Array.isArray(data.items) ? data.items.slice(0, 5) : [];
+        } catch (error) {
+          if (error.name === "AbortError") return;
+          matches = [];
+        }
+        if (clean(input.value, 120) === term) show(term);
+      };
+
+      input.addEventListener("input", () => {
+        window.clearTimeout(timer);
+        const term = clean(input.value, 120);
+        if (term.length < 2) {
+          close();
           return;
         }
-        mergeItem(items, entry);
-        ["name", "spec"].forEach((field) => {
-          const input = form.querySelector(`[data-rfq-${field}]`);
-          if (input) input.value = "";
-        });
-        const qty = form.querySelector("[data-rfq-qty]");
-        if (qty) qty.value = "1";
-        commit();
-        name?.focus();
+        timer = window.setTimeout(() => fetchMatches(term), 180);
+      });
+
+      list.addEventListener("mousedown", (event) => event.preventDefault());
+      list.addEventListener("click", (event) => {
+        const option = event.target.closest("[role=option]");
+        if (!option) return;
+        close();
+        addNamed(form, option.dataset.name);
+      });
+      input.addEventListener("blur", () => window.setTimeout(close, 120));
+
+      // Returns true when the key was used by the suggestion list.
+      const handleKey = (event) => {
+        if (list.hidden) return false;
+        const last = list.children.length - 1;
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          highlight(active >= last ? 0 : active + 1);
+          return true;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          highlight(active <= 0 ? last : active - 1);
+          return true;
+        }
+        if (event.key === "Escape") {
+          close();
+          event.stopPropagation();
+          return true;
+        }
+        if (event.key === "Enter" && active >= 0) {
+          event.preventDefault();
+          const name = list.children[active].dataset.name;
+          close();
+          addNamed(form, name);
+          return true;
+        }
+        return false;
+      };
+
+      return { close, handleKey };
+    };
+
+    forms.forEach((form) => {
+      const suggestions = setupSuggestions(form);
+      form.addEventListener("keydown", (event) => {
+        if (event.target.matches("[data-rfq-name]")) suggestions.handleKey(event);
+      });
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        suggestions.close();
+        const input = form.querySelector("[data-rfq-name]");
+        if (!addNamed(form, input?.value)) input?.focus();
       });
       form.addEventListener("input", (event) => {
-        if (event.target.matches("[data-rfq-place]")) place = clean(event.target.value, 80);
+        const target = event.target;
+        if (target.matches("[data-rfq-place]")) {
+          place = clean(target.value, 80);
+        } else if (target.matches("[data-rfq-spec-edit]")) {
+          const item = items[Number(target.dataset.index)];
+          if (item) {
+            item.spec = clean(target.value, 120);
+            save();
+          }
+        } else if (target.matches("[data-rfq-qty-edit]")) {
+          const item = items[Number(target.dataset.index)];
+          if (item && target.value !== "") {
+            item.qty = clampQty(target.value);
+            save();
+          }
+        }
         forms.forEach(updateLinks);
       });
+      // After typing a quantity or spec, redraw once so the counts and other lists match.
+      form.addEventListener("change", (event) => {
+        if (event.target.matches("[data-rfq-spec-edit], [data-rfq-qty-edit]")) render();
+      });
       form.addEventListener("click", (event) => {
-        const control = event.target.closest("[data-rfq-action]");
-        if (control) {
-          const index = Number(control.dataset.index);
+        const button = event.target.closest("[data-rfq-action]");
+        if (button) {
+          const index = Number(button.dataset.index);
           const item = items[index];
           if (!item) return;
-          if (control.dataset.rfqAction === "remove") items.splice(index, 1);
-          else item.qty = clampQty(item.qty + (control.dataset.rfqAction === "inc" ? 1 : -1));
+          if (button.dataset.rfqAction === "remove") items.splice(index, 1);
+          else item.qty = clampQty(item.qty + (button.dataset.rfqAction === "inc" ? 1 : -1));
           commit();
         } else if (event.target.closest("[data-rfq-clear]")) {
           items = [];
@@ -233,21 +376,17 @@
     const showToast = (message) => {
       let toast = document.querySelector(".quote-toast");
       if (!toast) {
-        toast = document.createElement("div");
-        toast.className = "quote-toast";
+        toast = element("div", "quote-toast");
         toast.setAttribute("role", "status");
         document.body.append(toast);
       }
-      const text = document.createElement("span");
-      text.textContent = message;
-      const view = document.createElement("button");
+      const view = element("button", "", "View list");
       view.type = "button";
-      view.textContent = "View list";
       view.addEventListener("click", () => {
         toast.classList.remove("show");
         openQuote();
       });
-      toast.replaceChildren(text, view);
+      toast.replaceChildren(element("span", "", message), view);
       toast.classList.add("show");
       window.clearTimeout(toastTimer);
       toastTimer = window.setTimeout(() => toast.classList.remove("show"), 4000);

@@ -19,7 +19,7 @@ from app.services.dependencies import get_product_service
 async def test_catalogue_pagination_and_configured_canonical_host(monkeypatch):
     monkeypatch.setattr(public, "settings", replace(public.settings, site_url="https://nawaglobalgtd.com"))
     service = get_product_service()
-    for index in range(11):
+    for index in range(14):
         await service.create_product(ProductCreate(name=f"Valve {index:02}", category="MRO & Tools"), [])
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         response = await client.get("/catalog", params={"q": "Valve", "cat": "MRO & Tools", "page": 2, "utm_source": "test"})
@@ -28,7 +28,7 @@ async def test_catalogue_pagination_and_configured_canonical_host(monkeypatch):
     url = urlsplit(canonical)
     assert (url.scheme, url.netloc, url.path) == ("https", "nawaglobalgtd.com", "/catalog")
     assert parse_qs(url.query) == {"q": ["Valve"], "cat": ["MRO & Tools"], "page": ["2"]}
-    assert "Showing 10–11 of 11" in response.text
+    assert "Showing 13–14 of 14" in response.text
 
 
 @pytest.mark.asyncio
