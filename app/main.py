@@ -30,7 +30,6 @@ from app.core.templates import template_context, templates
 from app.database import models  # noqa: F401
 from app.database.db import engine, ensure_database_schema
 
-
 settings = get_settings()
 setup_logging(settings)
 logger = logging.getLogger(__name__)

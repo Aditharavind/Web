@@ -1,0 +1,12 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["venv", "alembic/versions"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+# E501: formatting is not enforced. B008: FastAPI declares dependencies as defaults.
+ignore = ["E501", "B008"]

@@ -35,7 +35,7 @@ def _normalize_site_url(value: str) -> str:
         site_url = f"https://{site_url}"
     try:
         parsed = urlsplit(site_url)
-        parsed.port  # Validate the optional port.
+        _ = parsed.port  # Validate the optional port.
         valid = (
             parsed.scheme in {"http", "https"}
             and parsed.hostname

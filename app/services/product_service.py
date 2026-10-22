@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import UploadFile
 from sqlalchemy import func
@@ -88,7 +88,7 @@ class ProductService:
             image=record.image or (images[0] if images else None),
             images=images,
             created=record.created_at
-            or datetime.now(timezone.utc).replace(tzinfo=None),
+            or datetime.now(UTC).replace(tzinfo=None),
         )
 
     @staticmethod
@@ -124,7 +124,7 @@ class ProductService:
             db.add(category)
             db.flush()
             return category
-        except IntegrityError:
+        except IntegrityError as exc:
             db.rollback()
             category = (
                 db.query(Category)
@@ -132,7 +132,7 @@ class ProductService:
                 .first()
             )
             if category is None:
-                raise DataAccessError("Unable to save category.")
+                raise DataAccessError("Unable to save category.") from exc
             return category
 
     async def _save_images(

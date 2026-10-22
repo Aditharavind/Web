@@ -2,9 +2,10 @@
 
 ## Current status
 
-This branch is preparation for deployment, not a deployed or fully security-audited
-release. Verify dependency advisories, PostgreSQL, Redis and browser behavior before
-production launch. Contact enquiries use direct WhatsApp/email links; no form delivery service is needed.
+The code has had a full review (security headers, CSRF, sessions, uploads, queries,
+dependency advisories) and the test suite and linter pass. Before launch, still verify
+PostgreSQL, Redis, the proxy forwarding setup and browser behavior on the real host.
+Contact enquiries use direct WhatsApp/email links; no form delivery service is needed.
 
 ## Configuration
 

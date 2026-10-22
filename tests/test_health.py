@@ -4,8 +4,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.exc import OperationalError
 
-from app.main import app
 from app.api.routes import health
+from app.main import app
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     BigInteger,
@@ -24,7 +24,7 @@ class Category(Base):
     name = Column(String, nullable=False, unique=True, index=True)
     created_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
 
@@ -52,7 +52,7 @@ class Product(Base):
         Boolean, nullable=False, default=False, server_default=false(), index=True
     )
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
     )
 
     category_ref = relationship("Category", back_populates="products")
@@ -65,7 +65,7 @@ class Visit(Base):
     ip = Column(String, nullable=False, index=True)
     visited_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        default=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
         index=True,
     )

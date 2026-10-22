@@ -4,9 +4,9 @@ from __future__ import annotations
 from typing import Annotated
 from xml.sax.saxutils import escape
 
-from pydantic import StringConstraints
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from pydantic import StringConstraints
 from starlette.background import BackgroundTask
 
 from app.core.config import get_settings
@@ -137,12 +137,12 @@ def contact(
 @router.get("/catalog", response_class=HTMLResponse)
 def catalog(
     request: Request,
-    page: int = 1,
-    q: str = Query(default="", max_length=MAX_TEXT_LENGTH),
     cat: Annotated[
         list[Annotated[str, StringConstraints(max_length=MAX_TEXT_LENGTH)]],
-        Query(max_length=20),
-    ] = [],
+        Query(default_factory=list, max_length=20),
+    ],
+    page: int = 1,
+    q: str = Query(default="", max_length=MAX_TEXT_LENGTH),
     product_service: ProductService = Depends(get_product_service),
     visit_service: VisitService = Depends(get_visit_service),
 ) -> Response:

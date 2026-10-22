@@ -6,8 +6,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from PIL import Image
 
-from app.main import app
 from app.core.config import get_settings
+from app.main import app
 from app.services.dependencies import get_product_service
 
 

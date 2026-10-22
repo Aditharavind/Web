@@ -11,9 +11,10 @@ os.environ["UPLOAD_DIR"] = f"{_TEST_ROOT.name}/uploads"
 os.environ.pop("REDIS_URL", None)
 
 import pytest
-from app.database.db import Base, engine
-from app.database import models
+
 from app.core.rate_limiter import _local
+from app.database import models  # noqa: F401  (registers tables on Base)
+from app.database.db import Base, engine
 
 
 @pytest.fixture(autouse=True)

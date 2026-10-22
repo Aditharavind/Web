@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import case, func
 from sqlalchemy.exc import SQLAlchemyError
@@ -36,7 +36,7 @@ class VisitService:
 
     def summary(self) -> dict[str, int]:
         today = (
-            datetime.now(timezone.utc)
+            datetime.now(UTC)
             .replace(tzinfo=None)
             .replace(hour=0, minute=0, second=0, microsecond=0)
         )
@@ -51,7 +51,7 @@ class VisitService:
             return {"total": total, "today": today_count, "unique_ips": unique_ips}
 
     def analytics(self, period: str) -> dict[str, object]:
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(UTC).replace(tzinfo=None)
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)
         config = {
             "today": (today, "Today", "%Y-%m-%d %H", "YYYY-MM-DD HH24", "%I %p"),

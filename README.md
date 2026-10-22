@@ -17,7 +17,7 @@ python -m uvicorn app.main:app --reload
 Open http://127.0.0.1:8000. The default local administrator route is `/admin12`.
 Development defaults are `admin` / `admin123`; production rejects that password.
 The local database and uploads are generated at runtime and excluded from Git.
-Run `python -m pytest -q` for isolated tests. Tests never use the development database.
+Run `ruff check .` for linting and `python -m pytest -q` for isolated tests. Tests never use the development database.
 Run `node --test tests/js/*.test.cjs` for JavaScript checks (Node 22; no npm install needed).
 
 ## Production

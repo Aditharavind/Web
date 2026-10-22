@@ -1,6 +1,6 @@
 """Analytics totals and background recording regression checks."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
@@ -24,7 +24,7 @@ def test_empty_analytics():
 
 
 def test_aggregate_counts_and_query_budget():
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(UTC).replace(tzinfo=None)
     today = now.replace(hour=0, minute=0, second=0, microsecond=0)
     with SessionLocal() as db:
         db.add_all(

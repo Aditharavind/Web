@@ -1,13 +1,13 @@
 import re
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
-from app.main import app
 from app.core.config import get_settings
-from app.core.rate_limiter import allow_request
-from app.services.auth import SessionService
 from app.core.exceptions import AuthenticationError
+from app.core.rate_limiter import allow_request
+from app.main import app
+from app.services.auth import SessionService
 
 
 @pytest.mark.asyncio
