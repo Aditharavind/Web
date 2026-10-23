@@ -147,3 +147,38 @@ async def test_quote_suggestions_match_name_and_category_and_escape_wildcards():
     assert wildcard.json()["items"] == []
     assert short.json()["items"] == []
     assert by_name.headers["cache-control"] == "no-store"
+
+
+@pytest.mark.asyncio
+async def test_hostile_product_text_is_escaped_on_every_public_page():
+    service = get_product_service()
+    payload = '<script>alert(1)</script>"\'<img src=x onerror=alert(2)>'
+    product = await service.create_product(
+        ProductCreate(
+            name=payload,
+            category="Tools",
+            description=payload,
+            specs=[f"{payload}: {payload}"],
+            tags=payload,
+            featured=True,
+        ),
+        [],
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        pages = [
+            await client.get("/"),
+            await client.get("/catalog"),
+            await client.get("/catalog", params={"q": payload}),
+            await client.get(f"/product/{product.id}"),
+        ]
+        suggestions = await client.get("/api/suggest", params={"q": "alert"})
+    for page in pages:
+        assert page.status_code == 200
+        assert "<script>alert(1)" not in page.text
+        assert "<img src=x onerror" not in page.text
+    # The type-ahead returns data, never markup: JSON the browser will not sniff as HTML.
+    assert suggestions.headers["content-type"].startswith("application/json")
+    assert suggestions.headers["x-content-type-options"] == "nosniff"
+    assert suggestions.json()["items"][0]["name"] == payload

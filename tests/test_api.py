@@ -103,3 +103,16 @@ async def test_visitor_aggregates():
         result = service.analytics(period)
         assert result["total"] == 2
         assert sum(item["count"] for item in result["chart"]) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", ["/", "/about", "/contact", "/catalog", "/robots.txt", "/sitemap.xml", "/health"])
+async def test_public_pages_answer_head_requests_without_counting_visits(path):
+    from app.services.dependencies import get_visit_service
+
+    before = get_visit_service().summary()["total"]
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        response = await client.head(path)
+    assert response.status_code == 200
+    assert response.content == b""
+    assert get_visit_service().summary()["total"] == before

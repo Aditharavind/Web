@@ -45,6 +45,8 @@ def _render_page(request: Request, template: str, **context: object) -> Response
 
 
 def _track_visit(request: Request, visit_service: VisitService) -> None:
+    if request.method != "GET":
+        return  # Monitors and link checkers using HEAD are not visitors.
     client = request.client.host if request.client else "unknown"
     request.state.visit_background = BackgroundTask(visit_service.log_visit, client)
 
@@ -75,7 +77,7 @@ def _build_product_cards(
 
 # These routes use synchronous SQLAlchemy services and template rendering.
 # Normal endpoints run that work in FastAPI's thread pool.
-@router.get("/", response_class=HTMLResponse)
+@router.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def home(
     request: Request,
     product_service: ProductService = Depends(get_product_service),
@@ -98,7 +100,7 @@ def home(
     )
 
 
-@router.get("/about", response_class=HTMLResponse)
+@router.api_route("/about", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def about(
     request: Request,
     visit_service: VisitService = Depends(get_visit_service),
@@ -117,12 +119,12 @@ def about(
     )
 
 
-@router.get("/services", include_in_schema=False)
+@router.api_route("/services", methods=["GET", "HEAD"], include_in_schema=False)
 def services_page() -> RedirectResponse:
     return RedirectResponse("/#supply", status_code=301)
 
 
-@router.get("/contact", response_class=HTMLResponse)
+@router.api_route("/contact", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def contact(
     request: Request,
     visit_service: VisitService = Depends(get_visit_service),
@@ -142,7 +144,7 @@ def contact(
     )
 
 
-@router.get("/catalog", response_class=HTMLResponse)
+@router.api_route("/catalog", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def catalog(
     request: Request,
     cat: Annotated[
@@ -195,7 +197,7 @@ async def suggest(
     return JSONResponse({"items": items}, headers={"Cache-Control": "no-store"})
 
 
-@router.get("/product/{product_id}", response_class=HTMLResponse)
+@router.api_route("/product/{product_id}", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def product_detail(
     product_id: str,
     request: Request,
@@ -268,7 +270,7 @@ def product_detail(
     )
 
 
-@router.get("/robots.txt", response_class=PlainTextResponse)
+@router.api_route("/robots.txt", methods=["GET", "HEAD"], response_class=PlainTextResponse)
 def robots_txt() -> PlainTextResponse:
     return PlainTextResponse(
         "\n".join([
@@ -280,7 +282,7 @@ def robots_txt() -> PlainTextResponse:
     )
 
 
-@router.get("/sitemap.xml")
+@router.api_route("/sitemap.xml", methods=["GET", "HEAD"])
 def sitemap(
     product_service: ProductService = Depends(get_product_service),
 ) -> Response:

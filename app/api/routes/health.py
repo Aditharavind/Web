@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 def health_check() -> JSONResponse:
     # A normal endpoint keeps synchronous database I/O off the event loop.
     try:

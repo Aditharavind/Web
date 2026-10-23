@@ -33,6 +33,7 @@ MAX_WORKBOOK_BYTES = 5 * 1024 * 1024
 MAX_ZIP_BYTES = 40 * 1024 * 1024
 MAX_ROWS = 200
 MAX_ZIP_IMAGES = 400
+MAX_IMAGE_REFERENCES = 400  # image names across all rows; bounds the work done in one request
 MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024
 MAX_CELL_LENGTH = 5000
 
@@ -324,6 +325,10 @@ class ProductImportService:
         if not rows:
             raise ImportFileError("No product rows found. Fill in the Products sheet and try again.")
         images = ImageArchive(archive, self.images.max_upload_size_bytes)
+        if sum(len(_split(record["Images"], r"[,;\n]")) for _, record in rows) > MAX_IMAGE_REFERENCES:
+            raise ImportFileError(
+                f"Too many image names in the sheet (limit {MAX_IMAGE_REFERENCES} per import). Split it into two files."
+            )
         report = ImportReport()
         for number, record in rows:
             report.rows.append(await self._import_row(number, record, images, update_existing))

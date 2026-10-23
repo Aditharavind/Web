@@ -166,3 +166,11 @@ async def test_admin_import_endpoint_requires_login_csrf_and_shows_report():
             files={"workbook": ("x.xlsx", b"junk")},
         )
         assert broken.status_code == 303 and "error=" in broken.headers["location"]
+
+
+@pytest.mark.asyncio
+async def test_too_many_image_references_are_rejected(monkeypatch):
+    monkeypatch.setattr(import_service, "MAX_IMAGE_REFERENCES", 3)
+    sheet = workbook_bytes([row("A", images="a.jpg, b.jpg"), row("B", images="a.jpg, b.jpg")])
+    with pytest.raises(ImportFileError, match="Too many image names"):
+        await get_import_service().import_products(sheet, zip_bytes(["a.jpg", "b.jpg"]), False)
