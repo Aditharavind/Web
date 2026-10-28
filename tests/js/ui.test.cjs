@@ -13,11 +13,14 @@ function element() {
   };
 }
 
-test('upload previews preserve selection order and release old URLs', () => {
+function uploadZone(files, limits = {}) {
   class Input {}
-  const input = Object.assign(new Input(), element(), { files: ['first', 'second'], dataset: {previewTarget: 'preview'} });
+  const input = Object.assign(new Input(), element(), { files, dataset: {previewTarget: 'preview'}, value: 'chosen' });
   const grid = element();
-  const zone = Object.assign(element(), { querySelector: () => input });
+  const note = Object.assign(element(), { hidden: true, textContent: '' });
+  const zone = Object.assign(element(), {
+    dataset: limits, querySelector: () => input, parentElement: { querySelector: () => note },
+  });
   const revoked = [];
   const events = {};
   runInNewContext(source('admin-products.js'), {
@@ -30,17 +33,43 @@ test('upload previews preserve selection order and release old URLs', () => {
       querySelector: () => null,
       addEventListener() {},
     },
-    URL: { createObjectURL: (file) => `blob:${file}`, revokeObjectURL: (url) => revoked.push(url) },
+    URL: { createObjectURL: (file) => `blob:${file.name}`, revokeObjectURL: (url) => revoked.push(url) },
   });
   events.DOMContentLoaded();
+  return { input, grid, note, revoked, events };
+}
+const photo = (name, size = 1000) => ({ name, size });
+
+test('upload previews preserve selection order and release old URLs', () => {
+  const { input, grid, revoked, events } = uploadZone([photo('a.jpg'), photo('b.png')]);
   input.events.change();
-  assert.deepEqual(grid.children.map(item => item.children[0].src), ['blob:first', 'blob:second']);
-  input.files = ['replacement'];
+  assert.deepEqual(grid.children.map(item => item.children[0].src), ['blob:a.jpg', 'blob:b.png']);
+  input.files = [photo('c.webp')];
   input.events.change();
-  assert.deepEqual(grid.children.map(item => item.children[0].src), ['blob:replacement']);
-  assert.deepEqual(revoked, ['blob:first', 'blob:second']);
+  assert.deepEqual(grid.children.map(item => item.children[0].src), ['blob:c.webp']);
+  assert.deepEqual(revoked, ['blob:a.jpg', 'blob:b.png']);
   events.pagehide();
-  assert.equal(revoked.at(-1), 'blob:replacement');
+  assert.equal(revoked.at(-1), 'blob:c.webp');
+});
+
+test('invalid uploads are refused in the browser with a clear message and nothing is submitted', () => {
+  const limits = { maxFiles: '3', maxBytes: '5000', existing: '2' };
+  const cases = [
+    [[photo('manual.pdf')], /Only JPG, PNG or WEBP/],
+    [[photo('big.jpg', 9000)], /MB or smaller/],
+    [[photo('a.jpg'), photo('b.jpg')], /up to 3 images and already has 2/],
+  ];
+  for (const [files, message] of cases) {
+    const { input, note } = uploadZone(files, limits);
+    input.events.change();
+    assert.match(note.textContent, message);
+    assert.equal(note.hidden, false);
+    assert.equal(input.value, '');
+  }
+  const { input, note } = uploadZone([photo('ok.JPG')], limits);
+  input.events.change();
+  assert.equal(note.hidden, true);
+  assert.equal(input.value, 'chosen');
 });
 
 test('catalogue search waits for composition and cancels pending category search', () => {

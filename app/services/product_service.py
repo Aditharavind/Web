@@ -421,10 +421,27 @@ class ProductService:
     async def update_product(
         self, product_id: str, payload: ProductUpdate, images: list[UploadFile]
     ) -> ProductSchema:
+        self._validate_image_count(images)
+        await run_in_threadpool(self._check_image_room, product_id, images)
         saved_images = await self._save_images(product_id, images)
         return await run_in_threadpool(
             self._update_product, product_id, payload, saved_images
         )
+
+    def _check_image_room(self, product_id: str, images: list[UploadFile]) -> None:
+        """Refuse before any photo is processed when the product has no room for the new ones."""
+        incoming = sum(1 for image in images if (image.filename or "").strip())
+        if not incoming:
+            return
+        with SessionLocal() as db:
+            record = db.query(Product).filter(Product.id == product_id).first()
+            if record is None:
+                raise ProductNotFoundError("Product not found.")
+            existing = self._split_images(record.images) or ([record.image] if record.image else [])
+        if len(existing) + incoming > self.max_upload_files:
+            raise ValidationError(
+                f"A product can have up to {self.max_upload_files} images. Remove an existing image before adding more."
+            )
 
     def _update_product(
         self, product_id: str, payload: ProductUpdate, saved_images: list[str]

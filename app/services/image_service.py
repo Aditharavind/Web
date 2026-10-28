@@ -51,6 +51,7 @@ class ImageService:
         if Path(filename).name != filename or "\\" in filename:
             raise ValidationError("Invalid image identifier.")
         destination = self.upload_dir / filename
+        temporary = self.upload_dir / f".{filename}.{os.getpid()}.tmp"
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", Image.DecompressionBombWarning)
@@ -81,7 +82,7 @@ class ImageService:
                             rgb = processed.convert("RGB")
                         try:
                             rgb.save(
-                                destination,
+                                temporary,
                                 format="JPEG",
                                 quality=82,
                                 optimize=True,
@@ -91,17 +92,20 @@ class ImageService:
                             rgb.close()
                     finally:
                         processed.close()
+            os.replace(temporary, destination)  # a half-written photo is never visible
         except (
             UnidentifiedImageError,
             SyntaxError,
             OSError,
+            ValueError,
             Image.DecompressionBombError,
             Image.DecompressionBombWarning,
         ) as exc:
-            destination.unlink(missing_ok=True)
             raise ValidationError(
                 "The image could not be processed. Use a valid JPG, PNG, or WEBP image within the upload limits."
             ) from exc
+        finally:
+            temporary.unlink(missing_ok=True)
         return filename
 
     def delete_image(self, filename: str) -> None:

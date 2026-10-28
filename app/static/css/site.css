@@ -416,6 +416,9 @@ h3 { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015
 .card-gallery-nav.previous { left: 10px; }
 .card-gallery-nav.next { right: 10px; }
 .card-media:hover .card-gallery-nav, .card-gallery-nav:focus-visible { opacity: 1; }
+@media (hover: none) {
+  .card-gallery-nav { opacity: 1; width: 32px; height: 32px; margin-top: -16px; box-shadow: 0 1px 4px rgba(10, 26, 20, 0.25); }
+}
 .card-img-count {
   position: absolute;
   right: 10px;

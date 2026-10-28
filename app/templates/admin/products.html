@@ -93,12 +93,13 @@
       <label class="checkbox-row" for="add-featured"><input id="add-featured" type="checkbox" name="featured" value="true"><span><strong>Feature on homepage</strong><small>Show this product in the homepage Featured Products section.</small></span></label>
       <div class="form-group">
         <label class="form-label">Product images — up to {{ settings.max_upload_files }}, first = primary</label>
-        <div class="upload-zone" data-upload-zone>
+        <div class="upload-zone" data-upload-zone data-max-files="{{ settings.max_upload_files }}" data-max-bytes="{{ settings.max_upload_size_bytes }}" data-existing="0">
           <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp" aria-label="Upload product images" multiple data-upload-input data-preview-target="add-prev">
           <div class="upload-zone-icon">{{ icon('image', 32) }}</div>
           <div class="upload-zone-text">Click or drag &amp; drop images here</div>
           <div class="upload-zone-sub">PNG, JPG, WEBP · up to {{ settings.max_upload_files }} images · {{ (settings.max_upload_size_bytes / 1048576)|round(1) }} MB per file · 20 megapixels maximum</div>
         </div>
+        <p class="upload-error" role="alert" hidden data-upload-error></p>
         <div class="image-preview-grid" id="add-prev"></div>
       </div>
       <button type="submit" class="btn primary btn-block">Add product</button>

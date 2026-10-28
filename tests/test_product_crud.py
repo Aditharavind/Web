@@ -182,3 +182,49 @@ async def test_hostile_product_text_is_escaped_on_every_public_page():
     assert suggestions.headers["content-type"].startswith("application/json")
     assert suggestions.headers["x-content-type-options"] == "nosniff"
     assert suggestions.json()["items"][0]["name"] == payload
+
+
+@pytest.mark.asyncio
+async def test_full_product_refuses_new_photos_before_processing_them(monkeypatch):
+    service = get_product_service()
+    monkeypatch.setattr(service, "max_upload_files", 1)
+    product = await service.create_product(ProductCreate(name="Full", category="Tools"), [image_upload()])
+    before = set(service.image_service.upload_dir.iterdir())
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("photo was processed although the product is full")
+
+    monkeypatch.setattr(service.image_service, "_process_image", must_not_run)
+    with pytest.raises(ValidationError, match="up to 1 images"):
+        await service.update_product(product.id, ProductUpdate(name="Full", category="Tools"), [image_upload("blue")])
+    assert set(service.image_service.upload_dir.iterdir()) == before
+
+
+@pytest.mark.asyncio
+async def test_failed_photo_save_leaves_no_partial_file(monkeypatch):
+    service = get_product_service()
+    uploads = service.image_service.upload_dir
+    before = set(uploads.iterdir())
+    photo = image_upload()
+
+    def broken_save(self, fp, format=None, **options):
+        open(fp, "wb").write(b"half a photo")
+        raise OSError("disk full")
+
+    monkeypatch.setattr(Image.Image, "save", broken_save)
+    with pytest.raises(ValidationError):
+        await service.create_product(ProductCreate(name="Disk full", category="Tools"), [photo])
+    monkeypatch.undo()
+    assert set(uploads.iterdir()) == before
+    assert service.list_products() == []
+
+
+@pytest.mark.asyncio
+async def test_admin_forms_carry_upload_limits_and_touch_screens_get_gallery_arrows():
+    from pathlib import Path
+
+    css = Path("app/static/css/site.css").read_text()
+    assert "@media (hover: none)" in css and ".card-gallery-nav { opacity: 1;" in css
+    for template in ("products.html", "edit_product.html"):
+        html = Path("app/templates/admin", template).read_text()
+        assert "data-max-files=" in html and "data-max-bytes=" in html and "data-upload-error" in html

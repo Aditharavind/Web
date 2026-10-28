@@ -51,12 +51,13 @@
           <p class="muted-note">No images yet.</p>
           {% endif %}
           <label class="form-label">Add more images</label>
-          <div class="upload-zone" data-upload-zone>
+          <div class="upload-zone" data-upload-zone data-max-files="{{ settings.max_upload_files }}" data-max-bytes="{{ settings.max_upload_size_bytes }}" data-existing="{{ product_images|length }}">
             <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp" aria-label="Upload product images" multiple data-upload-input data-preview-target="edit-prev">
             <div class="upload-zone-icon">{{ icon('image', 32) }}</div>
             <div class="upload-zone-text">Click or drag &amp; drop to add images</div>
             <div class="upload-zone-sub">Existing images are kept unless removed above</div>
           </div>
+          <p class="upload-error" role="alert" hidden data-upload-error></p>
           <div class="image-preview-grid" id="edit-prev"></div>
         </div>
         <div class="table-actions">
