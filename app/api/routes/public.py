@@ -6,6 +6,7 @@ from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import (
+    FileResponse,
     HTMLResponse,
     JSONResponse,
     PlainTextResponse,
@@ -16,6 +17,7 @@ from pydantic import StringConstraints
 from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
+from app.core import seo
 from app.core.config import get_settings
 from app.core.exceptions import ProductNotFoundError
 from app.core.rate_limiter import allow_request
@@ -89,8 +91,9 @@ def home(
         "home.html",
         page_title="NAWA Global | Oilfield & Industrial Supplies in Abu Dhabi, UAE",
         page_description=(
-            "Oilfield parts, valves, MRO supplies, lubricants and safety equipment from "
-            "Abu Dhabi. Browse products and get a quote on WhatsApp or email."
+            "Oilfield equipment, valves, MRO supplies, lubricants and industrial safety "
+            "products from NAWA Global, a general trading company in Mussafah, Abu Dhabi. "
+            "Request a quote on WhatsApp or email."
         ),
         canonical_url=_canonical_url("/"),
         active_nav="home",
@@ -159,14 +162,15 @@ def catalog(
     _track_visit(request, visit_service)
     result = product_service.search_catalog(page=page, query=q, category=cat)
     start = (result.page - 1) * settings.products_per_page
+    title, description, robots = seo.catalog_seo(
+        result.categories, result.query, result.page, result.total
+    )
     return _render_page(
         request,
         "catalog.html",
-        page_title="Products | NAWA Global",
-        page_description=(
-            "Browse oilfield equipment, industrial products, lubricants and safety "
-            "equipment from NAWA Global. Enquire on WhatsApp or email."
-        ),
+        page_title=title,
+        page_description=description,
+        meta_robots=robots,
         canonical_url=_canonical_url(
             "/catalog",
             q=result.query or None,
@@ -216,12 +220,8 @@ def product_detail(
     return _render_page(
         request,
         "product_detail.html",
-        page_title=f"{product.name} — NAWA Global",
-        page_description=(
-            product.description[:150]
-            if product.description
-            else f"View specifications and inquiry options for {product.name} from NAWA Global."
-        ),
+        page_title=seo.product_title(product),
+        page_description=seo.product_description(product),
         page_keywords=", ".join(
             item
             for item in (product.name, product.category, product.tags, "NAWA Global")
@@ -246,27 +246,13 @@ def product_detail(
                 "Please send the product details, quotation, and lead time.\n"
             ),
         ),
-        structured_data=[
-            {
-                "@context": "https://schema.org",
-                "@type": "BreadcrumbList",
-                "itemListElement": [
-                    {"@type": "ListItem", "position": 1, "name": "Home", "item": _canonical_url("/")},
-                    {"@type": "ListItem", "position": 2, "name": "Products", "item": _canonical_url("/catalog")},
-                    {"@type": "ListItem", "position": 3, "name": product.name, "item": canonical},
-                ],
-            },
-            {
-                "@context": "https://schema.org",
-                "@type": "Product",
-                "name": product.name,
-                "description": product.description or product.name,
-                "category": product.category,
-                "keywords": product.tags,
-                "image": image_urls,
-                "url": canonical,
-            },
-        ],
+        structured_data=seo.product_structured_data(
+            product,
+            canonical=canonical,
+            image_urls=image_urls,
+            home_url=_canonical_url("/"),
+            catalog_url=_canonical_url("/catalog"),
+        ),
     )
 
 
@@ -276,6 +262,7 @@ def robots_txt() -> PlainTextResponse:
         "\n".join([
             "User-agent: *",
             "Allow: /",
+            "Disallow: /api/",
             f"Sitemap: {_canonical_url('/sitemap.xml')}",
         ]),
         media_type="text/plain; charset=utf-8",
@@ -286,18 +273,47 @@ def robots_txt() -> PlainTextResponse:
 def sitemap(
     product_service: ProductService = Depends(get_product_service),
 ) -> Response:
-    urls = [
-        _canonical_url(path)
-        for path in ("/", "/catalog", "/about", "/contact")
-    ]
-    urls.extend(
-        _canonical_url(f"/product/{product_id}")
-        for product_id in product_service.list_product_ids()
+    """Pages, one listing page per category that has products, and every product with its photos."""
+    products = product_service.sitemap_entries()
+    categories = sorted({entry["category"] for entry in products if entry["category"]}, key=str.casefold)
+    entries = [f"<url><loc>{escape(_canonical_url(path))}</loc></url>" for path in ("/", "/catalog", "/about", "/contact")]
+    entries.extend(
+        f"<url><loc>{escape(_canonical_url('/catalog', cat=[category]))}</loc></url>"
+        for category in categories
     )
-    entries = "\n".join(f"<url><loc>{escape(url)}</loc></url>" for url in urls)
+    for entry in products:
+        photos = "".join(
+            f"<image:image><image:loc>{escape(f'{settings.site_url}/uploads/{image}')}</image:loc></image:image>"
+            for image in entry["images"][:10]
+        )
+        entries.append(
+            f"<url><loc>{escape(_canonical_url('/product/' + entry['id']))}</loc>{photos}</url>"
+        )
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-        f"{entries}</urlset>"
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+        'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
+        f'{"".join(entries)}</urlset>'
     )
     return Response(content=xml, media_type="application/xml")
+
+
+@router.api_route("/media/{width}/{filename}", methods=["GET", "HEAD"], include_in_schema=False)
+async def product_image(
+    width: str,
+    filename: str,
+    product_service: ProductService = Depends(get_product_service),
+) -> Response:
+    """Smaller WebP copy of a product photo (320, 640 or 960 px wide), made on first request."""
+    path = (
+        await run_in_threadpool(product_service.image_service.derived_path, filename, int(width))
+        if width.isdecimal()
+        else None
+    )
+    if path is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found.")
+    return FileResponse(
+        path,
+        media_type="image/webp",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )

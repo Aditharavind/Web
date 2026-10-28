@@ -2,7 +2,7 @@
 <footer class="footer">
   <div class="shell footer-layout">
     <div class="footer-identity">
-      <a href="/" class="footer-mark" aria-label="NAWA Global home"><img src="{{ url_for('static', path='nawa-symbol.png') }}" alt="" width="192" height="192" loading="lazy">NAWA GLOBAL</a>
+      <a href="/" class="footer-mark" aria-label="NAWA Global home"><img src="{{ url_for('static', path='nawa-symbol-96.webp') }}?v={{ static_asset_version }}" alt="" width="96" height="96" loading="lazy">NAWA GLOBAL</a>
       <p class="footer-company">{{ settings.company_name }}</p>
       <p>Oilfield and industrial supply from Abu Dhabi.</p>
       <div class="footer-location">{{ icon('pin', 18) }} {{ settings.contact_address }}</div>

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import re
 import warnings
 from io import BytesIO
 from pathlib import Path
@@ -15,6 +17,9 @@ from app.core.exceptions import ValidationError
 class ImageService:
     allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
     max_input_pixels = 20_000_000
+    # Widths for the smaller WebP copies served to browsers (see derived_path).
+    derived_widths = (160, 320, 480, 720, 960)
+    _stored_name = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,200}\.jpg$")
 
     def __init__(
         self,
@@ -105,3 +110,33 @@ class ImageService:
         path = self.upload_dir / filename
         if path.is_file() or path.is_symlink():
             path.unlink(missing_ok=True)
+        for width in self.derived_widths:
+            (self.upload_dir / f"_w{width}" / f"{Path(filename).stem}.webp").unlink(missing_ok=True)
+
+    def derived_path(self, filename: str, width: int) -> Path | None:
+        """Smaller WebP copy of a stored image, created on first request and then reused.
+
+        Returns None for unknown widths, names that are not stored images, or missing files,
+        so nothing outside the upload folder can ever be read or written.
+        """
+        if width not in self.derived_widths or not self._stored_name.fullmatch(filename or ""):
+            return None
+        source = self.upload_dir / filename
+        if not source.is_file() or source.is_symlink():
+            return None
+        target = self.upload_dir / f"_w{width}" / f"{source.stem}.webp"
+        if target.is_file():
+            return target
+        target.parent.mkdir(exist_ok=True)
+        temporary = target.with_name(f"{target.stem}.{os.getpid()}.tmp")
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", Image.DecompressionBombWarning)
+                with Image.open(source) as image:
+                    image.thumbnail((width, width))
+                    image.convert("RGB").save(temporary, format="WEBP", quality=76, method=6)
+            os.replace(temporary, target)
+        except (OSError, SyntaxError, UnidentifiedImageError, Image.DecompressionBombError, Image.DecompressionBombWarning):
+            temporary.unlink(missing_ok=True)
+            return None
+        return target

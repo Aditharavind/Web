@@ -9,7 +9,7 @@
     <div class="page-head">
       <div>
         <h1 class="page-title">Products</h1>
-        <div class="page-subtitle">{{ product_rows|length }} product{% if product_rows|length != 1 %}s{% endif %} in the catalogue</div>
+        <div class="page-subtitle">{{ product_rows|length }} product{% if product_rows|length != 1 %}s{% endif %} in the catalogue{% set short_count = product_rows|selectattr('short')|list|length %}{% if short_count %} · {{ short_count }} with a very short description (Google shows more of the page when it has real detail){% endif %}</div>
       </div>
       <div class="page-head-actions">
         <button class="btn" type="button" data-modal-open="#import-modal">{{ icon('box', 18) }} Import from Excel</button>
@@ -46,7 +46,7 @@
               <div class="admin-thumb admin-thumb-empty">{{ icon('image', 20) }}</div>
               {% endif %}
             </td>
-            <td><strong class="table-strong">{{ product.name }}</strong><div class="muted-cell ellipsis-cell">{{ product.description[:80] }}</div></td>
+            <td><strong class="table-strong">{{ product.name }}</strong><div class="muted-cell ellipsis-cell">{{ product.description[:80] }}</div>{% if row.short %}<span class="tag gold">Add a fuller description</span>{% endif %}</td>
             <td><span class="tag green">{{ product.category or "—" }}</span></td>
             <td>{% if product.featured %}<span class="tag gold">{{ icon('star', 14) }} Featured</span>{% else %}<span class="muted-cell">—</span>{% endif %}</td>
             <td class="media-cell">{{ images|length }}</td>

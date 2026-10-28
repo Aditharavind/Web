@@ -55,7 +55,7 @@ async def test_product_metadata_and_sitemap_use_configured_urls(monkeypatch):
     assert record["url"] == f"https://nawaglobalgtd.com/product/{product.id}"
     root = ElementTree.fromstring(sitemap.text)
     urls = [node.text for node in root.findall("{*}url/{*}loc")]
-    assert len(urls) == 5
+    assert len(urls) == 6
     assert record["url"] in urls
     assert all(url.startswith("https://nawaglobalgtd.com/") for url in urls)
     assert missing.status_code == 404

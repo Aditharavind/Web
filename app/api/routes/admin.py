@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import ValidationError as PydanticValidationError
 from starlette.concurrency import run_in_threadpool
 
+from app.core import seo
 from app.core.config import get_settings
 from app.core.exceptions import (
     AuthenticationError,
@@ -90,7 +91,11 @@ def _product_rows(
     rows: list[dict[str, object]] = []
     for product in products:
         rows.append(
-            {"product": product, "images": product_service.get_product_images(product)}
+            {
+                "product": product,
+                "images": product_service.get_product_images(product),
+                "short": seo.has_short_description(product),
+            }
         )
     return rows
 

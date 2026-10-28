@@ -26,7 +26,7 @@ from app.core.security import (
     generate_nonce,
     get_or_create_csrf_token,
 )
-from app.core.templates import template_context, templates
+from app.core.templates import STATIC_ASSET_VERSION, template_context, templates
 from app.database import models  # noqa: F401
 from app.database.db import engine, ensure_database_schema
 
@@ -36,11 +36,29 @@ logger = logging.getLogger(__name__)
 settings.uploads_dir.mkdir(parents=True, exist_ok=True)
 
 
+ONE_YEAR = "public, max-age=31536000, immutable"
+
+
 class CustomStaticFiles(StaticFiles):
+    """Static files with cache lifetimes that can never serve a stale file.
+
+    Files requested with a ?v=<build> parameter, and the fonts, change URL whenever they
+    change, so browsers may keep them for a year. Uploaded images get a new random name
+    for every upload (`immutable=True`). Anything else is re-checked daily, and unversioned
+    CSS/JS is re-checked on every use.
+    """
+
+    def __init__(self, *args, immutable: bool = False, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.immutable = immutable
+
     async def get_response(self, path: str, scope) -> Response:
         response = await super().get_response(path, scope)
         if response.status_code == 200:
-            if path.startswith("css/") or path.startswith("js/"):
+            versioned = b"v=" in scope.get("query_string", b"")
+            if self.immutable or path.startswith("fonts/") or versioned:
+                response.headers["Cache-Control"] = ONE_YEAR
+            elif path.startswith(("css/", "js/")):
                 response.headers["Cache-Control"] = "public, max-age=0, must-revalidate"
             else:
                 response.headers["Cache-Control"] = "public, max-age=86400"
@@ -80,8 +98,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Cache-Control"] = "no-cache"
 
         if is_html and not is_asset:
+            # Must name the exact versioned file the page uses, or the browser fetches it twice.
+            stylesheet = "app" if is_admin else "site"
             response.headers.setdefault(
-                "Link", "</static/css/app.css>; rel=preload; as=style"
+                "Link",
+                f"</static/css/{stylesheet}.css?v={STATIC_ASSET_VERSION}>; rel=preload; as=style",
             )
             csrf_token = get_or_create_csrf_token(request, settings)
             if request.cookies.get(CSRF_COOKIE_NAME) != csrf_token:
@@ -163,7 +184,11 @@ except Exception:
 app.add_middleware(AccessLogMiddleware)
 
 app.mount("/static", CustomStaticFiles(directory=str(settings.static_dir)), name="static")
-app.mount("/uploads", CustomStaticFiles(directory=str(settings.uploads_dir)), name="uploads")
+app.mount(
+    "/uploads",
+    CustomStaticFiles(directory=str(settings.uploads_dir), immutable=True),
+    name="uploads",
+)
 
 app.include_router(public_router)
 app.include_router(admin_router)

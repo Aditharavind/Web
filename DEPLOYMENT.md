@@ -109,7 +109,13 @@ logout, invalid credentials, image add/edit/delete, CSRF rejection, rate limitin
 HTTPS redirects, secure cookies and `/health` using the configured Host header.
 Visitor timestamps and aggregates use UTC. IPs are addresses, not identified people.
 
-Back up PostgreSQL and uploads together to restricted storage outside the instance.
+Back up PostgreSQL and uploads together to restricted storage outside the instance. The
+`uploads/_w*` folders only hold regenerable smaller WebP copies, so a backup can skip them
+(`tar --exclude='uploads/_w*'`).
+
+Browsers keep versioned CSS/JS, fonts and uploaded photos for a year (`immutable`). Do not add
+an Nginx `expires` rule or any `proxy_cache` for `/static` or `/uploads` that overrides the
+application's `Cache-Control` headers.
 Define retention and test a restore. Keep the previous release available; database
 rollback requires a reviewed migration/restore plan. Use journald for logs and optionally
 Sentry. Monitor disk usage and database growth, and choose visitor-data retention before

@@ -48,7 +48,7 @@
         </p>
         {% if catalog.items %}
           <div class="product-grid">
-            {% for card in product_cards %}{% include "partials/product_card.html" %}{% endfor %}
+            {% for card in product_cards %}{% with card_eager = loop.first, card_heading = 'h2' %}{% include "partials/product_card.html" %}{% endwith %}{% endfor %}
           </div>
         {% else %}
           <div class="empty-state">

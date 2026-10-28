@@ -25,18 +25,11 @@
     <meta name="twitter:title" content="{{ page_title }}">
     <meta name="twitter:description" content="{{ page_description }}">
     <meta name="twitter:image" content="{{ share_image }}">
-    <link rel="preload"
-          href="{{ url_for('static', path='fonts/inter-latin-400-normal.woff2') }}"
-          as="font"
-          type="font/woff2"
-          crossorigin>
-    <link rel="preload"
-          href="{{ url_for('static', path='fonts/manrope-latin-700-normal.woff2') }}"
-          as="font"
-          type="font/woff2"
-          crossorigin>
+    {% block styles %}
+    <link rel="preload" href="{{ url_for('static', path='fonts/inter-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', path='css/fonts.css') }}?v={{ static_asset_version }}">
-    {% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}?v={{ static_asset_version }}">{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}?v={{ static_asset_version }}">
+    {% endblock %}
     <script defer src="{{ url_for('static', path='js/ui.js') }}?v={{ static_asset_version }}"></script>
     <script nonce="{{ csp_nonce }}" type="application/ld+json">
     {{ {
@@ -47,8 +40,15 @@
           "name": settings.company_name,
           "url": site_url,
           "logo": site_url ~ '/static/nawa-logo.png',
+          "image": site_url ~ '/static/nawa-logo.png',
           "email": settings.contact_email,
           "telephone": settings.contact_whatsapp,
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "sales",
+            "telephone": settings.contact_whatsapp,
+            "email": settings.contact_email
+          },
           "address": {
             "@type": "PostalAddress",
             "addressLocality": "Mussafah, Abu Dhabi",

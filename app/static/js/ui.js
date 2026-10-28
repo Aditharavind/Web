@@ -1,4 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
+  // matchMedia answers without measuring the page, so toggling the menu never forces a reflow.
+  const narrowScreen = window.matchMedia("(max-width: 900px)");
+
   document.querySelectorAll("[data-nav-toggle]").forEach((button) => {
     const nav = button.closest(".navbar");
     const controlsId = button.getAttribute("aria-controls");
@@ -13,7 +16,7 @@ window.addEventListener("DOMContentLoaded", () => {
       if (controlledNav) {
         controlledNav.setAttribute(
           "aria-hidden",
-          String(!isOpen && window.innerWidth <= 900),
+          String(!isOpen && narrowScreen.matches),
         );
       }
     };
@@ -34,7 +37,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("resize", () => {
-      setOpenState(window.innerWidth <= 900 && nav?.classList.contains("mobile-open"));
+      setOpenState(narrowScreen.matches && nav?.classList.contains("mobile-open"));
     });
   });
 
@@ -123,7 +126,8 @@ window.addEventListener("DOMContentLoaded", () => {
     gallery.querySelectorAll("[data-card-step]").forEach((button) => {
       button.addEventListener("click", () => {
         index = (index + Number(button.dataset.cardStep) + images.length) % images.length;
-        image.src = `/uploads/${images[index]}`;
+        image.removeAttribute("srcset");
+        image.src = `/media/480/${images[index]}`;
         image.alt = `Product image ${index + 1}`;
         counter.textContent = `${index + 1} / ${images.length}`;
       });

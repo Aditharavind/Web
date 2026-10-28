@@ -42,6 +42,22 @@ admin panel styles are in `app/static/css/app.css`. The home page quote builder
 (`static/js/quote.js`) prepares a WhatsApp or email message in the visitor's own
 app. Visitors contact the company by WhatsApp or email only.
 
+## Search visibility and speed
+
+- `app/core/seo.py` builds page titles, meta descriptions and the Product/Breadcrumb structured
+  data from stored product data only. Products are quote-only, so no prices, offers, ratings,
+  reviews or availability are ever published. Google lists the missing `offers` as an optional
+  warning; that is intentional.
+- `/sitemap.xml` lists the pages, one listing page per category that has products, and every
+  product with its photos. Free-text searches and combined filters are `noindex`.
+- Product photos are stored once (1600 px JPEG). `/media/<width>/<file>` serves smaller WebP
+  copies (160, 320, 480, 720, 960 px) created on first request and kept in `uploads/_w<width>/`.
+  They can be deleted at any time and are rebuilt on demand.
+- Files requested with `?v=<build>`, fonts and uploaded photos are cached for a year; the build
+  version changes whenever any static file changes, so nothing stale is served.
+- Admin → Products tags products whose description is very short, because Google shows more of a
+  page that has real detail. Write descriptions from verified facts only.
+
 ## Project structure
 
 | Path | Responsibility |

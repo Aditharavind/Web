@@ -9,6 +9,7 @@ window.addEventListener("DOMContentLoaded", () => {
       images = [];
     }
   }
+  const medium = (src) => src.replace("/uploads/", "/media/720/");
   const lightbox = document.getElementById("lightbox");
   const mainImage = document.getElementById("main-gallery-img");
   const lightboxImage = document.getElementById("lb-img");
@@ -21,7 +22,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const renderMain = () => {
     if (!images.length || !mainImage) return;
-    mainImage.src = images[index];
+    mainImage.removeAttribute("srcset");
+    mainImage.src = medium(images[index]);
     mainImage.alt = `Product image ${index + 1}`;
     document.querySelector("[data-gallery-counter]")?.replaceChildren(
       `${index + 1} / ${images.length}`,

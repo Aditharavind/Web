@@ -1,5 +1,11 @@
 {% extends "public.html" %}
 {% from 'partials/icons.html' import icon %}
+{% block head_extra %}
+  {% if product_images %}
+  {#- The product photo is the largest element on screen, so the browser is told about it up front. -#}
+  <link rel="preload" as="image" imagesrcset="/media/480/{{ product_images[0] }} 480w, /media/720/{{ product_images[0] }} 720w, /media/960/{{ product_images[0] }} 960w" imagesizes="(max-width: 1000px) 92vw, 600px" fetchpriority="high">
+  {% endif %}
+{% endblock %}
 {% block content %}
     <section class="section"><div class="shell">
       <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -12,7 +18,10 @@
         <section class="detail-gallery" aria-label="{{ product.name }} gallery">
           <div class="detail-main-img" data-open-lightbox>
             {% if product_images %}
-              <img src="/uploads/{{ product_images[0] }}"
+              <img src="/media/720/{{ product_images[0] }}"
+                   srcset="/media/480/{{ product_images[0] }} 480w, /media/720/{{ product_images[0] }} 720w, /media/960/{{ product_images[0] }} 960w"
+                   sizes="(max-width: 1000px) 92vw, 600px"
+                   width="720" height="540"
                    alt="{{ product.name }}"
                    id="main-gallery-img"
                    fetchpriority="high"
@@ -29,7 +38,9 @@
           {% if product_images|length > 1 %}
             <div class="detail-thumbs">
               {% for image in product_images %}
-                <img src="/uploads/{{ image }}"
+                <img src="/media/160/{{ image }}"
+                     srcset="/media/160/{{ image }} 160w, /media/320/{{ image }} 320w"
+                     sizes="76px"
                      class="detail-thumb{% if loop.first %} active{% endif %}"
                      alt="Image {{ loop.index }}"
                      data-thumb-index="{{ loop.index0 }}"
@@ -77,7 +88,7 @@
     </div></section>
     <div class="lightbox" id="lightbox">
       <button class="lightbox-close" type="button" data-lightbox-close aria-label="Close image viewer">✕</button>
-      <img class="lightbox-img" id="lb-img" src="" alt="">
+      <img class="lightbox-img" id="lb-img" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">
       <div class="lightbox-controls">
         <button class="lightbox-nav" type="button" data-lightbox-step="-1" aria-label="Previous image">‹</button>
         <span class="lightbox-counter" id="lb-ctr"></span>

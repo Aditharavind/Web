@@ -1,6 +1,6 @@
 {% from 'partials/icons.html' import icon %}
 <nav class="navbar" aria-label="Primary">
-  <a href="/" class="brand" aria-label="NAWA Global home"><img src="{{ url_for('static', path='nawa-logo.png') }}" alt="NAWA Global" width="400" height="208"></a>
+  <a href="/" class="brand" aria-label="NAWA Global home"><img src="{{ url_for('static', path='nawa-logo-208.webp') }}?v={{ static_asset_version }}" alt="NAWA Global" width="208" height="108" fetchpriority="high"></a>
   <div class="nav-links" id="public-nav-links">
     {% for path, label, key in [('/', 'Home', 'home'), ('/catalog', 'Products', 'catalog'), ('/about', 'About', 'about'), ('/contact', 'Contact', 'contact')] %}
     <a href="{{ path }}" class="nav-link{% if active_nav == key %} active{% endif %}"{% if active_nav == key %} aria-current="page"{% endif %}>{{ label }}</a>

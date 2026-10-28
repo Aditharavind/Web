@@ -89,3 +89,42 @@ test('quote list merges repeated items and builds one message for WhatsApp and e
   assert.equal(sanitize({ name: 'Seal', qty: 1e9 }).qty, 99999);
   assert.equal(sanitize('not an item'), null);
 });
+
+test('mobile menu opens and closes without ever measuring the window', () => {
+  const open = new Set();
+  const attributes = {};
+  const nav = {
+    classList: { toggle: (name, on) => (on ? open.add(name) : open.delete(name)), contains: (name) => open.has(name) },
+    querySelectorAll: () => [],
+  };
+  const button = {
+    events: {},
+    closest: () => nav,
+    getAttribute: (name) => (name === 'aria-controls' ? 'menu' : null),
+    setAttribute: (name, value) => { attributes[`button ${name}`] = value; },
+    addEventListener(name, callback) { this.events[name] = callback; },
+  };
+  const menu = { setAttribute: (name, value) => { attributes[`menu ${name}`] = value; } };
+  const keys = {};
+  const events = {};
+  const window = {
+    matchMedia: () => ({ matches: true }),
+    addEventListener: (name, callback) => { events[name] = callback; },
+    get innerWidth() { throw new Error('reading the window size forces a layout'); },
+  };
+  const document = {
+    querySelectorAll: (selector) => (selector === '[data-nav-toggle]' ? [button] : []),
+    getElementById: () => menu,
+    addEventListener: (name, callback) => { keys[name] = callback; },
+  };
+  runInNewContext(source('ui.js'), { window, document });
+  events.DOMContentLoaded();
+  assert.equal(attributes['menu aria-hidden'], 'true');
+  button.events.click();
+  assert.ok(open.has('mobile-open'));
+  assert.equal(attributes['button aria-expanded'], 'true');
+  assert.equal(attributes['menu aria-hidden'], 'false');
+  keys.keydown({ key: 'Escape' });
+  assert.ok(!open.has('mobile-open'));
+  events.resize();
+});

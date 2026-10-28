@@ -1,13 +1,17 @@
 {% from 'partials/icons.html' import icon %}
 {% set product = card.product %}
+{% set card_heading = card_heading | default('h3') %}
 {% set images = card.images %}
 <article class="product-card">
   <div class="card-media" data-card-gallery>
     {% if images %}
     <a class="card-media-link" href="/product/{{ product.id }}" aria-label="View {{ product.name }} details">
-      <img src="/uploads/{{ images[0] }}"
+      <img src="/media/480/{{ images[0] }}"
+           srcset="/media/320/{{ images[0] }} 320w, /media/480/{{ images[0] }} 480w, /media/720/{{ images[0] }} 720w"
+           sizes="(max-width: 640px) 92vw, (max-width: 1000px) 46vw, 400px"
+           width="480" height="360"
            alt="{{ product.name }}"
-           loading="lazy"
+           {% if card_eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
            decoding="async"
            data-card-image
            data-images='{{ images | tojson }}'>
@@ -24,7 +28,7 @@
   </div>
   <div class="card-body">
     <span class="card-category">{{ product.category or 'General' }}</span>
-    <h3 class="card-title"><a href="/product/{{ product.id }}">{{ product.name }}</a></h3>
+    <{{ card_heading }} class="card-title"><a href="/product/{{ product.id }}">{{ product.name }}</a></{{ card_heading }}>
     <p class="card-desc">{{ product.description or 'Contact our team for details and availability.' }}</p>
     <div class="card-footer">
       <button type="button" class="action primary compact" data-quote-add data-name="{{ product.name }}" hidden>{{ icon('plus', 18) }} Add to quote</button>

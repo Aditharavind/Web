@@ -171,14 +171,25 @@ class ProductService:
         finally:
             db.close()
 
-    def list_product_ids(self) -> list[str]:
+    def sitemap_entries(self) -> list[dict[str, object]]:
+        """Id, category and photo file names of every product, for the XML sitemap."""
         try:
             with SessionLocal() as db:
-                return [
-                    row[0] for row in db.query(Product.id).order_by(Product.id).all()
-                ]
+                rows = (
+                    db.query(Product.id, Product.category, Product.image, Product.images)
+                    .order_by(Product.id)
+                    .all()
+                )
         except SQLAlchemyError as exc:
             raise DataAccessError("Unable to load product links right now.") from exc
+        return [
+            {
+                "id": product_id,
+                "category": (category or "").strip(),
+                "images": self._split_images(images) or ([image] if image else []),
+            }
+            for product_id, category, image, images in rows
+        ]
 
     def get_product(self, product_id: str) -> ProductSchema:
         db = SessionLocal()
