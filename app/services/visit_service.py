@@ -14,7 +14,13 @@ from app.models.schemas import Visit
 logger = logging.getLogger(__name__)
 
 
+RETENTION_DAYS = 400  # IP addresses are personal data: keep them a little over the 365-day report window
+_PRUNE_EVERY = timedelta(hours=24)
+
+
 class VisitService:
+    _last_prune: datetime | None = None
+
     def log_visit(self, ip_address: str) -> None:
         with SessionLocal() as db:
             try:
@@ -23,6 +29,24 @@ class VisitService:
             except SQLAlchemyError:
                 db.rollback()
                 logger.exception("Failed to record visit.")
+                return
+            self._prune_old_visits(db)
+
+    @classmethod
+    def _prune_old_visits(cls, db) -> None:
+        """Delete visits past the retention period, at most once a day per worker."""
+        now = datetime.now(UTC).replace(tzinfo=None)
+        if cls._last_prune is not None and now - cls._last_prune < _PRUNE_EVERY:
+            return
+        cls._last_prune = now
+        try:
+            db.query(VisitRecord).filter(
+                VisitRecord.visited_at < now - timedelta(days=RETENTION_DAYS)
+            ).delete(synchronize_session=False)
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            logger.exception("Failed to prune old visits.")
 
     def recent_visits(self, limit: int = 50) -> list[Visit]:
         with SessionLocal() as db:

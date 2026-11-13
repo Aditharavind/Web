@@ -113,13 +113,16 @@ Back up PostgreSQL and uploads together to restricted storage outside the instan
 `uploads/_w*` folders only hold regenerable smaller WebP copies, so a backup can skip them
 (`tar --exclude='uploads/_w*'`).
 
+Hide the web server version with `server_tokens off;` in the `http {}` block of `/etc/nginx/nginx.conf`
+(then `sudo nginx -t && sudo systemctl reload nginx`).
+
 Browsers keep versioned CSS/JS, fonts and uploaded photos for a year (`immutable`). Do not add
 an Nginx `expires` rule or any `proxy_cache` for `/static` or `/uploads` that overrides the
 application's `Cache-Control` headers.
 Define retention and test a restore. Keep the previous release available; database
 rollback requires a reviewed migration/restore plan. Use journald for logs and optionally
-Sentry. Monitor disk usage and database growth, and choose visitor-data retention before
-traffic grows. Admin sessions are stored as token hashes in `admin_sessions`;
+Sentry. Monitor disk usage and database growth, and note that visits (which hold IP addresses) are
+deleted automatically after 400 days (`RETENTION_DAYS` in `visit_service.py`). Admin sessions are stored as token hashes in `admin_sessions`;
 logout removes the session record and clears the browser cookie. Other sessions
 remain active. Password-hash or SECRET_KEY rotation invalidates existing cookies.
 Expired session records are pruned on successful login.

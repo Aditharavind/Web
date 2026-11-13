@@ -81,3 +81,31 @@ async def test_visit_recording_is_attached_to_response():
     assert response.background is not None
     await response.background()
     service.log_visit.assert_called_once_with("127.0.0.1")
+
+
+def test_visits_older_than_the_retention_period_are_deleted_once_a_day():
+    from datetime import UTC, datetime, timedelta
+
+    from app.database.db import SessionLocal
+    from app.database.models import Visit as VisitRecord
+    from app.services import visit_service as module
+
+    now = datetime.now(UTC).replace(tzinfo=None)
+    with SessionLocal() as db:
+        db.add_all([
+            VisitRecord(ip="old", visited_at=now - timedelta(days=module.RETENTION_DAYS + 5)),
+            VisitRecord(ip="recent", visited_at=now - timedelta(days=30)),
+        ])
+        db.commit()
+    module.VisitService._last_prune = None
+    module.VisitService().log_visit("9.9.9.9")
+    with SessionLocal() as db:
+        remaining = {row.ip for row in db.query(VisitRecord).all()}
+    assert "old" not in remaining and {"recent", "9.9.9.9"} <= remaining
+    # a second visit the same day does not prune again
+    with SessionLocal() as db:
+        db.add(VisitRecord(ip="old2", visited_at=now - timedelta(days=module.RETENTION_DAYS + 5)))
+        db.commit()
+    module.VisitService().log_visit("8.8.8.8")
+    with SessionLocal() as db:
+        assert db.query(VisitRecord).filter(VisitRecord.ip == "old2").count() == 1
