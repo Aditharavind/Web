@@ -435,3 +435,23 @@ def test_lightbox_placeholder_is_a_valid_image_and_filter_panel_can_flip_inside_
         assert placeholder.size == (1, 1)
     css = Path("app/static/css/site.css").read_text()
     assert ".filter-panel.align-end { left: auto; right: 0; }" in css
+
+
+def test_products_sharing_one_stored_description_still_get_distinct_snippets():
+    shared = "Made in Germany since 1948, these surface tools are produced to a consistent quality standard."
+    first = seo.product_description(make_product(name="Lessmann Wire Brush", description=shared))
+    second = seo.product_description(make_product(name="Lessmann Steel Scraper", description=shared))
+    assert first != second
+    assert first.startswith("Lessmann Wire Brush: ") and len(first) <= 158
+    # a description that already starts with the name is left as written
+    named = seo.product_description(make_product(name="Wire Brush", description="Wire Brush with a hardened steel handle for heavy industrial cleaning work."))
+    assert named.startswith("Wire Brush with")
+
+
+@pytest.mark.asyncio
+async def test_every_static_page_description_fits_a_search_snippet():
+    async with client() as http:
+        for path in ("/", "/about", "/contact", "/catalog"):
+            page = await http.get(path)
+            description = re.search(r'name="description" content="([^"]*)"', page.text).group(1)
+            assert 60 <= len(description) <= 160, (path, len(description))

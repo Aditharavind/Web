@@ -43,6 +43,10 @@ def product_description(product: Product) -> str:
     """Meta description: the real description when it is substantial, otherwise real facts."""
     text = " ".join(product.description.split())
     if len(text) >= SHORT_DESCRIPTION_LENGTH:
+        name = " ".join(product.name.split())
+        # Several products can share one stored description; the name keeps each snippet distinct.
+        if name.casefold() not in text[: len(name) + 40].casefold():
+            text = f"{name}: {text}"
         return truncate(text, _META_LIMIT)
     sentences = [text.rstrip(".") if text else product.name]
     if product.category and product.category.lower() not in sentences[0].lower():

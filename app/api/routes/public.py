@@ -94,8 +94,7 @@ def home(
         page_title="NAWA Global | Oilfield & Industrial Supplies in Abu Dhabi, UAE",
         page_description=(
             "Oilfield equipment, valves, MRO supplies, lubricants and industrial safety "
-            "products from NAWA Global, a general trading company in Mussafah, Abu Dhabi. "
-            "Request a quote on WhatsApp or email."
+            "products from NAWA Global, Mussafah, Abu Dhabi. Request a quote on WhatsApp."
         ),
         canonical_url=_canonical_url("/"),
         active_nav="home",
