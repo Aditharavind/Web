@@ -85,6 +85,15 @@
             {% endif %}
           </nav>
         {% endif %}
+        {% if categories and not catalog.query and not selected %}
+          {#- Plain links, so search engines can reach every category listing (the filters above are form controls). -#}
+          <nav class="category-links" aria-label="Browse by category">
+            <h2>Browse by category</h2>
+            <ul>
+              {% for category in categories %}<li><a href="/catalog?{{ build_query_string({'cat': [category]}) }}">{{ category }}</a></li>{% endfor %}
+            </ul>
+          </nav>
+        {% endif %}
       </div>
     </section>
     {% include "partials/quote_cta.html" %}

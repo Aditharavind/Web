@@ -107,8 +107,24 @@ async def test_organization_schema_only_contains_verified_details():
     assert organization["contactPoint"]["email"] == settings.contact_email
     assert organization["contactPoint"]["telephone"] == settings.contact_whatsapp
     # The street and postal code are not known, so they must not be made up.
-    assert set(organization["address"]) == {"@type", "addressLocality", "addressCountry"}
+    assert set(organization["address"]) == {"@type", "addressLocality", "addressRegion", "addressCountry"}
+    assert organization["areaServed"] == {"@type": "Country", "name": "United Arab Emirates"}
+    assert 'content="en_AE"' in home.text and 'name="geo.region" content="AE-AZ"' in home.text
     assert "postalCode" not in json.dumps(organization) and "streetAddress" not in json.dumps(organization)
+
+
+@pytest.mark.asyncio
+async def test_catalogue_links_every_category_as_a_plain_crawlable_link():
+    service = get_product_service()
+    for name, category in (("Gate valve", "Valves"), ("Hard hat", "Safety & PPE")):
+        await service.create_product(ProductCreate(name=name, category=category), [photo()])
+    async with client() as http:
+        page = await http.get("/catalog")
+        filtered = await http.get("/catalog?cat=Valves")
+        searched = await http.get("/catalog?q=valve")
+    assert 'href="/catalog?cat=Valves"' in page.text
+    assert 'href="/catalog?cat=Safety+%26+PPE"' in page.text or "cat=Safety%20%26%20PPE" in page.text
+    assert "Browse by category" not in filtered.text and "Browse by category" not in searched.text
 
 
 # --- Titles and descriptions -----------------------------------------------------------

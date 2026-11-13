@@ -14,6 +14,9 @@
     {% if canonical_url %}
       <link rel="canonical" href="{{ canonical_url }}">
     {% endif %}
+    <meta property="og:locale" content="en_AE">
+    <meta name="geo.region" content="AE-AZ">
+    <meta name="geo.placename" content="Mussafah, Abu Dhabi">
     <meta property="og:site_name" content="NAWA Global General Trading">
     <meta property="og:title" content="{{ page_title }}">
     <meta property="og:description" content="{{ page_description }}">
@@ -52,8 +55,10 @@
           "address": {
             "@type": "PostalAddress",
             "addressLocality": "Mussafah, Abu Dhabi",
+            "addressRegion": "Abu Dhabi",
             "addressCountry": "AE"
-          }
+          },
+          "areaServed": {"@type": "Country", "name": "United Arab Emirates"}
         },
         {
           "@type": schema_type or "WebSite",
