@@ -640,6 +640,8 @@ a.page-btn:hover { border-color: var(--ink); }
 .specs-box td { padding: 12px 20px; border-top: 1px solid var(--line); vertical-align: top; font-size: 15px; }
 .specs-box tr:first-child td { border-top: 0; }
 .specs-box td:first-child { width: 40%; color: var(--muted); font-weight: 500; }
+.detail-terms { margin-top: 16px; color: var(--muted); font-size: 14.5px; overflow-wrap: anywhere; }
+.detail-terms strong { color: var(--ink); font-weight: 600; }
 .detail-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .detail-contact { margin-top: 20px; color: var(--muted); }
 .detail-contact a { font-weight: 600; color: var(--green-text); }

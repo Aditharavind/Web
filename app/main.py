@@ -4,7 +4,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -167,6 +167,18 @@ app = FastAPI(
     redoc_url=None if settings.is_production else "/redoc",
     openapi_url=None if settings.is_production else "/openapi.json",
 )
+
+@app.middleware("http")
+async def single_address_per_page(request: Request, call_next):
+    """/catalog/ and /catalog are one page: send the slash version to the clean URL permanently."""
+    path = request.url.path
+    if request.method in {"GET", "HEAD"} and len(path) > 1 and path.endswith("/"):
+        clean = "/" + path.strip("/")  # a leading "//" would otherwise become an off-site redirect
+        if clean != "/":
+            query = request.url.query
+            return RedirectResponse(f"{clean}?{query}" if query else clean, status_code=301)
+    return await call_next(request)
+
 
 # Starlette runs user middleware in reverse registration order. Preserve:
 # access log -> HTTPS (production) -> trusted host -> gzip -> security headers.

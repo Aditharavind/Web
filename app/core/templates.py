@@ -59,8 +59,10 @@ def template_context(request: Request | None = None, **extra: object) -> dict[st
             "components, MRO essentials, lubricants, safety products and sourcing coordination."
         ),
         "page_keywords": (
-            "oilfield equipment supplier, industrial supply UAE, PPE supplier Abu Dhabi, "
-            "lubricants supplier, NAWA Global"
+            "oilfield equipment supplier UAE, industrial supplies Abu Dhabi, MRO supplies UAE, "
+            "general trading company Mussafah, valves and fittings, lubricants supplier, "
+            "industrial safety products, PPE supplier Abu Dhabi, tools and measuring instruments, "
+            "request a quote, NAWA Global"
         ),
         "canonical_url": None,
         "page_image": None,

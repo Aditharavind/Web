@@ -387,3 +387,37 @@ async def test_catalogue_loads_the_first_photo_eagerly_and_uses_a_valid_heading_
     assert "<h1>" in catalogue and "<h2 class=\"card-title\">" in catalogue and "<h3 class=\"card-title\">" not in catalogue
     # On the home page the cards sit under section headings, so they stay h3 and load lazily.
     assert "<h3 class=\"card-title\">" in home and "<h2 class=\"card-title\">" not in home
+
+
+@pytest.mark.asyncio
+async def test_url_variants_redirect_permanently_to_the_one_clean_address():
+    async with client() as http:
+        for source, target in (
+            ("/catalog/", "/catalog"),
+            ("/about/", "/about"),
+            ("/catalog/?cat=Valves&page=2", "/catalog?cat=Valves&page=2"),
+            ("/products", "/catalog"),
+            ("/index.html", "/"),
+            ("/services", "/#supply"),
+        ):
+            response = await http.get(source)
+            assert response.status_code == 301, source
+            assert response.headers["location"] == target
+        # never an off-site redirect, and writes are not redirected
+        hostile = await http.get("//evil.example/")
+        assert hostile.headers.get("location", "").startswith("//") is False
+        assert (await http.post("/catalog/")).status_code != 301
+        assert (await http.get("/nothing-here")).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_related_terms_are_visible_on_the_product_page():
+    product = await get_product_service().create_product(
+        ProductCreate(name="Ball valve", category="Valves", tags="BV-200, two piece valve"), [photo()]
+    )
+    async with client() as http:
+        page = await http.get(f"/product/{product.id}")
+        bare = await get_product_service().create_product(ProductCreate(name="Plain", category="Valves"), [photo()])
+        none = await http.get(f"/product/{bare.id}")
+    assert "Related terms:" in page.text and "BV-200, two piece valve" in page.text
+    assert "Related terms" not in none.text

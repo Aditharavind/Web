@@ -127,6 +127,16 @@ def services_page() -> RedirectResponse:
     return RedirectResponse("/#supply", status_code=301)
 
 
+@router.api_route("/products", methods=["GET", "HEAD"], include_in_schema=False)
+def products_alias() -> RedirectResponse:
+    return RedirectResponse("/catalog", status_code=301)
+
+
+@router.api_route("/index.html", methods=["GET", "HEAD"], include_in_schema=False)
+def index_alias() -> RedirectResponse:
+    return RedirectResponse("/", status_code=301)
+
+
 @router.api_route("/contact", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def contact(
     request: Request,
