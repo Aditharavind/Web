@@ -13,7 +13,13 @@ Use Python 3.11 or 3.12. Provide the variables in `.env.example` through a prote
 process environment or a root-owned systemd EnvironmentFile. Do not commit secrets.
 `ENVIRONMENT=production` is canonical; `APP_ENV` is accepted only as a legacy alias.
 Set SITE_URL and TRUSTED_HOSTS to the real domain, SECURE_COOKIES=1, a unique random
-SECRET_KEY, a nondefault ADMIN_USERNAME and a bcrypt ADMIN_PASSWORD_HASH.
+SECRET_KEY, a nondefault ADMIN_USERNAME, a bcrypt ADMIN_PASSWORD_HASH and a private ADMIN_ROUTE.
+
+The admin address is not a secret by itself, but the default is published with the code, so production
+refuses to start without a private one: a single path segment of 10-64 letters, digits, `-` or `_`.
+Create one with `python3 -c "import secrets; print('/ops-' + secrets.token_hex(6))"` and put the same
+`ADMIN_ROUTE=/ops-xxxxxxxxxxxx` line in `/etc/nawa.env` **and** `/etc/nawa.owner.env` (Alembic loads the
+same settings). Set it *before* deploying a version that enforces this, then bookmark the new login URL.
 
 Generate a secret and password hash locally without putting the password in shell history:
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -60,6 +61,30 @@ def _normalize_admin_route(value: str) -> str:
     if not route.startswith("/"):
         route = f"/{route}"
     return route.rstrip("/") or "/admin"
+
+
+_GUESSABLE_ADMIN_ROUTES = {
+    "/admin", "/admin12", "/administrator", "/admin-login", "/login", "/dashboard", "/panel",
+    "/manage", "/backend", "/wp-admin", "/cpanel", "/console", "/staff",
+}
+_RESERVED_ROUTES = {
+    "/catalog", "/about", "/contact", "/product", "/services", "/static", "/uploads", "/media",
+    "/api", "/health", "/robots.txt", "/sitemap.xml",
+}
+_PRIVATE_ADMIN_ROUTE = re.compile(r"^/[A-Za-z0-9][A-Za-z0-9_-]{9,63}$")
+
+
+def _check_private_admin_route(route: str) -> None:
+    """The default path is published with the code, so production must use its own."""
+    if (
+        route.lower() in _GUESSABLE_ADMIN_ROUTES
+        or route.lower() in _RESERVED_ROUTES
+        or not _PRIVATE_ADMIN_ROUTE.fullmatch(route)
+    ):
+        raise ValueError(
+            "ADMIN_ROUTE must be a private, hard-to-guess path in production: one segment of "
+            "10-64 letters, digits, '-' or '_' (for example /ops-7k3q9x2m), not a common name."
+        )
 
 
 def _parse_csv(value: str | None, default: list[str]) -> list[str]:
@@ -129,6 +154,7 @@ def get_settings() -> Settings:
         admin_password_hash = pwd_context.hash(admin_password_plain)
     secret_key = os.getenv("SECRET_KEY", "").strip()
     database_url = os.getenv("DATABASE_URL", "").strip()
+    admin_route = _normalize_admin_route(os.getenv("ADMIN_ROUTE", "/admin12"))
 
     if is_production:
         required = {
@@ -158,6 +184,7 @@ def get_settings() -> Settings:
             ) from exc
         if default_password:
             raise ValueError("Default admin password is forbidden in production.")
+        _check_private_admin_route(admin_route)
 
     secret_key = secret_key or "dev-secret-key-change-me"
     database_url = database_url or f"sqlite:///{DEFAULT_SQLITE_PATH}"
@@ -183,7 +210,7 @@ def get_settings() -> Settings:
         admin_username=admin_username,
         admin_password_hash=admin_password_hash,
         secret_key=secret_key,
-        admin_route=_normalize_admin_route(os.getenv("ADMIN_ROUTE", "/admin12")),
+        admin_route=admin_route,
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         trusted_hosts=trusted_hosts,
         database_url=database_url,

@@ -17,6 +17,7 @@ def test_production_https_hosts_headers_and_cookies(tmp_path):
         UPLOAD_DIR=str(tmp_path / "uploads"),
         SECRET_KEY=secrets.token_urlsafe(48),
         ADMIN_USERNAME="test-owner",
+        ADMIN_ROUTE="/ops-7k3q9x2m",
         ADMIN_PASSWORD_HASH=pwd_context.hash("production-check-password"),
         SECURE_COOKIES="1",
         TRUSTED_HOSTS="nawaglobalgtd.com",
@@ -43,13 +44,14 @@ async def check():
         assert response.status_code == 307
         assert response.headers["location"] == "https://nawaglobalgtd.com/health"
     async with AsyncClient(transport=ASGITransport(app=app), base_url="https://nawaglobalgtd.com") as client:
-        response = await client.get("/admin12/login")
+        response = await client.get("/ops-7k3q9x2m/login")
         assert response.status_code == 200
         assert response.headers["cache-control"] == "no-store"
         assert response.headers["strict-transport-security"].startswith("max-age=")
         assert "upgrade-insecure-requests" in response.headers["content-security-policy"]
         cookie = response.headers["set-cookie"].lower()
         assert "secure" in cookie and "httponly" in cookie and "samesite=strict" in cookie
+        assert (await client.get("/admin12/login")).status_code == 404  # the published default is gone
         assert (await client.get("/docs")).status_code == 404
         assert (await client.get("/health", headers={"host": "untrusted.invalid"})).status_code == 400
 asyncio.run(check())

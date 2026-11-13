@@ -59,6 +59,7 @@ def test_production_host_defaults_and_wildcard(monkeypatch):
         "ADMIN_PASSWORD_HASH", pwd_context.hash("test-only-strong-password")
     )
     monkeypatch.setenv("SECURE_COOKIES", "1")
+    monkeypatch.setenv("ADMIN_ROUTE", "/ops-7k3q9x2m")
     monkeypatch.delenv("TRUSTED_HOSTS", raising=False)
     get_settings.cache_clear()
     try:
@@ -72,5 +73,40 @@ def test_production_host_defaults_and_wildcard(monkeypatch):
         get_settings.cache_clear()
         with pytest.raises(ValueError, match="valid bcrypt hash"):
             get_settings()
+    finally:
+        get_settings.cache_clear()
+
+
+@pytest.mark.parametrize(
+    "route",
+    [None, "/admin12", "/admin", "/Admin12/", "/login", "/short", "/two/segments", "/has space-12345", "/catalog", "/api"],
+)
+def test_production_refuses_a_guessable_admin_route(monkeypatch, route):
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("SITE_URL", "https://nawaglobalgtd.com")
+    monkeypatch.setenv("SECRET_KEY", "a" * 40)
+    monkeypatch.setenv("ADMIN_USERNAME", "owner")
+    monkeypatch.setenv("ADMIN_PASSWORD_HASH", pwd_context.hash("test-only-strong-password"))
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///unused.db")
+    if route is None:
+        monkeypatch.delenv("ADMIN_ROUTE", raising=False)
+    else:
+        monkeypatch.setenv("ADMIN_ROUTE", route)
+    get_settings.cache_clear()
+    try:
+        with pytest.raises(ValueError, match="ADMIN_ROUTE"):
+            get_settings()
+        monkeypatch.setenv("ADMIN_ROUTE", "/ops-7k3q9x2m")
+        get_settings.cache_clear()
+        assert get_settings().admin_route == "/ops-7k3q9x2m"
+    finally:
+        get_settings.cache_clear()
+
+
+def test_development_keeps_the_easy_default_admin_route(monkeypatch):
+    monkeypatch.delenv("ADMIN_ROUTE", raising=False)
+    get_settings.cache_clear()
+    try:
+        assert get_settings().admin_route == "/admin12"
     finally:
         get_settings.cache_clear()
