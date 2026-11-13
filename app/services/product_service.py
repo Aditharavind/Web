@@ -220,6 +220,34 @@ class ProductService:
         finally:
             db.close()
 
+    def related_products(self, product: ProductSchema, limit: int = 4) -> list[ProductSchema]:
+        """The next products in the same category (by name, wrapping around).
+
+        Every product is therefore linked from a few others, which helps visitors move on and
+        gives search engines more internal links to follow, spread evenly across the catalogue.
+        """
+        category = self._clean_text(product.category)
+        if not category:
+            return []
+        try:
+            with SessionLocal() as db:
+                ids = [
+                    row[0]
+                    for row in db.query(Product.id)
+                    .filter(func.lower(Product.category) == category.casefold())
+                    .order_by(func.lower(Product.name), Product.id)
+                    .all()
+                ]
+                if product.id not in ids or len(ids) < 2:
+                    return []
+                start = ids.index(product.id)
+                chosen = [ids[(start + step) % len(ids)] for step in range(1, min(limit, len(ids) - 1) + 1)]
+                records = {r.id: r for r in db.query(Product).filter(Product.id.in_(chosen)).all()}
+                return [self._to_product(records[i]) for i in chosen if i in records]
+        except SQLAlchemyError as exc:
+            logger.exception("Failed to load related products.")
+            raise DataAccessError("Unable to load related products right now.") from exc
+
     def get_categories(self) -> list[str]:
         db = SessionLocal()
         try:

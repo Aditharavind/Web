@@ -455,3 +455,25 @@ async def test_every_static_page_description_fits_a_search_snippet():
             page = await http.get(path)
             description = re.search(r'name="description" content="([^"]*)"', page.text).group(1)
             assert 60 <= len(description) <= 160, (path, len(description))
+
+
+@pytest.mark.asyncio
+async def test_each_product_links_to_a_few_others_in_its_category_and_every_product_gets_inbound_links():
+    service = get_product_service()
+    made = [
+        await service.create_product(ProductCreate(name=f"Valve {letter}", category="Valves"), [photo()])
+        for letter in "ABCDEF"
+    ]
+    lone = await service.create_product(ProductCreate(name="Only helmet", category="Safety"), [photo()])
+    inbound = {product.id: 0 for product in made}
+    async with client() as http:
+        for product in made:
+            page = await http.get(f"/product/{product.id}")
+            linked = [pid for pid in inbound if f'href="/product/{pid}"' in page.text and pid != product.id]
+            assert len(linked) == 4 and product.id not in linked
+            assert 'id="related-title"' in page.text and "More Valves" in page.text
+            for pid in linked:
+                inbound[pid] += 1
+        alone = await http.get(f"/product/{lone.id}")
+    assert all(count == 4 for count in inbound.values())  # evenly spread
+    assert 'id="related-title"' not in alone.text  # a category of one has nothing to link to

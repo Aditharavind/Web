@@ -247,6 +247,7 @@ def product_detail(
         active_nav="catalog",
         product=product,
         product_images=product_images,
+        related_cards=_build_product_cards(product_service.related_products(product), product_service),
         product_image_urls=[f"/uploads/{image}" for image in product_images],
         page_image=image_urls[0] if image_urls else None,
         og_type="product",

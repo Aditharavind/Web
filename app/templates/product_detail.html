@@ -87,6 +87,15 @@
         </section>
       </article>
     </div></section>
+    {% if related_cards %}
+    <section class="section related-products" aria-labelledby="related-title"><div class="shell">
+      <h2 id="related-title">More {{ product.category }}</h2>
+      <div class="product-grid">
+        {% for card in related_cards %}{% with card_heading = 'h3' %}{% include "partials/product_card.html" %}{% endwith %}{% endfor %}
+      </div>
+      <a href="/catalog?{{ build_query_string({'cat': [product.category]}) }}" class="text-link">View all {{ product.category }} {{ icon('arrow', 16) }}</a>
+    </div></section>
+    {% endif %}
     <div class="lightbox" id="lightbox">
       <button class="lightbox-close" type="button" data-lightbox-close aria-label="Close image viewer">✕</button>
       <img class="lightbox-img" id="lb-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
