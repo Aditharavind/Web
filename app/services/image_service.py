@@ -51,7 +51,7 @@ class ImageService:
         if Path(filename).name != filename or "\\" in filename:
             raise ValidationError("Invalid image identifier.")
         destination = self.upload_dir / filename
-        temporary = self.upload_dir / f".{filename}.{os.getpid()}.tmp"
+        temporary = self.upload_dir / f".{filename}.{uuid4().hex}.tmp"
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", Image.DecompressionBombWarning)
@@ -134,7 +134,7 @@ class ImageService:
         if target.is_file():
             return target
         target.parent.mkdir(exist_ok=True)
-        temporary = target.with_name(f"{target.stem}.{os.getpid()}.tmp")
+        temporary = target.with_name(f"{target.stem}.{uuid4().hex}.tmp")  # unique, so simultaneous requests never share a file
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", Image.DecompressionBombWarning)

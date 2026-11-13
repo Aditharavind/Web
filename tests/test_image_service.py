@@ -118,3 +118,18 @@ async def test_smaller_copies_are_made_at_upload_time(tmp_path):
     for width in service.derived_widths:
         assert (service.upload_dir / f"_w{width}" / f"{stem}.webp").is_file()
     assert not list(service.upload_dir.glob("*.tmp")) and not list(service.upload_dir.glob(".*"))
+
+
+def test_simultaneous_first_requests_for_one_photo_all_get_a_valid_copy(tmp_path):
+    from threading import Thread
+
+    service = ImageService(tmp_path / "uploads", 10_000_000, 1600)
+    Image.effect_noise((1600, 1200), 64).convert("RGB").save(service.upload_dir / "abc.jpg", "JPEG", quality=90)
+    results = []
+    threads = [Thread(target=lambda: results.append(service.derived_path("abc.jpg", 960))) for _ in range(8)]
+    [thread.start() for thread in threads]
+    [thread.join() for thread in threads]
+    assert all(path is not None for path in results)
+    with Image.open(service.upload_dir / "_w960" / "abc.webp") as copy:
+        copy.load()
+    assert not list((service.upload_dir / "_w960").glob("*.tmp"))

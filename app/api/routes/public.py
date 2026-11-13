@@ -1,6 +1,7 @@
 """Public website routes and search-engine discovery endpoints."""
 from __future__ import annotations
 
+import logging
 from typing import Annotated
 from xml.sax.saxutils import escape
 
@@ -31,6 +32,7 @@ from app.utils.text import build_query_string, mailto_url, whatsapp_message_url
 
 router = APIRouter()
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 def _canonical_url(path: str, **params: str | int | list[str] | None) -> str:
@@ -205,7 +207,12 @@ async def suggest(
     product_service: ProductService = Depends(get_product_service),
 ) -> JSONResponse:
     client = request.client.host if request.client else "unknown"
-    if not await allow_request(f"suggest:{client}", 90, 60):
+    try:
+        allowed = await allow_request(f"suggest:{client}", 90, 60)
+    except Exception:  # the rate-limit store is down: suggestions pause, the rest of the site works
+        logger.exception("Rate limiter unavailable for /api/suggest.")
+        return JSONResponse({"items": []}, status_code=503, headers={"Cache-Control": "no-store"})
+    if not allowed:
         return JSONResponse({"items": []}, status_code=429, headers={"Cache-Control": "no-store"})
     items = await run_in_threadpool(product_service.suggest_products, q)
     return JSONResponse({"items": items}, headers={"Cache-Control": "no-store"})

@@ -163,3 +163,69 @@ async def test_make_primary_image_reorders_gallery():
     updated = service.get_product(product.id)
     assert service.get_product_images(updated) == [third, first, second]
     assert updated.image == third
+
+
+def _admin_endpoints():
+    from fastapi.routing import APIRoute
+
+    prefix = get_settings().admin_route
+    for route in admin.router.routes:
+        if isinstance(route, APIRoute) and route.path.startswith(prefix):
+            for method in route.methods - {"HEAD"}:
+                yield method, route.path
+
+
+@pytest.mark.asyncio
+async def test_every_admin_endpoint_refuses_visitors_without_a_session():
+    """Enumerates the real routes, so a newly added admin page cannot be forgotten."""
+    prefix = get_settings().admin_route
+    public = {f"{prefix}/login"}
+    checked = 0
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        for method, template in _admin_endpoints():
+            path = template.replace("{product_id}", "x").replace("{filename}", "x.jpg")
+            response = await client.request(method, path, data={"csrf_token": "bad"} if method == "POST" else None)
+            if template in public and method == "GET":
+                assert response.status_code == 200
+            elif template in public:  # a login attempt with a bad CSRF token
+                assert response.status_code in {403, 422}, (method, path)
+            else:
+                assert response.status_code in {303, 403, 405, 422}, (method, path, response.status_code)
+                assert 'class="alert' not in response.text and "Product added" not in response.text
+            checked += 1
+    assert checked >= 15
+
+
+@pytest.mark.asyncio
+async def test_signed_in_admin_writes_still_need_a_csrf_token():
+    prefix = get_settings().admin_route
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        await login(client)
+        for action in ("add", "edit/x", "delete/x", "delete-image/x/y.jpg", "primary-image/x/y.jpg", "logout", "import"):
+            response = await client.post(f"{prefix}/products/{action}" if action != "logout" else f"{prefix}/logout", data={"name": "n"})
+            assert response.status_code in {403, 422}, action
+
+
+@pytest.mark.asyncio
+async def test_login_page_never_echoes_text_from_the_link():
+    prefix = get_settings().admin_route
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        spoofed = await client.get(f"{prefix}/login", params={"error": "Your account is locked, call +1 555 0100"})
+        known = await client.get(f"{prefix}/login", params={"error": "Invalid credentials"})
+    assert 'role="alert"' not in spoofed.text
+    assert 'role="alert"' in known.text and "Invalid credentials" in known.text
+
+
+@pytest.mark.asyncio
+async def test_suggest_pauses_quietly_when_the_rate_limit_store_is_down(monkeypatch):
+    from app.api.routes import public
+
+    async def broken(*args, **kwargs):
+        raise ConnectionError("redis down")
+
+    monkeypatch.setattr(public, "allow_request", broken)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        response = await client.get("/api/suggest", params={"q": "valve"})
+        page = await client.get("/catalog")
+    assert response.status_code == 503 and response.json() == {"items": []}
+    assert page.status_code == 200

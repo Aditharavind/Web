@@ -45,6 +45,7 @@ def _client_key(request: Request) -> str:
 
 
 router = APIRouter()
+LOGIN_MESSAGES = {"Invalid credentials", "Too many login attempts. Try again in five minutes."}
 settings = get_settings()
 
 
@@ -121,7 +122,7 @@ def login_page(
         "admin/login.html",
         page_title="Admin Login — NAWA Global",
         page_description="Secure administrator access for the NAWA Global product catalog.",
-        error=error.strip(),
+        error=error.strip() if error.strip() in LOGIN_MESSAGES else "",  # never echo text from a link
     )
 
 
