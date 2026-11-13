@@ -421,3 +421,17 @@ async def test_related_terms_are_visible_on_the_product_page():
         none = await http.get(f"/product/{bare.id}")
     assert "Related terms:" in page.text and "BV-200, two piece valve" in page.text
     assert "Related terms" not in none.text
+
+
+def test_lightbox_placeholder_is_a_valid_image_and_filter_panel_stays_inside_the_page():
+    import base64
+    from io import BytesIO
+    from pathlib import Path
+
+    html = Path("app/templates/product_detail.html").read_text()
+    encoded = re.search(r'id="lb-img" src="data:image/gif;base64,([^"]+)"', html).group(1)
+    with Image.open(BytesIO(base64.b64decode(encoded))) as placeholder:
+        placeholder.load()  # a truncated GIF is reported as a broken image by browsers
+        assert placeholder.size == (1, 1)
+    css = Path("app/static/css/site.css").read_text()
+    assert ".filter-dropdown { position: static; }" in css and ".catalog-form { position: relative;" in css
