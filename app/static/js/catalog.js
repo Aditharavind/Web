@@ -20,6 +20,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const dropdown = document.querySelector?.(".filter-dropdown");
   if (dropdown && document.addEventListener) {
+    // Measured only when the visitor opens the list, never while the page loads.
+    dropdown.addEventListener("toggle", () => {
+      const panel = dropdown.querySelector(".filter-panel");
+      if (!panel) return;
+      panel.classList.remove("align-end");
+      if (dropdown.open && panel.getBoundingClientRect().right > document.documentElement.clientWidth - 8) {
+        panel.classList.add("align-end");
+      }
+    });
     document.addEventListener("click", (event) => {
       if (dropdown.open && !dropdown.contains(event.target)) dropdown.open = false;
     });

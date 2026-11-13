@@ -108,3 +108,13 @@ async def test_png_checksum_failure_is_validation_error(service):
             UploadFile(BytesIO(malformed), filename="broken.png"), "product"
         )
     assert list(service.upload_dir.iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_smaller_copies_are_made_at_upload_time(tmp_path):
+    service = ImageService(tmp_path / "uploads", 5_000_000, 1600)
+    name = await service.save_image(upload(size=(1200, 900)), "product")
+    stem = name.removesuffix(".jpg")
+    for width in service.derived_widths:
+        assert (service.upload_dir / f"_w{width}" / f"{stem}.webp").is_file()
+    assert not list(service.upload_dir.glob("*.tmp")) and not list(service.upload_dir.glob(".*"))

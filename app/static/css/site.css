@@ -486,7 +486,7 @@ h3 { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015
 .page-hero .shell { position: relative; z-index: 1; }
 
 /* Catalogue */
-.catalog-form { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+.catalog-form { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
 .search-box {
   position: relative;
   flex: 1 1 320px;
@@ -516,8 +516,8 @@ h3 { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015
 .chip.active { background: var(--ink); border-color: var(--ink); color: var(--white); }
 .chip input { position: absolute; opacity: 0; pointer-events: none; }
 .chip:has(input:focus-visible) { outline: 3px solid var(--lime-deep); outline-offset: 2px; }
-/* The panel is placed against the whole form, so it can never run past the page edge. */
-.filter-dropdown { position: static; }
+/* Opens under its button; catalog.js adds .align-end when that would run past the page edge. */
+.filter-dropdown { position: relative; }
 .filter-dropdown summary {
   display: inline-flex;
   align-items: center;
@@ -538,7 +538,7 @@ h3 { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015
   z-index: 20;
   top: calc(100% + 8px);
   left: 0;
-  width: min(320px, 100%);
+  width: min(320px, calc(100vw - 32px));
   max-height: 340px;
   overflow: auto;
   padding: 12px;
@@ -547,6 +547,7 @@ h3 { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015
   background: var(--white);
   box-shadow: 0 20px 40px rgba(10, 26, 20, 0.18);
 }
+.filter-panel.align-end { left: auto; right: 0; }
 .check-option { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
 .check-option:hover { background: var(--paper); }
 .check-option input { accent-color: var(--green-text); width: 16px; height: 16px; }

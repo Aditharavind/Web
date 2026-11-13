@@ -106,6 +106,8 @@ class ImageService:
             ) from exc
         finally:
             temporary.unlink(missing_ok=True)
+        for width in self.derived_widths:  # ready before the first visitor asks, so nobody waits for it
+            self.derived_path(filename, width)
         return filename
 
     def delete_image(self, filename: str) -> None:

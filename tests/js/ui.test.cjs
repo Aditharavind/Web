@@ -157,3 +157,26 @@ test('mobile menu opens and closes without ever measuring the window', () => {
   assert.ok(!open.has('mobile-open'));
   events.resize();
 });
+
+test('category list flips to the right edge only when opening it would overflow the page', () => {
+  const classes = new Set();
+  const panel = { classList: { add: (c) => classes.add(c), remove: (c) => classes.delete(c) }, right: 0, getBoundingClientRect() { return { right: this.right }; } };
+  const dropdown = Object.assign(element(), { open: false, querySelector: () => panel, contains: () => false });
+  const input = element();
+  runInNewContext(source('catalog.js'), {
+    window: { addEventListener: (_, callback) => callback() },
+    document: {
+      documentElement: { clientWidth: 768 },
+      addEventListener() {},
+      querySelector: (selector) => (selector === '.filter-dropdown' ? dropdown : input),
+      querySelectorAll: () => [],
+      getElementById: () => ({}),
+    },
+  });
+  panel.right = 824; dropdown.open = true; dropdown.events.toggle();
+  assert.ok(classes.has('align-end'));
+  panel.right = 300; classes.add('align-end'); dropdown.events.toggle();
+  assert.ok(!classes.has('align-end'));
+  dropdown.open = false; panel.right = 900; dropdown.events.toggle();
+  assert.ok(!classes.has('align-end'));
+});
